@@ -246,8 +246,9 @@ return (
                     {t('geoFencing.configOptions')}
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
-                    <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
+                    <label htmlFor="allow-clock-without-location" aria-label={t('geoFencing.allowWithoutLocation')} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
                         <input
+                            id="allow-clock-without-location"
                             type="checkbox"
                             checked={settings?.allow_clock_without_location}
                             onChange={(e) => updateSettingsMutation.mutate({ allow_clock_without_location: e.target.checked })}
@@ -258,8 +259,9 @@ return (
                             <p className="text-xs text-gray-500">{t('geoFencing.allowWithoutLocationHint')}</p>
                         </div>
                     </label>
-                    <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
+                    <label htmlFor="require-high-accuracy" aria-label={t('geoFencing.requireHighAccuracy')} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
                         <input
+                            id="require-high-accuracy"
                             type="checkbox"
                             checked={settings?.require_high_accuracy}
                             onChange={(e) => updateSettingsMutation.mutate({ require_high_accuracy: e.target.checked })}

@@ -12,7 +12,7 @@ import { CallOverlay } from '@/components/chat/CallOverlay';
 import { ChatNotification } from '@/components/chat/ChatNotification';
 import { AIChatAssistant } from '@/components/ai/AIChatAssistant';
 
-export const RootLayout = () => {
+export const RootLayout: React.FC = () => {
     const { i18n } = useTranslation();
     const location = useLocation();
 

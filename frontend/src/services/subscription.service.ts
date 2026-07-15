@@ -14,7 +14,7 @@ export interface Plan {
     setup_fee: number;
     tier: number;
     prices: PlanPrice[];
-    features: any;
+    features: Record<string, unknown>;
     is_active: boolean;
     max_employees: number | null;
 }
@@ -74,7 +74,7 @@ export const subscriptionService = {
         return response.data.data;
     },
 
-    verifyPayment: async (data: Record<string, any>) => {
+    verifyPayment: async (data: Record<string, unknown>) => {
         const response = await api.post('/subscriptions/verify-payment', data);
         return response.data.data;
     }

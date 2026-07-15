@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { bonusService } from '@/services/bonus.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Percent, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

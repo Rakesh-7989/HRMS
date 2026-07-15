@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export const MyLeaveContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const { t } = useTranslation();
-    const { user: _user } = useAuth();
+    useAuth();
     const queryClient = useQueryClient();
     const [applyDialogOpen, setApplyDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -68,25 +68,25 @@ export const MyLeaveContent: React.FC = () => {
     const leaveColumns = [
         {
             header: t('leave.type'),
-            cell: (leave: any) => leave.leave_type_name || leave.leave_type,
+            cell: (leave: { leave_type_name?: string; leave_type: string }) => leave.leave_type_name || leave.leave_type,
         },
         {
             header: t('leave.startDate'),
-            cell: (leave: any) => format(new Date(leave.start_date), 'MMM dd, yyyy'),
+            cell: (leave: { start_date: string }) => format(new Date(leave.start_date), 'MMM dd, yyyy'),
         },
         {
             header: t('leave.endDate'),
-            cell: (leave: any) => format(new Date(leave.end_date), 'MMM dd, yyyy'),
+            cell: (leave: { end_date: string }) => format(new Date(leave.end_date), 'MMM dd, yyyy'),
         },
         {
             header: t('leave.reason'),
-            cell: (leave: any) => (
+            cell: (leave: { reason?: string }) => (
                 <span title={leave.reason} className="truncate max-w-[200px] block">{leave.reason}</span>
             ),
         },
         {
             header: t('leave.status'),
-            cell: (leave: any) => (
+            cell: (leave: { status: string; rejection_reason?: string }) => (
                 <div>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${leave.status === 'APPROVED'
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -109,7 +109,7 @@ export const MyLeaveContent: React.FC = () => {
         {
             header: t('leave.actions'),
             className: 'text-right',
-            cell: (leave: any) => (
+            cell: (leave: { status: string; id: string }) => (
                 leave.status === 'PENDING' ? (
                      <Button variant="ghost" 
                         onClick={() => cancelMutation.mutate(leave.id)}

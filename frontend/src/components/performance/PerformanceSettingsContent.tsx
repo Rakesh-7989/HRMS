@@ -2,8 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { performanceService } from '@/services/performance.service';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
+import { Card } from '@/components/ui/Card';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Settings, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 

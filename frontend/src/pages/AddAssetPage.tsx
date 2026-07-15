@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -11,6 +11,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Asset, AssetCategory, AssetStatus } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { ROUTES } from '@/utils/constants';
 
 interface AssetFormData {
   asset_code: string; // Changed from asset_id
@@ -38,7 +39,7 @@ interface AssetFormData {
 
 export const AddAssetPage: React.FC = () => {
   const { t } = useTranslation();
-  const { user: _user } = useAuth();
+  useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
@@ -136,12 +137,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.createAsset(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      showToast.success('Asset created successfully');
-      navigate('/assets');
+      showToast.success(t('assets.createdSuccess'));
+      navigate(ROUTES.ASSETS);
     },
     onError: (err: Error) => {
-      setError(err.message);
-      showToast.error(err.message);
+      setError(((err as {message?: string}).message) || null);
+      showToast.error((err as {message?: string}).message);
     },
   });
 
@@ -150,12 +151,12 @@ export const AddAssetPage: React.FC = () => {
       assetsService.updateAsset(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] });
-      showToast.success('Asset updated successfully');
-      navigate('/assets');
+      showToast.success(t('assets.updatedSuccess'));
+      navigate(ROUTES.ASSETS);
     },
     onError: (err: Error) => {
-      setError(err.message);
-      showToast.error(err.message);
+      setError(((err as {message?: string}).message) || null);
+      showToast.error((err as {message?: string}).message);
     },
   });
 
@@ -165,8 +166,8 @@ export const AddAssetPage: React.FC = () => {
 
     // Basic client-side validation to surface missing required fields
     if (!formData.asset_code || !formData.asset_code.trim() || !formData.name || !formData.name.trim()) {
-      setError('Please provide both Asset Code and Asset Name.');
-      showToast.error('Please provide both Asset Code and Asset Name.');
+      setError(t('assets.provideCodeAndName'));
+      showToast.error(t('assets.provideCodeAndName'));
       return;
     }
 
@@ -179,8 +180,8 @@ export const AddAssetPage: React.FC = () => {
       purchaseDate.setHours(0, 0, 0, 0);
 
       if (purchaseDate > today) {
-        setError('Purchase date cannot be in the future.');
-        showToast.error('Purchase date cannot be in the future.');
+        setError(t('assets.purchaseDateInvalid'));
+        showToast.error(t('assets.purchaseDateInvalid'));
         return;
       }
 
@@ -189,8 +190,8 @@ export const AddAssetPage: React.FC = () => {
         expiryDate.setHours(0, 0, 0, 0);
 
         if (expiryDate < purchaseDate) {
-          setError('Warranty expiry date cannot be before purchase date.');
-          showToast.error('Warranty expiry date cannot be before purchase date.');
+          setError(t('assets.warrantyDateInvalid'));
+          showToast.error(t('assets.warrantyDateInvalid'));
           return;
         }
       }
@@ -247,7 +248,7 @@ export const AddAssetPage: React.FC = () => {
             </p>
             <Button
               variant="outline"
-              onClick={() => navigate('/assets')}
+              onClick={() => navigate(ROUTES.ASSETS)}
               className="mt-6"
             >
               Back to Assets
@@ -285,10 +286,11 @@ export const AddAssetPage: React.FC = () => {
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Asset Code *
                 </label>
                 <input
+                  id="asset-code"
                   type="text"
                   value={formData.asset_code}
                   onChange={(e) => handleInputChange('asset_code', e.target.value)}
@@ -298,10 +300,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Asset Name *
                 </label>
                 <input
+                  id="asset-name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -310,10 +313,11 @@ export const AddAssetPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <input
+                  id="asset-description"
                   type="text"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
@@ -323,10 +327,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Category *
                 </label>
                 <select
+                  id="asset-category"
                   value={formData.category}
                   onChange={(e) => handleCategoryChange(e.target.value as AssetCategory)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
@@ -341,10 +346,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Status *
                 </label>
                 <select
+                  id="asset-status"
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value as AssetStatus)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
@@ -357,10 +363,11 @@ export const AddAssetPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Purchase Price
                 </label>
                 <input
+                  id="asset-price"
                   type="number"
                   value={formData.purchase_price}
                   onChange={(e) =>
@@ -373,10 +380,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-purchase-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Purchase Date
                 </label>
                 <input
+                  id="asset-purchase-date"
                   type="date"
                   value={formData.purchase_date}
                   onChange={(e) => handleInputChange('purchase_date', e.target.value)}
@@ -386,10 +394,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-manufacturer" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Manufacturer
                 </label>
                 <input
+                  id="asset-manufacturer"
                   type="text"
                   value={formData.manufacturer}
                   onChange={(e) => handleInputChange('manufacturer', e.target.value)}
@@ -399,10 +408,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-serial" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Serial Number
                 </label>
                 <input
+                  id="asset-serial"
                   type="text"
                   value={formData.serial_number}
                   onChange={(e) => handleInputChange('serial_number', e.target.value)}
@@ -412,10 +422,11 @@ export const AddAssetPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-warranty" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Warranty Expiry
                 </label>
                 <input
+                  id="asset-warranty"
                   type="date"
                   value={formData.warranty_expiry}
                   onChange={(e) => handleInputChange('warranty_expiry', e.target.value)}
@@ -434,10 +445,11 @@ export const AddAssetPage: React.FC = () => {
                 {['Laptop', 'Desktop', 'Mobile'].includes(formData.category) ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-os" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Operating System
                       </label>
                       <input
+                        id="asset-os"
                         type="text"
                         value={formData.configuration.os || ''}
                         onChange={(e) => handleConfigChange('os', e.target.value)}
@@ -447,10 +459,11 @@ export const AddAssetPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-processor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Processor (CPU)
                       </label>
                       <input
+                        id="asset-processor"
                         type="text"
                         value={formData.configuration.processor || ''}
                         onChange={(e) => handleConfigChange('processor', e.target.value)}
@@ -460,10 +473,11 @@ export const AddAssetPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-ram" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         RAM
                       </label>
                       <input
+                        id="asset-ram"
                         type="text"
                         value={formData.configuration.ram || ''}
                         onChange={(e) => handleConfigChange('ram', e.target.value)}
@@ -473,10 +487,11 @@ export const AddAssetPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-storage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Storage
                       </label>
                       <input
+                        id="asset-storage"
                         type="text"
                         value={formData.configuration.storage || ''}
                         onChange={(e) => handleConfigChange('storage', e.target.value)}
@@ -486,10 +501,11 @@ export const AddAssetPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-graphics" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Graphics (GPU)
                       </label>
                       <input
+                        id="asset-graphics"
                         type="text"
                         value={formData.configuration.graphics || ''}
                         onChange={(e) => handleConfigChange('graphics', e.target.value)}
@@ -499,10 +515,11 @@ export const AddAssetPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-display" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Display
                       </label>
                       <input
+                        id="asset-display"
                         type="text"
                         value={formData.configuration.display || ''}
                         onChange={(e) => handleConfigChange('display', e.target.value)}
@@ -513,10 +530,11 @@ export const AddAssetPage: React.FC = () => {
 
                     {formData.category !== 'Desktop' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="asset-battery" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Battery
                         </label>
                         <input
+                          id="asset-battery"
                           type="text"
                           value={formData.configuration.battery || ''}
                           onChange={(e) => handleConfigChange('battery', e.target.value)}
@@ -527,10 +545,11 @@ export const AddAssetPage: React.FC = () => {
                     )}
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor="asset-model" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Model Number
                       </label>
                       <input
+                        id="asset-model"
                         type="text"
                         value={formData.configuration.model || ''}
                         onChange={(e) => handleConfigChange('model', e.target.value)}
@@ -548,10 +567,11 @@ export const AddAssetPage: React.FC = () => {
 
               {/* Notes - MOVED INSIDE GRID */}
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="asset-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Notes
                 </label>
                 <textarea
+                  id="asset-notes"
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={3}
@@ -573,7 +593,7 @@ export const AddAssetPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/assets')}
+                onClick={() => navigate(ROUTES.ASSETS)}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft size={18} />

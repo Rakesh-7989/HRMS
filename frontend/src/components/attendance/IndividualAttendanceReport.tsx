@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService } from '@/services/attendance.service';
+import { attendanceService, IndividualAttendanceReportResponse } from '@/services/attendance.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { formatTime12Hour } from '@/utils/timeFormat';
@@ -27,13 +27,11 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
     const { user } = useAuth();
     const { t } = useTranslation();
     // Fetch Report
-    const { data: reportData, isLoading } = useQuery({
+    const { data: reportData, isLoading } = useQuery<IndividualAttendanceReportResponse>({
         queryKey: ['attendance', 'individual-report', employeeId, fromDate, toDate],
         queryFn: () => attendanceService.getIndividualEmployeeReport(employeeId, { from_date: fromDate, to_date: toDate }),
         enabled: !!employeeId && !!fromDate && !!toDate,
     });
-
-
 
     const records = reportData?.daily_report || [];
     const summary = reportData?.summary;
@@ -43,7 +41,7 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
 
         const csvContent = [
             ['Date', 'Day', 'Shift', 'Check In', 'Check Out', 'Total Hours', 'Effective Hours', 'Overtime', 'Status', 'Late By'].join(','),
-            ...records.map((r: any) => [
+            ...records.map((r: { date: string; day_of_week: string; shift_name?: string; check_in_time?: string; check_out_time?: string; work_hours?: string; effective_work_hours?: string; overtime_hours?: string; status: string; late_by?: string }) => [
                 r.date,
                 r.day_of_week,
                 r.shift_name || '-',
@@ -123,25 +121,25 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                     </div>
                     <DataTable
                         columns={[
-                            { header: t('common.date'), accessor: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
-                            { header: t('attendance.day'), accessor: (row) => row.day_of_week, sortKey: 'day_of_week' },
-                            { header: t('attendance.shift'), accessor: (row) => row.shift_name || '-', sortKey: 'shift_name' },
+                            { header: t('common.date'), cell: (row) => format(new Date(row.date), 'MMM dd, yyyy'), sortKey: 'date' },
+                            { header: t('attendance.day'), cell: (row) => row.day_of_week, sortKey: 'day_of_week' },
+                            { header: t('attendance.shift'), cell: (row) => row.shift_name || '-', sortKey: 'shift_name' },
                             {
                                 header: t('attendance.checkIn'),
-                                accessor: (row) => (
+                                cell: (row) => (
                                     row.check_in_time ? (
-                                        <span className={row.is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
+                                        <span className={(row as { is_late?: boolean }).is_late ? 'text-red-500 font-medium' : 'text-gray-700 dark:text-gray-300'}>
                                             {formatTime12Hour(row.check_in_time, user?.timezone)}
-                                            {row.is_late && <span className="text-xs ml-1 text-red-500">({row.late_by})</span>}
+                                            {(row as { is_late?: boolean; late_by?: string }).is_late && <span className="text-xs ml-1 text-red-500">({(row as { late_by?: string }).late_by})</span>}
                                         </span>
                                     ) : '-'
                                 ),
                                 sortKey: 'check_in_time',
                             },
-                            { header: t('attendance.checkOut'), accessor: (row) => formatTime12Hour(row.check_out_time, user?.timezone) || '-', sortKey: 'check_out_time' },
+                            { header: t('attendance.checkOut'), cell: (row) => formatTime12Hour(row.check_out_time, user?.timezone) || '-', sortKey: 'check_out_time' },
                             {
                                 header: t('common.status'),
-                                accessor: (row) => (
+                                cell: (row) => (
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium
                                         ${row.status === 'PRESENT' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                             row.status === 'ABSENT' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
@@ -153,11 +151,11 @@ export const IndividualAttendanceReport: React.FC<IndividualAttendanceReportProp
                                 ),
                                 sortKey: 'status',
                             },
-                            { header: t('attendance.totalHours'), accessor: (row) => row.work_hours || '-', sortKey: 'work_hours' },
-                            { header: t('attendance.effectiveHours'), accessor: (row) => row.effective_work_hours || '-', sortKey: 'effective_work_hours' },
+                            { header: t('attendance.totalHours'), cell: (row) => row.work_hours || '-', sortKey: 'work_hours' },
+                            { header: t('attendance.effectiveHours'), cell: (row) => row.effective_work_hours || '-', sortKey: 'effective_work_hours' },
                             {
                                 header: t('attendance.overtime'),
-                                accessor: (row) => (
+                                cell: (row) => (
                                     Number(row.overtime_hours) > 0 ? (
                                         <span className="text-green-600">+{row.overtime_hours}</span>
                                     ) : '-'

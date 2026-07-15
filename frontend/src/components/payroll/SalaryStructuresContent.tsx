@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown } from '@/services/payroll.service';
+import { payrollService, SalaryStructure, SalaryComponent, CTCBreakdown, CreateSalaryStructurePayload } from '@/services/payroll.service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, IndianRupee, Wallet, FileText, X, Globe, ArrowRight, Sparkles, Shield, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Calculator, Package, Settings, Loader2, Check, AlertCircle, Info, ArrowRight, Sparkles, Users } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useTranslation } from 'react-i18next';
 
@@ -57,7 +57,21 @@ export const SalaryStructuresContent: React.FC = () => {
     const [structureName, setStructureName] = useState('');
     const [structureDescription, setStructureDescription] = useState('');
     const [structureIsDefault, setStructureIsDefault] = useState(false);
-    const [selectedComponents, setSelectedComponents] = useState<any[]>([]);
+    
+    type StructureComponentPayload = {
+        component_id: string;
+        calculation_type: string;
+        percentage?: number;
+        fixed_amount?: number;
+        formula?: string;
+        min_value?: number;
+        max_value?: number;
+        display_order?: number;
+        name?: string; // for display in UI
+        code?: string; // for display in UI
+    };
+    
+    const [selectedComponents, setSelectedComponents] = useState<StructureComponentPayload[]>([]);
 
     const [componentName, setComponentName] = useState('');
     const [componentCode, setComponentCode] = useState('');
@@ -73,7 +87,7 @@ export const SalaryStructuresContent: React.FC = () => {
 
     // Mutations
     const createStructureMut = useMutation({
-        mutationFn: (data: any) =>
+        mutationFn: (data: CreateSalaryStructurePayload) =>
             payrollService.createSalaryStructure(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['salary-structures'] });
@@ -83,7 +97,7 @@ export const SalaryStructuresContent: React.FC = () => {
     });
 
     const updateStructureMut = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) =>
+        mutationFn: ({ id, data }: { id: string; data: Partial<CreateSalaryStructurePayload> }) =>
             payrollService.updateSalaryStructureV2(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['salary-structures'] });
@@ -99,16 +113,21 @@ export const SalaryStructuresContent: React.FC = () => {
 
     const migrateMut = useMutation({
         mutationFn: (id: string) => payrollService.migrateEmployeesToStructure(id),
-        onSuccess: (res: any) => {
-            const result = res.data;
-            if (result.successCount > 0) {
+        onSuccess: (res: unknown) => {
+            const result = res as { successCount?: number; message?: string; data?: { successCount?: number } };
+            const data = result.data || result;
+            const count = data.successCount ?? 0;
+            if (count > 0) {
                 // Use a custom toast or just success
-                alert(result.message); // Simple alert for detailed message
+                alert(result.message || 'Success'); // Simple alert for detailed message
             } else {
                 alert(t('payroll.salaryStructure.alerts.noEligibleEmployees'));
             }
         },
-        onError: (err: any) => alert(err.message || t('payroll.salaryStructure.alerts.migrationFailed'))
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(error.response?.data?.message || error.message || t('payroll.salaryStructure.alerts.migrationFailed'));
+        }
     });
 
     const createComponentMut = useMutation({
@@ -142,9 +161,11 @@ export const SalaryStructuresContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['salary-components'] });
             alert(t('payroll.salaryStructure.alerts.seedSuccess'));
         },
-        onError: (err: any) =>             alert(t('payroll.salaryStructure.alerts.seedFailed') + (err.response?.data?.message || err.message))
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(t('payroll.salaryStructure.alerts.seedFailed') + (error.response?.data?.message || error.message));
+        }
     });
-
 
 
     const resetStructureForm = () => {
@@ -196,8 +217,8 @@ export const SalaryStructuresContent: React.FC = () => {
             components: selectedComponents.map((c, idx) => ({
                 component_id: c.component_id,
                 calculation_type: c.calculation_type,
-                percentage: c.percentage ? parseFloat(c.percentage) : undefined,
-                fixed_amount: c.fixed_amount ? parseFloat(c.fixed_amount) : undefined,
+                percentage: c.calculation_type === 'PERCENTAGE_OF_CTC' || c.calculation_type === 'PERCENTAGE_OF_BASIC' ? c.percentage : undefined,
+                fixed_amount: c.calculation_type === 'FIXED' ? c.fixed_amount : undefined,
                 display_order: c.display_order || idx
             }))
         };
@@ -224,7 +245,7 @@ export const SalaryStructuresContent: React.FC = () => {
         setSelectedComponents(selectedComponents.filter(c => c.component_id !== compId));
     };
 
-    const updateSelectedComponent = (compId: string, field: string, value: any) => {
+    const updateSelectedComponent = (compId: string, field: string, value: unknown) => {
         setSelectedComponents(selectedComponents.map(c =>
             c.component_id === compId ? { ...c, [field]: value } : c
         ));
@@ -262,8 +283,9 @@ export const SalaryStructuresContent: React.FC = () => {
         try {
             const breakdown = await payrollService.calculateCTC(calcStructureId, parseFloat(calcCTC));
             setCtcBreakdown(breakdown);
-        } catch (err: any) {
-            alert(t('payroll.salaryStructure.alerts.calculationFailed') + (err?.response?.data?.message || err.message));
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(t('payroll.salaryStructure.alerts.calculationFailed') + (error?.response?.data?.message || error.message));
         } finally {
             setCalculating(false);
         }
@@ -337,8 +359,11 @@ export const SalaryStructuresContent: React.FC = () => {
                         </div>
                         <div className="md:col-span-3 flex flex-col justify-end">
                             <div
+                                role="button"
+                                tabIndex={0}
                                 className={`flex items-center gap-2.5 px-5 h-10 rounded-xl border transition-all cursor-pointer select-none font-bold text-[10px] uppercase tracking-widest ${structureIsDefault ? 'bg-slate-900 dark:bg-brand-500 border-slate-900 dark:border-brand-500 text-white shadow-elev-3' : 'bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 text-gray-400 hover:border-brand-500/50'}`}
                                 onClick={() => setStructureIsDefault(!structureIsDefault)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStructureIsDefault(!structureIsDefault); } }}
                             >
                                 <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${structureIsDefault ? 'bg-white border-white text-slate-800' : 'bg-gray-50 dark:bg-gray-900 border-gray-300 dark:border-gray-700'}`}>
                                     {structureIsDefault && <Check size={12} className="stroke-[4px] text-slate-900" />}
@@ -371,7 +396,7 @@ export const SalaryStructuresContent: React.FC = () => {
                                     </div>
                                 ) : (
                                     components.filter(c => c.is_active && !selectedComponents.some(sc => sc.component_id === c.id)).map(c => (
-                                         <Button variant="ghost" 
+                                        <Button variant="ghost"
                                             key={c.id}
                                             onClick={() => addComponentToStructure(c)}
                                             className="w-full group flex justify-between items-center p-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-brand-500/50 hover:shadow-elev-4 hover:shadow-brand-500/5 transition-all text-left"
@@ -447,8 +472,8 @@ export const SalaryStructuresContent: React.FC = () => {
                                                                 <Input
                                                                     type="number"
                                                                     className="h-10 text-right font-black text-sm pr-10 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 rounded-xl focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all shadow-elev-1 text-gray-800 dark:text-gray-200"
-                                                                    value={c.calculation_type === 'FIXED' ? c.fixed_amount : c.percentage}
-                                                                    onChange={e => updateSelectedComponent(c.component_id, c.calculation_type === 'FIXED' ? 'fixed_amount' : 'percentage', e.target.value)}
+                                                                    value={c.calculation_type === 'FIXED' ? (c.fixed_amount ?? '') : (c.percentage ?? '')}
+                                                                    onChange={e => updateSelectedComponent(c.component_id, c.calculation_type === 'FIXED' ? 'fixed_amount' : 'percentage', e.target.value === '' ? undefined : Number(e.target.value))}
                                                                 />
                                                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-gray-50 dark:bg-gray-800 rounded text-[9px] font-black text-gray-400">
                                                                     {c.calculation_type === 'FIXED' ? '₹' : '%'}
@@ -542,9 +567,9 @@ export const SalaryStructuresContent: React.FC = () => {
                     ].map(tab => {
                         const isActive = activeTab === tab.id;
                         return (
-                             <Button variant="ghost" 
+                            <Button variant="ghost"
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id as 'structures' | 'components' | 'calculator')}
                                 className={`flex items-center gap-2 px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all duration-200 ${isActive
                                     ? 'bg-brand-500 text-white shadow-elev-3'
                                     : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-800'
@@ -725,18 +750,18 @@ export const SalaryStructuresContent: React.FC = () => {
                                                          <AlertCircle size={10} /> {t('payroll.salaryStructure.list.taxable')}
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center gap-1.5 text-brand-600 font-bold text-[9px] uppercase tracking-wider">
-                                                         <Check size={10} className="stroke-[3px]" /> {t('payroll.salaryStructure.list.exempt')}
+                                                    <div className="flex items-center gap-1.5 text-green-600 font-bold text-[9px] uppercase tracking-wider">
+                                                         <Check size={10} /> {t('payroll.salaryStructure.list.nonTaxable')}
                                                     </div>
                                                 )}
                                             </TableCell>
                                             <TableCell className="px-6 py-4 text-right">
-                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex gap-2 justify-end">
                                                     <Button variant="outline" size="sm" onClick={() => handleEditComponent(c)} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-brand-500">
                                                         <Edit size={14} />
                                                     </Button>
                                                     <Button variant="outline" size="sm" onClick={async () => {
-                                                        if (await confirm({ type: 'destructive', title: t('payroll.salaryStructure.list.confirmDeactivateComponentTitle'), message: t('payroll.salaryStructure.list.confirmDeactivateComponentMessage') })) deleteComponentMut.mutate(c.id);
+                                                        if (await confirm({ type: 'destructive', title: t('payroll.salaryStructure.list.confirmDeleteComponentTitle'), message: t('payroll.salaryStructure.list.confirmDeleteComponentMessage') })) deleteComponentMut.mutate(c.id);
                                                     }} className="h-8 w-8 p-0 dark:bg-gray-900 border-gray-100 dark:border-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:border-red-200">
                                                         <Trash2 size={14} />
                                                     </Button>
@@ -751,347 +776,182 @@ export const SalaryStructuresContent: React.FC = () => {
                 </Card>
             )}
 
-            {/* CTC Calculator Tab */}
+            {/* Calculator Tab */}
             {activeTab === 'calculator' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="p-8 border-none shadow-elev-1 ring-1 ring-black/5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center">
-                                <Calculator size={20} />
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('payroll.salaryStructure.calculator.simulator')}</h2>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{t('payroll.salaryStructure.calculator.simulatorDesc')}</p>
-                            </div>
+                <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('payroll.salaryStructure.calculator.title')}</h3>
+                            <p className="text-xs text-gray-500 mt-1">{t('payroll.salaryStructure.calculator.subtitle')}</p>
                         </div>
-
-                        <div className="space-y-6">
-                            <div className="space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.computationFramework')}</Label>
+                    </div>
+                    <div className="p-6 space-y-6 max-w-2xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2 md:col-span-2">
+                                <Label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.selectStructure')}</Label>
                                 <select
-                                    className="w-full h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer"
+                                    className="w-full h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer shadow-elev-1 text-gray-700 dark:text-gray-200"
                                     value={calcStructureId}
-                                    onChange={e => setCalcStructureId(e.target.value)}
+                                    onChange={(e) => setCalcStructureId(e.target.value)}
                                 >
-                                    <option value="">{t('payroll.salaryStructure.calculator.selectStructure')}</option>
-                                    {structures.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    <option value="">{t('payroll.salaryStructure.calculator.selectPlaceholder')}</option>
+                                    {structures.map((s) => (
+                                        <option key={s.id} value={s.id}>{s.name} {s.is_default ? t('payroll.salaryStructure.calculator.default') : ''}</option>
                                     ))}
                                 </select>
                             </div>
-
-                            <div className="space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.annualCtcGross')}</Label>
-                                <div className="relative group/input">
-                                    <Input
-                                        type="number"
-                                        placeholder={t('payroll.salaryStructure.calculator.annualCtcPlaceholder')}
-                                        className="h-11 pl-10 pr-4 font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-                                        value={calcCTC}
-                                        onChange={e => setCalcCTC(e.target.value)}
-                                    />
-                                    <IndianRupee size={16} />
-                                </div>
-                            </div>
-
-                            <Button
-                                onClick={handleCalculateCTC}
-                                disabled={calculating || !calcStructureId || !calcCTC}
-                                className="w-full h-11 bg-slate-900 dark:bg-brand-500 hover:bg-slate-800 dark:hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-elev-4 transition-all active:scale-[0.98]"
-                            >
-                                {calculating ? <Loader2 className="animate-spin mr-2" size={16} /> : <Calculator className="mr-2" size={16} />}
-                                 {t('payroll.salaryStructure.calculator.executeProjection')}
-                            </Button>
-                        </div>
-                    </Card>
-
-                    {ctcBreakdown ? (
-                        <Card className="p-0 border-none shadow-elev-1 ring-1 ring-black/5 overflow-hidden animate-fadeIn">
-                            <div className="p-8 bg-gray-50/50 dark:bg-gray-950/20 border-b border-gray-100 dark:border-gray-800">
-                                <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-tight">{t('payroll.salaryStructure.calculator.financialProjection')}</h2>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl ring-1 ring-black/5 shadow-elev-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Wallet size={14} className="text-brand-500" />
-                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{t('payroll.salaryStructure.calculator.annualCtc')}</p>
-                                        </div>
-                                        <p className="text-xl font-black text-gray-900 dark:text-white">{formatINR(ctcBreakdown.annual_ctc)}</p>
-                                    </div>
-                                    <div className="bg-brand-500/5 p-5 rounded-2xl ring-1 ring-brand-500/20 shadow-elev-1 border border-brand-500/10">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Check size={14} className="text-brand-500 stroke-[3px]" />
-                                             <p className="text-[9px] font-bold text-brand-500 uppercase tracking-[0.2em]">{t('payroll.salaryStructure.calculator.monthlyTakeHome')}</p>
-                                        </div>
-                                        <p className="text-xl font-black text-brand-500">{formatINR(ctcBreakdown.monthly_net)}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader className="bg-white dark:bg-gray-900">
-                                        <TableRow>
-                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3">{t('payroll.salaryStructure.calculator.compensationElement')}</TableHead>
-                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">{t('payroll.salaryStructure.calculator.monthly')}</TableHead>
-                                             <TableHead className="text-[9px] font-bold uppercase text-gray-400 px-8 py-3 text-right">{t('payroll.salaryStructure.calculator.annual')}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {ctcBreakdown.breakdown.map((b, idx) => (
-                                            <TableRow key={b.component_id} className={`border-none ${idx % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-800/10' : ''}`}>
-                                                <TableCell className="px-8 py-3.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-1.5 h-1.5 rounded-full ${b.component_type === 'DEDUCTION' ? 'bg-red-400' :
-                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'bg-brand-400' : 'bg-brand-400'
-                                                            }`} />
-                                                        <span className={`text-[11px] font-bold uppercase tracking-tight ${b.component_type === 'DEDUCTION' ? 'text-red-500' :
-                                                            b.component_type === 'EMPLOYER_CONTRIBUTION' ? 'text-brand-500' : 'text-gray-700 dark:text-gray-200'
-                                                            }`}>
-                                                            {b.component_name}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="px-8 py-3.5 text-right font-bold text-xs text-gray-600 dark:text-gray-300">{formatINR(b.monthly_amount)}</TableCell>
-                                                <TableCell className="px-8 py-3.5 text-right font-bold text-xs text-gray-600 dark:text-gray-300">{formatINR(b.annual_amount)}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-
-                            <div className="p-8 bg-slate-900 dark:bg-gray-950 flex justify-between items-center group">
-                                <div className="space-y-0.5">
-                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.3em]">{t('payroll.salaryStructure.calculator.finalNetValuation')}</p>
-                                    <h4 className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-brand-500 transition-colors">{t('payroll.salaryStructure.calculator.totalNetTakeHome')}</h4>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-lg font-black text-white">{formatINR(ctcBreakdown.net_salary)}</p>
-                                    <div className="flex items-center justify-end gap-1 mt-1">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                                        <p className="text-[8px] font-black text-brand-500 uppercase tracking-tighter">{t('payroll.salaryStructure.calculator.verifiedComputation')}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                    ) : (
-                        <div className="h-full min-h-[400px] border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl flex flex-col items-center justify-center p-12 text-center opacity-60">
-                            <div className="w-20 h-20 bg-gray-50 dark:bg-gray-900 rounded-3xl flex items-center justify-center mb-6">
-                                <Calculator size={32} className="text-gray-300" />
-                            </div>
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.calculator.simulatorReady')}</h3>
-                            <p className="text-xs text-gray-400 mt-2 max-w-[200px] leading-relaxed">{t('payroll.salaryStructure.calculator.simulatorReadyHint')}</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-
-
-            {/* Component Dialog */}
-            <Dialog open={componentDialogOpen} onOpenChange={setComponentDialogOpen}>
-                <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-none shadow-elev-6 rounded-3xl p-0 overflow-hidden">
-                    <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4">
-                        <div className="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center">
-                            <Package size={24} className="stroke-[2.5px]" />
-                        </div>
-                        <div>
-                            <DialogTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
-                                {editingComponent ? t('payroll.salaryStructure.componentDialog.modifyTitle') : t('payroll.salaryStructure.componentDialog.constructTitle')}
-                            </DialogTitle>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mt-0.5">{t('payroll.salaryStructure.componentDialog.definition')}</p>
-                        </div>
-                    </div>
-                    <div className="p-8 space-y-6">
-                        <div className="space-y-1.5">
-                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.officialName')}</Label>
-                            <Input
-                                value={componentName}
-                                onChange={e => setComponentName(e.target.value)}
-                                placeholder={t('payroll.salaryStructure.componentDialog.officialNamePlaceholder')}
-                                className="h-11 px-4 text-sm font-semibold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all"
-                            />
-                        </div>
-                        <div className="grid grid-cols-5 gap-4">
-                            <div className="col-span-2 space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.codeRef')}</Label>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.calculator.annualCtc')}</Label>
                                 <Input
-                                    value={componentCode}
-                                    onChange={e => setComponentCode(e.target.value.toUpperCase())}
-                                    placeholder={t('payroll.salaryStructure.componentDialog.codeRefPlaceholder')}
-                                    className="h-11 px-4 text-sm font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
+                                    type="number"
+                                    value={calcCTC}
+                                    onChange={(e) => setCalcCTC(e.target.value)}
+                                    placeholder="e.g. 1200000"
+                                    className="h-11 px-4 text-sm font-semibold bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-elev-1 text-gray-700 dark:text-gray-200"
                                 />
                             </div>
-                            <div className="col-span-3 space-y-1.5">
-                                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.typeClass')}</Label>
-                                <select
-                                    className="w-full h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all cursor-pointer uppercase tracking-tight text-gray-700 dark:text-gray-200"
-                                    value={componentType}
-                                    onChange={e => setComponentType(e.target.value as any)}
-                                >
-                                    <option value="EARNING">{t('payroll.salaryStructure.componentDialog.typeEarning')}</option>
-                                    <option value="DEDUCTION">{t('payroll.salaryStructure.componentDialog.typeDeduction')}</option>
-                                    <option value="EMPLOYER_CONTRIBUTION">{t('payroll.salaryStructure.componentDialog.typeEmployerContribution')}</option>
-                                    <option value="REIMBURSEMENT">{t('payroll.salaryStructure.componentDialog.typeReimbursement')}</option>
-                                </select>
-                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('payroll.salaryStructure.componentDialog.functionalCategory')}</Label>
-                            <Input
-                                value={componentCategory}
-                                onChange={e => setComponentCategory(e.target.value)}
-                                placeholder={t('payroll.salaryStructure.componentDialog.functionalCategoryPlaceholder')}
-                                className="h-11 px-4 text-xs font-bold bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl transition-all uppercase"
-                            />
-                        </div>
-                        <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 cursor-pointer select-none" onClick={() => setComponentIsTaxable(!componentIsTaxable)}>
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${componentIsTaxable ? 'bg-brand-500 border-brand-500 text-white' : 'bg-transparent border-gray-200 dark:border-gray-800'}`}>
-                                {componentIsTaxable && <Check size={14} className="stroke-[3px]" />}
-                            </div>
-                            <div>
-                                <Label htmlFor="isTaxable" className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-tight cursor-pointer">{t('payroll.salaryStructure.componentDialog.taxableIncrement')}</Label>
-                                <p className="text-[9px] text-gray-400 font-medium uppercase tracking-widest mt-0.5">{t('payroll.salaryStructure.componentDialog.taxableIncrementHint')}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-8 pt-0 flex gap-3">
-                        <Button variant="ghost" className="flex-1 h-11 rounded-xl font-bold text-gray-400 text-xs uppercase"                                 onClick={() => setComponentDialogOpen(false)}>{t('payroll.salaryStructure.componentDialog.abort')}</Button>
+
                         <Button
-                            onClick={handleSaveComponent}
-                            disabled={!componentName || !componentCode}
-                            className="flex-[2] h-11 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-elev-4 shadow-brand-500/20"
+                            onClick={handleCalculateCTC}
+                            disabled={!calcStructureId || !calcCTC || calculating}
+                            className="w-full md:w-auto h-11 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-elev-4 shadow-brand-500/20 transition-all active:scale-[0.98]"
                         >
-                            {editingComponent ? t('payroll.salaryStructure.componentDialog.updateSchema') : t('payroll.salaryStructure.componentDialog.commitComponent')}
+                            {calculating ? <Loader2 className="animate-spin mr-2" size={16} /> : <Calculator className="mr-2" size={16} />}
+                            {t('payroll.salaryStructure.calculator.calculate')}
                         </Button>
+
+                        {ctcBreakdown && (
+                            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800 animate-fadeIn">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-brand-50 dark:bg-brand-500/10 text-brand-600 rounded-lg flex items-center justify-center">
+                                        <Calculator size={18} />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{t('payroll.salaryStructure.calculator.breakdownTitle')}</h4>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div className="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl ring-1 ring-black/5 shadow-elev-1">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('payroll.salaryStructure.calculator.grossEarnings')}</p>
+                                        <p className="text-lg font-black text-gray-900 dark:text-white">{formatINR(ctcBreakdown.gross_earnings)}</p>
+                                    </div>
+                                    <div className="p-5 bg-red-50/50 dark:bg-red-500/5 rounded-2xl ring-1 ring-red-500/10 shadow-elev-1 border border-red-100/50 dark:border-red-900/20">
+                                        <p className="text-[9px] font-bold text-red-500/50 dark:text-red-400/50 uppercase tracking-widest mb-1.5">{t('payroll.salaryStructure.calculator.totalDeductions')}</p>
+                                        <p className="text-lg font-black text-red-600 dark:text-red-400">{formatINR(ctcBreakdown.total_deductions)}</p>
+                                    </div>
+                                    <div className="p-5 bg-brand-50/50 dark:bg-brand-500/5 rounded-2xl ring-1 ring-purple-500/10 shadow-elev-1 border border-brand-100/50 dark:border-purple-900/20">
+                                        <p className="text-[9px] font-bold text-brand-500/50 dark:text-brand-400/50 uppercase tracking-widest mb-1.5">{t('payroll.salaryStructure.calculator.netMonthly')}</p>
+                                        <p className="text-lg font-black text-brand-600 dark:text-brand-400">{formatINR(ctcBreakdown.monthly_net)}</p>
+                                    </div>
+                                    <div className="p-5 bg-brand-500/5 rounded-2xl ring-1 ring-primary/10 shadow-elev-1 border border-brand-500/5">
+                                        <p className="text-[9px] font-bold text-brand-500/50 dark:text-brand-500/50 uppercase tracking-widest mb-1.5">{t('payroll.salaryStructure.calculator.annualCtc')}</p>
+                                        <p className="text-lg font-black text-brand-500">{formatINR(ctcBreakdown.annual_ctc)}</p>
+                                    </div>
+                                </div>
+
+                                {ctcBreakdown.breakdown && ctcBreakdown.breakdown.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.calculator.componentBreakdown')}</h5>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {ctcBreakdown.breakdown.map((comp: { component_name: string; monthly_amount: number; component_type: string }, i: number) => (
+                                                <div key={i} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100/50 dark:border-gray-800/50">
+                                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">{comp.component_name}</p>
+                                                    <p className="font-black text-gray-900 dark:text-white">{formatINR(comp.monthly_amount)}</p>
+                                                    <p className="text-[8px] font-bold text-gray-400 uppercase">{comp.component_type}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </Card>
+            )}
+
+            {/* Template Dialog */}
+            <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('payroll.salaryStructure.templates.title')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4">
+                        {templatesLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="animate-spin text-brand-500" size={24} />
+                            </div>
+                        ) : templates.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">{t('payroll.salaryStructure.templates.empty')}</div>
+                        ) : (
+                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                                {templates.map(tmpl => (
+                                    <Button
+                                        key={tmpl.id}
+                                        variant="outline"
+                                        className="w-full justify-start gap-3 p-4 text-left"
+                                        onClick={() => createFromTemplateMut.mutate(tmpl.id)}
+                                    >
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-gray-900 dark:text-white">{tmpl.name}</p>
+                                            <p className="text-xs text-gray-500">{tmpl.description}</p>
+                                        </div>
+                                        <ArrowRight size={16} />
+                                    </Button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
 
-            {/* Template Selection Dialog */}
-            {templateDialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-                    <div className="w-full max-w-3xl mx-4 bg-white dark:bg-gray-900 rounded-3xl shadow-elev-6 ring-1 ring-black/10 overflow-hidden">
-                        {/* Dialog Header */}
-                        <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-brand-500/20 to-brand-500/5 text-brand-500 rounded-2xl flex items-center justify-center shadow-inner">
-                                    <FileText size={24} className="stroke-[2px]" />
-                                </div>
-                                <div>
-                                <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">{t('payroll.salaryStructure.templateDialog.title')}</h2>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-0.5">{t('payroll.salaryStructure.templateDialog.subtitle')}</p>
-                                </div>
-                            </div>
-                             <Button variant="ghost" 
-                                onClick={() => setTemplateDialogOpen(false)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 transition-all"
-                            >
-                                <X size={20} />
-                            </Button>
+            {/* Component Dialog */}
+            <Dialog open={componentDialogOpen} onOpenChange={setComponentDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{editingComponent ? t('payroll.salaryStructure.component.editTitle') : t('payroll.salaryStructure.component.createTitle')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label>{t('payroll.salaryStructure.component.name')}</Label>
+                            <Input value={componentName} onChange={e => setComponentName(e.target.value)} />
                         </div>
-
-                        {/* Dialog Body */}
-                        <div className="p-8 max-h-[70vh] overflow-y-auto">
-                            {templatesLoading ? (
-                                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                                    <Loader2 className="animate-spin text-brand-500" size={32} />
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('payroll.salaryStructure.templateDialog.loading')}</p>
-                                </div>
-                            ) : templates.length === 0 ? (
-                                <div className="text-center py-20">
-                                    <FileText size={48} className="mx-auto text-gray-200 mb-4" />
-                                    <p className="text-sm font-bold text-gray-400">{t('payroll.salaryStructure.templateDialog.noTemplates')}</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {templates.map(tmpl => (
-                                        <div
-                                            key={tmpl.id}
-                                            className="group relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-brand-500/30 hover:shadow-elev-5 hover:shadow-brand-500/5 transition-all duration-300 overflow-hidden"
-                                        >
-                                            {/* Template Header */}
-                                            <div className="p-6 pb-4 flex items-start justify-between">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-elev-4 shadow-orange-500/20 shrink-0">
-                                                        <Globe size={24} className="text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-base font-black text-gray-900 dark:text-white tracking-tight group-hover:text-brand-500 transition-colors">{tmpl.name}</h3>
-                                                        <p className="text-xs text-gray-500 mt-1 max-w-md leading-relaxed">{tmpl.description}</p>
-                                                        <div className="flex items-center gap-2 mt-3">
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 dark:bg-orange-500/10 text-orange-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-orange-500/20">
-                                                                <Globe size={10} />
-                                                                {tmpl.country}
-                                                            </span>
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 dark:bg-brand-500/10 text-brand-600 rounded-full text-[9px] font-black uppercase tracking-tight ring-1 ring-purple-500/20">
-                                                                <Shield size={10} />
-                                                                 {t('payroll.salaryStructure.templateDialog.compliant')}
-                                                            </span>
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-gray-800 text-gray-500 rounded-full text-[9px] font-bold uppercase tracking-tight ring-1 ring-black/5">
-                                                                 {t('payroll.salaryStructure.templateDialog.componentsCount', { count: tmpl.components.length })}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Button
-                                                    size="sm"
-                                                    disabled={createFromTemplateMut.isPending}
-                                                    onClick={() => createFromTemplateMut.mutate(tmpl.id)}
-                                                    className="px-6 h-10 bg-brand-500 hover:bg-brand-500/90 text-white font-black text-[10px] uppercase tracking-[0.15em] rounded-xl shadow-elev-4 shadow-brand-500/20 active:scale-95 transition-all flex items-center gap-2 shrink-0"
-                                                >
-                                                    {createFromTemplateMut.isPending ? (
-                                                        <Loader2 className="animate-spin" size={14} />
-                                                    ) : (
-                                                        <ArrowRight size={14} className="stroke-[2.5px]" />
-                                                    )}
-                                                     {t('payroll.salaryStructure.templateDialog.useTemplate')}
-                                                </Button>
-                                            </div>
-
-                                            {/* Components Preview */}
-                                            <div className="px-6 pb-6">
-                                                <div className="bg-white dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                                                    <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-950/30 border-b border-gray-100 dark:border-gray-800">
-                                                        <div className="grid grid-cols-12 gap-2 text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewComponent')}</div>
-                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewCalcRule')}</div>
-                                                            <div className="col-span-4">{t('payroll.salaryStructure.templateDialog.previewValue')}</div>
-                                                        </div>
-                                                    </div>
-                                                    {tmpl.components.map((c, idx) => (
-                                                        <div key={c.code} className={`px-4 py-2.5 grid grid-cols-12 gap-2 items-center text-[11px] ${idx % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-gray-800/10'} ${idx < tmpl.components.length - 1 ? 'border-b border-gray-50 dark:border-gray-800/50' : ''}`}>
-                                                            <div className="col-span-4">
-                                                                <span className="font-bold text-gray-700 dark:text-gray-200">{c.name}</span>
-                                                                <span className="ml-2 text-[9px] text-gray-400 font-medium">{c.code}</span>
-                                                            </div>
-                                                            <div className="col-span-4">
-                                                                <span className={`inline-flex px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tight ring-1 ring-black/5 ${c.calculation_type === 'REMAINING' ? 'bg-brand-50/50 text-brand-600 dark:bg-brand-500/10' :
-                                                                    c.calculation_type === 'FIXED' ? 'bg-coral-50/50 text-coral-600 dark:bg-coral-500/10' :
-                                                                        'bg-gray-50 text-gray-500 dark:bg-gray-800'
-                                                                    }`}>
-                                                                    {c.calculation_type.replace(/_/g, ' ')}
-                                                                </span>
-                                                            </div>
-                                                            <div className="col-span-4 text-gray-500 font-medium text-[10px]">
-                                                                {                                                                 c.calculation_type === 'REMAINING' ? t('payroll.salaryStructure.templateDialog.balanceAmount') :
-                                                                    c.calculation_type === 'FIXED' ? `₹${c.fixed_amount?.toLocaleString('en-IN')}/mo` :
-                                                                        `${c.percentage}%${c.max_value ? ` (max ₹${c.max_value.toLocaleString('en-IN')}/mo)` : ''}`
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                        <div className="space-y-2">
+                            <Label>{t('payroll.salaryStructure.component.code')}</Label>
+                            <Input value={componentCode} onChange={e => setComponentCode(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('payroll.salaryStructure.component.type')}</Label>
+                            <select
+                                value={componentType}
+                                onChange={e => setComponentType(e.target.value as 'EARNING' | 'DEDUCTION' | 'EMPLOYER_CONTRIBUTION' | 'REIMBURSEMENT')}
+                                className="w-full border rounded p-2 mt-1"
+                            >
+                                <option value="EARNING">{t('payroll.salaryStructure.component.typeEarning')}</option>
+                                <option value="DEDUCTION">{t('payroll.salaryStructure.component.typeDeduction')}</option>
+                                <option value="EMPLOYER_CONTRIBUTION">{t('payroll.salaryStructure.component.typeEmployerContribution')}</option>
+                                <option value="REIMBURSEMENT">{t('payroll.salaryStructure.component.typeReimbursement')}</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>{t('payroll.salaryStructure.component.category')}</Label>
+                            <Input value={componentCategory} onChange={e => setComponentCategory(e.target.value)} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="taxable"
+                                checked={componentIsTaxable}
+                                onChange={e => setComponentIsTaxable(e.target.checked)}
+                            />
+                            <Label htmlFor="taxable">{t('payroll.salaryStructure.component.taxable')}</Label>
                         </div>
                     </div>
-                </div>
-            )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setComponentDialogOpen(false)}>{t('payroll.common.cancel')}</Button>
+                        <Button onClick={handleSaveComponent} isLoading={createComponentMut.isPending || updateComponentMut.isPending}>{editingComponent ? t('payroll.common.update') : t('payroll.common.create')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
-
-export default SalaryStructuresContent;

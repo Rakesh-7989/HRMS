@@ -74,7 +74,7 @@ export const Button: React.FC<ButtonProps> = ({
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       disabled={effectivelyDisabled}
       title={isSubscriptionDisabled ? 'This action requires an active subscription plan.' : props.title}
-      {...(props as any)}
+      {...(props as React.ComponentProps<typeof motion.button>)}
     >
       {isLoading ? (
         <span className="flex items-center gap-2">

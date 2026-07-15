@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -12,7 +12,7 @@ import { UnifiedApprovalsContent } from '@/components/attendance/UnifiedApproval
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 export const AttendancePage: React.FC = () => {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ export const AttendancePage: React.FC = () => {
   const canManage = hasPermission('attendance', 'manage');
   const [searchParams] = useSearchParams();
 
-  const ATTENDANCE_TABS: { id: string; label: string; action: PermissionAction; minPlan?: number }[] = [
+  const ATTENDANCE_TABS = useMemo((): { id: string; label: string; action: PermissionAction; minPlan?: number }[] => [
     { id: 'reports', label: t('attendance.tabs.reports'), action: 'view_analytics' },
     { id: 'daily', label: t('attendance.tabs.daily'), action: 'view_my' },
     { id: 'history', label: t('attendance.tabs.history'), action: 'view_my' },
@@ -28,7 +28,7 @@ export const AttendancePage: React.FC = () => {
     { id: 'regularization', label: t('attendance.tabs.regularization'), action: 'regularize' },
     { id: 'approvals', label: t('attendance.tabs.approvals'), action: 'approve' },
     { id: 'geofence', label: t('attendance.tabs.geofence'), action: 'manage_geofence' },
-  ];
+  ], [t]);
 
   const tabParam = searchParams.get('tab');
 
@@ -68,7 +68,7 @@ export const AttendancePage: React.FC = () => {
         }
       }
     }
-  }, [tabParam, hasPermission, canManage]);
+  }, [tabParam, hasPermission, canManage, ATTENDANCE_TABS]);
 
   return (
     <DashboardLayout
@@ -128,4 +128,3 @@ export const AttendancePage: React.FC = () => {
   );
 };
 
-export default AttendancePage;

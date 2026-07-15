@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 import { WeeklyTimesheetEntry } from './WeeklyTimesheetEntry';
 import { Timesheet } from '@/types/project.types';
@@ -27,7 +27,7 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
             queryClient.invalidateQueries({ queryKey: ['timesheets', 'pending-approvals'] });
             onClose();
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             showToast.error(error.message || "Failed to approve timesheet");
         }
     });
@@ -40,8 +40,9 @@ export const TimesheetApprovalModal: React.FC<TimesheetApprovalModalProps> = ({
             queryClient.invalidateQueries({ queryKey: ['timesheets', 'pending-approvals'] });
             onClose();
         },
-        onError: (error: any) => {
-            showToast.error(error.message || "Failed to reject timesheet");
+        onError: (error: unknown) => {
+            const err = error as { message?: string };
+            showToast.error(err.message || "Failed to reject timesheet");
         }
     });
 

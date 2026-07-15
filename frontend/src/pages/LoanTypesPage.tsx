@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,8 +16,8 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 
 export const LoanTypesPage: React.FC = () => {
   const { t } = useTranslation();
-  const confirm = useConfirm();
-  const { user: _user } = useAuth();
+  const { confirm } = useConfirm();
+  useAuth();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission('payroll', 'manage');
 
@@ -34,10 +34,10 @@ export const LoanTypesPage: React.FC = () => {
   const [interestType, setInterestType] = useState<'FLAT' | 'REDUCING'>('FLAT');
   const [maxAmount, setMaxAmount] = useState<number | ''>('');
   const [description, setDescription] = useState('');
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
 
   const createMut = useMutation({
-    mutationFn: (payload: any) => payrollService.createLoanType(payload),
+    mutationFn: (payload: Record<string, unknown>) => payrollService.createLoanType(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payroll', 'loan-types'] });
       setCreateOpen(false);
@@ -46,7 +46,7 @@ export const LoanTypesPage: React.FC = () => {
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => payrollService.updateLoanType(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: Record<string, unknown> }) => payrollService.updateLoanType(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payroll', 'loan-types'] });
       setEditOpen(false);
@@ -61,13 +61,13 @@ export const LoanTypesPage: React.FC = () => {
     },
   });
 
-  const openEdit = (lt: any) => {
+  const openEdit = (lt: Record<string, unknown>) => {
     setSelected(lt);
-    setName(lt.name || '');
-    setInterestRate(lt.interest_rate ?? lt.interestRate ?? '');
-    setInterestType((lt.interest_type || lt.interestType || 'FLAT') as any);
-    setMaxAmount(lt.max_amount ?? lt.maxAmount ?? '');
-    setDescription(lt.description || '');
+    setName(lt.name as string || '');
+    setInterestRate(Number((lt.interest_rate as string | number) ?? (lt.interestRate as string | number) ?? '') || '');
+    setInterestType(((lt.interest_type || lt.interestType || 'FLAT') as string) as 'FLAT' | 'REDUCING');
+    setMaxAmount(Number((lt.max_amount as string | number) ?? (lt.maxAmount as string | number) ?? '') || '');
+    setDescription((lt.description as string) || '');
     setEditOpen(true);
   };
 
@@ -78,10 +78,10 @@ export const LoanTypesPage: React.FC = () => {
 
   const handleUpdate = () => {
     if (!selected) return;
-    const payload: any = { name, interest_rate: Number(interestRate || 0), interest_type: interestType };
+    const payload: Record<string, unknown> = { name, interest_rate: Number(interestRate || 0), interest_type: interestType };
     if (maxAmount) payload.max_amount = Number(maxAmount);
     if (description) payload.description = description;
-    updateMut.mutate({ id: selected.id, payload });
+    updateMut.mutate({ id: selected.id as string, payload });
   };
 
   return (
@@ -131,17 +131,17 @@ export const LoanTypesPage: React.FC = () => {
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              loanTypes.map((lt: any) => (
-                <TableRow key={lt.id}>
-                  <TableCell>{lt.name}</TableCell>
-                  <TableCell>{lt.interest_rate ?? lt.interestRate ?? '—'}</TableCell>
-                  <TableCell>{(lt.interest_type || lt.interestType || '—').toString()}</TableCell>
-                  <TableCell>{(lt.max_amount ?? lt.maxAmount) ? `₹${Number(lt.max_amount ?? lt.maxAmount).toLocaleString('en-IN')}` : '—'}</TableCell>
+              (loanTypes as unknown as Record<string, unknown>[]).map((lt: Record<string, unknown>) => (
+                <TableRow key={lt.id as string}>
+                  <TableCell>{lt.name as string}</TableCell>
+                  <TableCell>{(lt.interest_rate as string | number) ?? (lt.interestRate as string | number) ?? 'â€”'}</TableCell>
+                  <TableCell>{((lt.interest_type as string) || (lt.interestType as string) || 'â€”').toString()}</TableCell>
+                  <TableCell>{(lt.max_amount as number) ?? (lt.maxAmount as number) ? `â‚¹${Number((lt.max_amount as number) ?? (lt.maxAmount as number)).toLocaleString('en-IN')}` : 'â€”'}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(lt)}>
                       <Edit size={16} />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ type: 'destructive', title: 'Delete Loan Type', message: 'Delete this loan type?' })) deleteMut.mutate(lt.id); }} isLoading={deleteMut.isPending}>
+                    <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ type: 'destructive', title: 'Delete Loan Type', message: 'Delete this loan type?' })) deleteMut.mutate(lt.id as string); }} isLoading={deleteMut.isPending}>
                       <Trash2 size={16} className="text-red-600" />
                     </Button>
                   </TableCell>
@@ -167,7 +167,7 @@ export const LoanTypesPage: React.FC = () => {
             <Input type="number" value={String(interestRate)} onChange={(e) => setInterestRate(Number(e.target.value) || '')} placeholder="Interest %" />
 
             <Label>Interest Type</Label>
-            <select value={interestType} onChange={(e) => setInterestType(e.target.value as any)} className="w-full px-3 py-2 border rounded-md mt-1">
+            <select value={interestType} onChange={(e) => setInterestType(e.target.value as 'FLAT' | 'REDUCING')} className="w-full px-3 py-2 border rounded-md mt-1">
               <option value="FLAT">FLAT</option>
               <option value="REDUCING">REDUCING</option>
             </select>
@@ -201,7 +201,7 @@ export const LoanTypesPage: React.FC = () => {
             <Input type="number" value={String(interestRate)} onChange={(e) => setInterestRate(Number(e.target.value) || '')} placeholder="Interest %" />
 
             <Label>Interest Type</Label>
-            <select value={interestType} onChange={(e) => setInterestType(e.target.value as any)} className="w-full px-3 py-2 border rounded-md mt-1">
+            <select value={interestType} onChange={(e) => setInterestType(e.target.value as 'FLAT' | 'REDUCING')} className="w-full px-3 py-2 border rounded-md mt-1">
               <option value="FLAT">FLAT</option>
               <option value="REDUCING">REDUCING</option>
             </select>
@@ -223,4 +223,3 @@ export const LoanTypesPage: React.FC = () => {
   );
 };
 
-export default LoanTypesPage;

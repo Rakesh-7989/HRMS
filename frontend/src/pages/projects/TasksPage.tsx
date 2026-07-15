@@ -46,6 +46,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { cn } from '@/utils/cn';
 import type { TaskStatus, TaskPriority, Task } from '@/types/project.types';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const TasksPage: React.FC = () => {
   const { t } = useTranslation();
@@ -139,7 +140,7 @@ export const TasksPage: React.FC = () => {
             const defaultCol = enabledColumns.find(c => c.column_key === 'TODO') || enabledColumns[0];
             setFormData(prev => ({ ...prev, column_key: defaultCol.column_key as TaskStatus }));
         }
-    }, [enabledColumns]);
+    }, [enabledColumns, formData.column_key]);
 
     // Update board config from backend Kanban columns when they're loaded
     React.useEffect(() => {
@@ -193,7 +194,7 @@ export const TasksPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: (_error: any) => {
+        onError: () => {
             setIsSubmitting(false);
             showToast.error(t('projects.taskCreateFailed'));
         },
@@ -206,13 +207,13 @@ export const TasksPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
             showToast.success(t('projects.statusUpdated'));
         },
-        onError: (_error: any) => {
+        onError: () => {
             showToast.error(t('projects.statusUpdateFailed'));
         }
     });
 
     const updateTaskMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) =>
+        mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
             projectsService.updateTask(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
@@ -221,7 +222,7 @@ export const TasksPage: React.FC = () => {
             setIsSubmitting(false);
             showToast.success(t('projects.taskUpdated'));
         },
-        onError: (_error: any) => {
+        onError: () => {
             setIsSubmitting(false);
             showToast.error(t('projects.taskUpdateFailed'));
         },
@@ -234,7 +235,7 @@ export const TasksPage: React.FC = () => {
             setTaskToDelete(null);
             showToast.success(t('projects.taskDeleted'));
         },
-        onError: (_error: any) => {
+        onError: () => {
             showToast.error(t('projects.taskDeleteFailed'));
             setTaskToDelete(null);
         },
@@ -315,7 +316,7 @@ export const TasksPage: React.FC = () => {
 
         // 2. Get role levels for comparison
         const userRoleLevel = ROLE_HIERARCHY[user.role] || 0;
-        const creatorRoleLevel = ROLE_HIERARCHY[(task as any).creator_role] || 0;
+        const creatorRoleLevel = ROLE_HIERARCHY[(task as unknown as Record<string, unknown>).creator_role as string] || 0;
 
         // Higher roles can edit tasks created by lower or equal roles
         // ADMIN can edit all, MANAGER can edit MANAGER/HR/EMPLOYEE tasks, etc.
@@ -420,7 +421,7 @@ export const TasksPage: React.FC = () => {
             <div className="flex flex-col flex-1 min-h-0 gap-4 w-full">
                 {/* Header: Tabs, Search, Filters, and Actions - All in One Row */}
                 <div className="shrink-0 flex flex-wrap items-center gap-3">
-                    <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} title="Back to Projects">
+                    <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.PROJECTS)} title="Back to Projects">
                         <ArrowLeft size={16} className="mr-2" />
                         {t('common.back')}
                     </Button>
@@ -672,7 +673,7 @@ export const TasksPage: React.FC = () => {
                                                     </TableCell>
                                                     <TableCell>
                                                         {canEditTask(task) && (
-                                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && e.stopPropagation()}>
                                                                  <Button variant="ghost" 
                                                                     onClick={() => handleOpenEditModal(task)}
                                                                     className="p-2 text-gray-400 hover:text-brand-500 transition-colors"

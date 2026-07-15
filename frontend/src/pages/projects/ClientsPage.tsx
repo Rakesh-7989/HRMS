@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Building2, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { showToast } from '@/utils/toast';
@@ -29,6 +29,7 @@ import { projectsService } from '@/services/projects.service';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import type { Client, ClientStatus } from '@/types/project.types';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const ClientsPage: React.FC = () => {
     const { t } = useTranslation();
@@ -84,25 +85,27 @@ export const ClientsPage: React.FC = () => {
             });
             setIsSubmitting(false);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to create client');
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('projects.clientCreateFailed'));
         },
     });
 
     // Update Client Mutation
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<Client> }) =>
-            projectsService.updateClient(id, data as any),
+            projectsService.updateClient(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setIsModalOpen(false);
             setEditingClient(null);
             setIsSubmitting(false);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
             setIsSubmitting(false);
-            showToast.error(error.response?.data?.message || 'Failed to update client');
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || t('projects.clientUpdateFailed'));
         },
     });
 
@@ -113,8 +116,9 @@ export const ClientsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setClientToDelete(null);
         },
-        onError: (error: any) => {
-            showToast.error(error.response?.data?.message || 'Failed to delete client. It may have linked projects.');
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } } };
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to delete client. It may have linked projects.');
             setClientToDelete(null);
         },
     });
@@ -167,9 +171,9 @@ export const ClientsPage: React.FC = () => {
         const target = e.target as HTMLInputElement;
         const id = target.id;
         if (id === 'name') {
-            target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
+            target.value = target.value.replace(/[^A-Za-z\s\-.]/g, '');
         } else if (id === 'phone') {
-            target.value = target.value.replace(/[^0-9+\-()\s\.]/g, '');
+            target.value = target.value.replace(/[^0-9+\-()\s.]/g, '');
         }
     };
 
@@ -218,7 +222,7 @@ export const ClientsPage: React.FC = () => {
                 {/* Header Actions */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" onClick={() => navigate('/projects')} className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => navigate(ROUTES.PROJECTS)} className="flex items-center gap-2">
                             <ArrowLeft size={16} />
                             Back
                         </Button>

@@ -68,18 +68,19 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
     const currentYear = getYear(currentMonth);
     const currentMonthIndex = getMonth(currentMonth);
 
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
     // Calculate days between
     const daysBetween = useMemo(() => {
-        if (start && end) {
-            return differenceInDays(end, start) + 1;
+        if (startDate && endDate) {
+            return differenceInDays(new Date(endDate), new Date(startDate)) + 1;
         }
         return 0;
-    }, [start, end]);
+    }, [startDate, endDate]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -437,7 +438,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return (
         <div ref={containerRef} className={cn('relative', className)}>
             {customTrigger ? (
-                <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+                <div role="button" tabIndex={0} onClick={() => setIsOpen(!isOpen)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }} className="cursor-pointer">
                     {customTrigger}
                 </div>
             ) : (

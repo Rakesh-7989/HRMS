@@ -11,6 +11,7 @@ export interface CardProps {
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   bordered?: boolean;
   variant?: 'default' | 'elevated' | 'outlined' | 'filled';
+  onClick?: () => void;
 }
 
 export const Card: React.FC<CardProps> = ({ 

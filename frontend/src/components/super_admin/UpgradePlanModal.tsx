@@ -68,7 +68,10 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                         plans.map((plan) => (
                             <div
                                 key={plan.id}
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => setSelectedPlanId(plan.id)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPlanId(plan.id); } }}
                                 className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between ${selectedPlanId === plan.id
                                     ? 'border-brand-500 bg-brand-500/5'
                                     : 'border-gray-200 dark:border-gray-800 hover:border-brand-500/50'

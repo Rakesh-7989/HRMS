@@ -110,7 +110,7 @@ export const ProjectReportsPage: React.FC = () => {
                     ['Total Timesheets', String(projectReport.total_timesheets || 0)],
                 ];
                 downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Project report exported successfully!');
+                showToast.success(t('projects.projectReportExported'));
 
             } else if (activeTab === 'client' && clientReport) {
                 const clientName = clients.find(c => c.id === selectedClient)?.name || 'Client';
@@ -129,7 +129,7 @@ export const ProjectReportsPage: React.FC = () => {
                     ...(clientReport.projects || []).map((p: string) => [p]),
                 ];
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Client report exported successfully!');
+                showToast.success(t('projects.clientReportExported'));
 
             } else if (activeTab === 'utilization' && utilizationReport && utilizationReport.length > 0) {
                 const rows: string[][] = [
@@ -138,23 +138,23 @@ export const ProjectReportsPage: React.FC = () => {
                     ['Generated On', new Date().toLocaleString()],
                     [],
                     ['Employee Name', 'Email', 'Assigned Projects', 'Logged Hours', 'Utilization %'],
-                    ...utilizationReport.map((emp: any) => [
-                        `${emp.first_name || ''} ${emp.last_name || ''}`.trim(),
-                        emp.email || '',
-                        String(emp.projects_assigned || 0),
-                        String(Number(emp.total_hours_logged || 0).toFixed(2)),
-                        `${emp.utilization_percent || 0}%`,
+                    ...(utilizationReport as unknown as Record<string, unknown>[]).map((emp: Record<string, unknown>) => [
+                        `${(emp.first_name as string) || ''} ${(emp.last_name as string) || ''}`.trim(),
+                        (emp.email as string) || '',
+                        String((emp.projects_assigned as number) || 0),
+                        String(Number((emp.total_hours_logged as number) || 0).toFixed(2)),
+                        `${(emp.utilization_percent as number) || 0}%`,
                     ]),
                 ];
                 downloadCSV(rows, `utilization_report_${dateRange}.csv`);
-                showToast.success('Utilization report exported successfully!');
+                showToast.success(t('projects.utilizationExported'));
 
             } else {
-                showToast.error('No data available to export. Please select filters and load report first.');
+                showToast.error(t('projects.noExportData'));
             }
         } catch (error) {
             console.error('Export error:', error);
-            showToast.error('Failed to export report. Please try again.');
+            showToast.error(t('projects.exportFailedRetry'));
         }
     };
 
@@ -328,27 +328,27 @@ export const ProjectReportsPage: React.FC = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {utilizationReport.map((emp: any) => (
-                                            <TableRow key={emp.id}>
+                                        {(utilizationReport as unknown as Record<string, unknown>[]).map((emp: Record<string, unknown>) => (
+                                            <TableRow key={emp.id as string}>
                                                 <TableCell className="font-medium">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-500-dark flex items-center justify-center text-[10px] text-white font-bold">
-                                                            {emp.first_name?.charAt(0)}{emp.last_name?.charAt(0)}
+                                                            {(emp.first_name as string)?.charAt(0)}{(emp.last_name as string)?.charAt(0)}
                                                         </div>
-                                                        {emp.first_name} {emp.last_name}
+                                                        {emp.first_name as string} {emp.last_name as string}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>{emp.email}</TableCell>
-                                                <TableCell>{emp.projects_assigned}</TableCell>
-                                                <TableCell className="text-right">{Number(emp.total_hours_logged || 0).toFixed(2)}</TableCell>
+                                                <TableCell>{emp.email as string}</TableCell>
+                                                <TableCell>{(emp.projects_assigned as number)}</TableCell>
+                                                <TableCell className="text-right">{Number((emp.total_hours_logged as number) || 0).toFixed(2)}</TableCell>
                                                 <TableCell className="text-right">
                                                     <span className={cn(
                                                         "px-2 py-1 rounded text-xs font-medium",
-                                                        Number(emp.utilization_percent) > 80 ? "bg-red-100 text-red-700" :
-                                                            Number(emp.utilization_percent) > 50 ? "bg-green-100 text-green-700" :
+                                                        Number(emp.utilization_percent as number) > 80 ? "bg-red-100 text-red-700" :
+                                                            Number(emp.utilization_percent as number) > 50 ? "bg-green-100 text-green-700" :
                                                                 "bg-yellow-100 text-yellow-700"
                                                     )}>
-                                                        {emp.utilization_percent}%
+                                                        {emp.utilization_percent as number}%
                                                     </span>
                                                 </TableCell>
                                             </TableRow>

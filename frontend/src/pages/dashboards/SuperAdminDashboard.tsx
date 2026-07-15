@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -17,22 +17,23 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 // Custom Tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-gray-100 dark:border-white/10 p-3 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] min-w-[140px] ring-1 ring-black/5">
         <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em] mb-2 border-b border-gray-50 dark:border-white/5 pb-1">{label}</p>
         <div className="space-y-2">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: Record<string, unknown>, index: number) => (
             <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full shadow-elev-1" style={{ backgroundColor: entry.color }} />
-                <span className="text-sm font-bold text-gray-500 dark:text-gray-400 font-bold">{entry.name}</span>
+                <div className="w-2 h-2 rounded-full shadow-elev-1" style={{ backgroundColor: entry.color as string }} />
+                <span className="text-sm font-bold text-gray-500 dark:text-gray-400 font-bold">{entry.name as string}</span>
               </div>
               <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">
-                {entry.value}
+                {entry.value as string}
               </span>
             </div>
           ))}
@@ -44,7 +45,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Tenant Card Component
-const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; onClick: () => void }) => (
+const TenantCard = ({ tenant, index, onClick }: { tenant: Record<string, unknown>; index: number; onClick: () => void }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -55,18 +56,18 @@ const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; on
   >
     <div className="flex items-center gap-4">
       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-elev-4 shadow-brand-500/30">
-        {tenant.name?.charAt(0)}
+        {(tenant.name as string)?.charAt(0)}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-gray-900 dark:text-white truncate">{tenant.name}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{tenant.domain || 'No domain'}</p>
+        <h4 className="font-bold text-gray-900 dark:text-white truncate">{tenant.name as string}</h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{(tenant.domain as string) || 'No domain'}</p>
       </div>
       <div className="flex items-center gap-2">
         <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${tenant.status === 'ACTIVE'
           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
           : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
           }`}>
-          {tenant.status}
+          {tenant.status as string}
         </span>
         <motion.button
           whileHover={{ scale: 1.1 }}
@@ -80,15 +81,15 @@ const TenantCard = ({ tenant, index, onClick }: { tenant: any; index: number; on
     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
       <div className="grid grid-cols-3 gap-4 text-center">
         <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{tenant.employee_count || 0}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{(tenant.employee_count as number) || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Employees</p>
         </div>
         <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{tenant.department_count || 0}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{(tenant.department_count as number) || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Departments</p>
         </div>
         <div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{tenant.utilization ? `${tenant.utilization}%` : '0%'}</p>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{(tenant.utilization as string) ? `${(tenant.utilization as string)}%` : '0%'}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Utilization</p>
         </div>
       </div>
@@ -102,7 +103,7 @@ const StatCard = ({
 }: {
   title: string;
   value: number | string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   delay?: number;
 }) => (
@@ -148,7 +149,7 @@ const SystemStatusCard = ({
   title: string;
   status: 'healthy' | 'warning' | 'critical';
   value: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   delay?: number;
 }) => (
@@ -192,21 +193,22 @@ export const SuperAdminDashboard: React.FC = () => {
     retry: false,
   });
 
-  const metrics = (data as any)?.metrics || {};
-  const health = (data as any)?.systemHealth || {};
+  const systemMetrics = useMemo(() => {
+    const m = ((data as unknown as Record<string, unknown>)?.metrics as Record<string, unknown>) || {};
+    const h = ((data as unknown as Record<string, unknown>)?.systemHealth as Record<string, unknown>) || {};
+    return {
+      total_tenants: m.total_tenants || 0,
+      total_users: m.total_users || 0,
+      active_users: m.active_users !== undefined ? m.active_users : 0,
+      inactive_users: m.inactive_users !== undefined ? m.inactive_users : 0,
+      total_employees: m.total_employees || 0,
+      active_employees: m.active_employees !== undefined ? m.active_employees : 0,
+      inactive_employees: m.inactive_employees !== undefined ? m.inactive_employees : 0,
+      system_health: h.status || 'healthy',
+    };
+  }, [data]);
 
-  const systemMetrics = useMemo(() => ({
-    total_tenants: metrics.total_tenants || 0,
-    total_users: metrics.total_users || 0,
-    active_users: metrics.active_users !== undefined ? metrics.active_users : 0,
-    inactive_users: metrics.inactive_users !== undefined ? metrics.inactive_users : 0,
-    total_employees: metrics.total_employees || 0,
-    active_employees: metrics.active_employees !== undefined ? metrics.active_employees : 0,
-    inactive_employees: metrics.inactive_employees !== undefined ? metrics.inactive_employees : 0,
-    system_health: health.status || 'healthy',
-  }), [metrics, health]);
-
-  const tenantList = (data as any)?.recentTenants || (data as any)?.tenants || (data as any)?.topActiveTenants || [];
+  const tenantList = ((data as unknown as Record<string, unknown>)?.recentTenants as Record<string, unknown>[]) || ((data as unknown as Record<string, unknown>)?.tenants as Record<string, unknown>[]) || ((data as unknown as Record<string, unknown>)?.topActiveTenants as Record<string, unknown>[]) || [];
 
   // Current Time State
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -227,24 +229,27 @@ export const SuperAdminDashboard: React.FC = () => {
     return `${m}m ${Math.floor(seconds % 60)}s`;
   };
 
-  const systemStats = useMemo(() => ({
-    uptime: formatUptime((data as any)?.systemHealth?.uptime || 0),
-    latency: (data as any)?.systemHealth?.latency || 0,
-    memory: (data as any)?.systemHealth?.memoryUsage || 0,
-    status: (data as any)?.systemHealth?.status || 'healthy'
-  }), [data]);
+  const systemStats = useMemo(() => {
+    const h = ((data as unknown as Record<string, unknown>)?.systemHealth as Record<string, unknown>) || {};
+    return {
+      uptime: formatUptime(h.uptime as number || 0),
+      latency: h.latency as number || 0,
+      memory: h.memoryUsage as string || '',
+      status: h.status as string || 'healthy'
+    };
+  }, [data]);
 
   // Platform Growth Data (Cumulative Breakdown)
   const growthChartData = useMemo(() => {
-    const tGrowth = [...((data as any)?.tenantGrowth || [])].reverse();
-    const eGrowth = [...((data as any)?.employeeGrowth || [])].reverse();
+    const tGrowth = [...(((data as unknown as Record<string, unknown>)?.tenantGrowth as Record<string, unknown>[]) || [])].reverse();
+    const eGrowth = [...(((data as unknown as Record<string, unknown>)?.employeeGrowth as Record<string, unknown>[]) || [])].reverse();
 
-    return tGrowth.map((t: any, index: number) => {
+    return tGrowth.map((t: Record<string, unknown>, index: number) => {
       const tenants = Number(t.count || 0);
-      const employees = Number(eGrowth[index]?.count || 0);
+      const employees = Number((eGrowth[index] as Record<string, unknown>)?.count || 0);
 
       return {
-        date: t.month || t.date ? format(new Date(t.month || t.date), 'MMM dd') : 'Day ' + index,
+        date: (t.month || t.date) ? format(new Date((t.month || t.date) as string), 'MMM dd') : 'Day ' + index,
         Tenants: tenants,
         Employees: employees,
         Total: tenants + employees
@@ -253,9 +258,9 @@ export const SuperAdminDashboard: React.FC = () => {
   }, [data]);
 
   const tenantStatusData = useMemo(() => {
-    const metrics = (data as any)?.metrics || {};
-    const total = metrics.total_tenants || 0;
-    const active = metrics.active_tenants || 0;
+    const m = ((data as unknown as Record<string, unknown>)?.metrics as Record<string, unknown>) || {};
+    const total = Number(m.total_tenants) || 0;
+    const active = Number(m.active_tenants) || 0;
     const inactive = Math.max(0, total - active);
 
     return [
@@ -266,7 +271,7 @@ export const SuperAdminDashboard: React.FC = () => {
   }, [data]);
 
   // Resource History for Line Chart
-  const [resourceHistory, setResourceHistory] = useState<any[]>([]);
+  const [resourceHistory, setResourceHistory] = useState<Record<string, unknown>[]>([]);
 
   useEffect(() => {
     if (!data?.systemHealth?.resources) return;
@@ -395,7 +400,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <StatCard
               key={stat.title}
               title={stat.title}
-              value={stat.value}
+              value={stat.value as number}
               icon={stat.icon}
               gradient={stat.gradient}
               delay={0.1 + index * 0.1}
@@ -422,11 +427,11 @@ export const SuperAdminDashboard: React.FC = () => {
               <div className="flex gap-4">
                 <div className="text-right">
 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tenants</p>
-                    <p className="text-xl font-black text-brand-600 leading-none">{(data as any)?.metrics?.total_tenants || 0}</p>
+                    <p className="text-xl font-black text-brand-600 leading-none">{(systemMetrics.total_tenants as number) || 0}</p>
                   </div>
                   <div className="text-right border-l border-gray-100 dark:border-gray-800 pl-4">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Employees</p>
-                  <p className="text-xl font-black text-emerald-500 leading-none">{(data as any)?.metrics?.total_employees || 0}</p>
+                  <p className="text-xl font-black text-emerald-500 leading-none">{(systemMetrics.total_employees as number) || 0}</p>
                 </div>
               </div>
             </div>
@@ -473,12 +478,12 @@ export const SuperAdminDashboard: React.FC = () => {
                     domain={[0, 'auto']}
                   />
                   <Tooltip
-                    content={({ active, payload }: any) => {
+                    content={(({ active, payload }: { active?: boolean; payload?: Array<Record<string, unknown>> }) => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="bg-white dark:bg-gray-900 px-4 py-3 rounded-2xl shadow-elev-6 border border-gray-100 dark:border-white/5 min-w-[170px]">
                             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-50 dark:border-white/5 pb-2">
-                              {payload[0].payload.date}
+                              {((payload[0].payload as Record<string, unknown>).date as string)}
                             </p>
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
@@ -486,28 +491,29 @@ export const SuperAdminDashboard: React.FC = () => {
   <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
   <span className="text-sm font-bold text-gray-500">Tenants</span>
 </div>
-<span className="text-sm font-black text-brand-600">{payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0}</span>
+<span className="text-sm font-black text-brand-600">{((payload.find((p: Record<string, unknown>) => p.dataKey === 'Tenants') as Record<string, unknown>)?.value as number) || 0}</span>
                               </div>
                               <div className="flex items-center justify-between">
 <div className="flex items-center gap-2">
   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
   <span className="text-sm font-bold text-gray-500">Employees</span>
 </div>
-<span className="text-sm font-black text-emerald-600">{payload.find((p: any) => p.dataKey === 'Employees')?.value || 0}</span>
+<span className="text-sm font-black text-emerald-600">{((payload.find((p: Record<string, unknown>) => p.dataKey === 'Employees') as Record<string, unknown>)?.value as number) || 0}</span>
                               </div>
                             </div>
                             <div className="mt-3 pt-2 border-t border-gray-50 dark:border-white/10 flex items-center justify-between">
                               <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter">Total Scale</span>
                               <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
-                                {Number(payload.find((p: any) => p.dataKey === 'Tenants')?.value || 0) +
-                                  Number(payload.find((p: any) => p.dataKey === 'Employees')?.value || 0)}
+                                {Number((payload.find((p: Record<string, unknown>) => p.dataKey === 'Tenants') as Record<string, unknown>)?.value || 0) +
+                                  Number((payload.find((p: Record<string, unknown>) => p.dataKey === 'Employees') as Record<string, unknown>)?.value || 0)}
                               </span>
                             </div>
                           </div>
                         );
                       }
                       return null;
-                    }}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    }) as any}
                   />
                   <Area
                     yAxisId="tenants"
@@ -676,7 +682,7 @@ export const SuperAdminDashboard: React.FC = () => {
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">{tenantList.length} organizations</p>
             </div>
-            <Button variant="ghost" onClick={() => navigate('/tenants')}>
+            <Button variant="ghost" onClick={() => navigate(ROUTES.TENANTS)}>
               View All
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -684,12 +690,12 @@ export const SuperAdminDashboard: React.FC = () => {
 
           {tenantList.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {tenantList.slice(0, 6).map((tenant: any, index: number) => (
+              {tenantList.slice(0, 6).map((tenant: Record<string, unknown>, index: number) => (
                 <TenantCard
-                  key={tenant.id}
+                  key={tenant.id as string}
                   tenant={tenant}
                   index={index}
-                  onClick={() => navigate('/tenants')}
+                  onClick={() => navigate(ROUTES.TENANTS)}
                 />
               ))}
             </div>
@@ -700,7 +706,7 @@ export const SuperAdminDashboard: React.FC = () => {
               </div>
               <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No Tenants Yet</h4>
               <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by creating your first tenant</p>
-              <Button onClick={() => navigate('/tenants/create')}>
+              <Button onClick={() => navigate(ROUTES.TENANTS_CREATE)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Tenant
               </Button>

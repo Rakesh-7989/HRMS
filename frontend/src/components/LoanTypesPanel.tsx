@@ -6,20 +6,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import payrollService, { LoanType } from '@/services/payroll.service';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
-export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ onCreated }) => {
-  const confirm = useConfirm();
+export const LoanTypesPanel: React.FC<{ onCreated?: (lt: LoanType) => void }> = ({ onCreated }) => {
+  const { confirm } = useConfirm();
   const { user } = useAuth();
   const role = user?.role || 'EMPLOYEE';
   const canManage = ['HR', 'ADMIN'].includes(role);
 
   const queryClient = useQueryClient();
   // only HR/Admin can fetch and manage loan types (backend enforces access)
-  const { data: loanTypes = [], isLoading, error } = useQuery<any[], unknown>({
+  const { data: loanTypes = [], isLoading, error } = useQuery({
     queryKey: ['payroll', 'loan-types'],
     queryFn: () => payrollService.listLoanTypes(),
     enabled: canManage,
@@ -27,8 +27,8 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
 
   useEffect(() => {
     if (error) {
-      const err = error as any;
-      setErrorMsg(err?.response?.data?.message || err?.message || 'Failed to load loan types');
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to load loan types');
     }
   }, [error]);
 
@@ -48,11 +48,11 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
   const [maxTenureMonths, setMaxTenureMonths] = useState<number | ''>('');
   const [isTaxable, setIsTaxable] = useState<boolean>(false);
   const [description, setDescription] = useState('');
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<LoanType | null>(null);
 
   const createMut = useMutation({
-    mutationFn: (payload: any) => payrollService.createLoanType(payload),
-    onSuccess: (data: any) => {
+    mutationFn: (payload: Record<string, unknown>) => payrollService.createLoanType(payload) as Promise<LoanType>,
+    onSuccess: (data: LoanType) => {
       // Use returned data for messages / callbacks
       queryClient.invalidateQueries({ queryKey: ['payroll', 'loan-types'] });
       setCreateOpen(false);
@@ -64,14 +64,15 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
       setErrorMsg('');
       if (onCreated) onCreated(data);
     },
-    onError: (err: any) => {
-      setErrorMsg(err?.message || 'Failed to create loan type');
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setErrorMsg(error.response?.data?.message || error.message || 'Failed to create loan type');
       setSuccessMsg('');
     }
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => payrollService.updateLoanType(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: Record<string, unknown> }) => payrollService.updateLoanType(id, payload) as Promise<LoanType>,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payroll', 'loan-types'] });
       setEditOpen(false);
@@ -80,8 +81,9 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
       setTimeout(() => setSuccessMsg(''), 3000);
       setErrorMsg('');
     },
-    onError: (err: any) => {
-      setErrorMsg(err?.message || 'Failed to update loan type');
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setErrorMsg(error.response?.data?.message || error.message || 'Failed to update loan type');
       setSuccessMsg('');
     }
   });
@@ -94,17 +96,17 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
       setTimeout(() => setSuccessMsg(''), 3000);
       setErrorMsg('');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setErrorMsg(err?.message || 'Failed to delete loan type');
       setSuccessMsg('');
     }
   });
 
-  const openEdit = (lt: any) => {
+  const openEdit = (lt: LoanType) => {
     setSelected(lt);
     setName(lt.name || '');
     setInterestRate(lt.interest_rate ?? lt.interestRate ?? '');
-    setInterestType((lt.interest_type || lt.interestType || 'FLAT') as any);
+    setInterestType((lt.interest_type ?? lt.interestType ?? 'FLAT') as 'FLAT' | 'REDUCING');
     setMaxAmount(lt.max_amount ?? lt.maxAmount ?? '');
     setMaxTenureMonths(lt.max_tenure_months ?? lt.maxTenureMonths ?? '');
     setIsTaxable(lt.is_taxable ?? lt.isTaxable ?? false);
@@ -156,7 +158,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
       return;
     }
     setErrorMsg('');
-    const payload: any = { name: name.trim(), interestRate: Number(interestRate || 0), interestType, isTaxable };
+    const payload: Record<string, unknown> = { name: name.trim(), interestRate: Number(interestRate || 0), interestType, isTaxable };
     if (maxAmount) payload.maxAmount = Number(maxAmount);
     if (maxTenureMonths) payload.maxTenureMonths = Number(maxTenureMonths);
     if (description) payload.description = description;
@@ -219,7 +221,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
                 <TableCell>-</TableCell>
               </TableRow>
             ) : (
-              loanTypes.map((lt: any) => (
+              loanTypes.map((lt: LoanType) => (
                 <TableRow key={lt.id}>
                   <TableCell>{lt.name ?? '—'}</TableCell>
                   <TableCell>{lt.interest_rate ?? lt.interestRate ?? '—'}</TableCell>
@@ -265,7 +267,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
             <Label>Interest Type</Label>
             <select
               value={interestType}
-              onChange={(e) => setInterestType(e.target.value as any)}
+              onChange={(e) => setInterestType(e.target.value as 'FLAT' | 'REDUCING')}
               className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50"
             >
               <option value="FLAT">FLAT</option>
@@ -312,7 +314,7 @@ export const LoanTypesPanel: React.FC<{ onCreated?: (lt: any) => void }> = ({ on
             <Label>Interest Type</Label>
             <select
               value={interestType}
-              onChange={(e) => setInterestType(e.target.value as any)}
+              onChange={(e) => setInterestType(e.target.value as 'FLAT' | 'REDUCING')}
               className="w-full px-3 py-2 border rounded-md mt-1 bg-white text-gray-900 border-gray-200 dark:bg-gray-950 dark:text-gray-50 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-500/50"
             >
               <option value="FLAT">FLAT</option>

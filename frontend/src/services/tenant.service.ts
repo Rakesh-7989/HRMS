@@ -35,8 +35,9 @@ export const tenantService = {
         try {
             const response = await api.get('/tenants/employee-id-settings');
             return response.data.data;
-        } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Failed to get employee ID settings');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            throw new Error(axiosError.response?.data?.message || 'Failed to get employee ID settings');
         }
     },
 
@@ -47,8 +48,9 @@ export const tenantService = {
         try {
             const response = await api.post('/tenants/employee-id-prefix', { prefix });
             return response.data.data;
-        } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Failed to set employee ID prefix');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            throw new Error(axiosError.response?.data?.message || 'Failed to set employee ID prefix');
         }
     },
 
@@ -59,8 +61,9 @@ export const tenantService = {
         try {
             const response = await api.put('/tenants/employee-id-mode', { usePrefix });
             return response.data.data;
-        } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Failed to toggle employee ID mode');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            throw new Error(axiosError.response?.data?.message || 'Failed to toggle employee ID mode');
         }
     },
 };

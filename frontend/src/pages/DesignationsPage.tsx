@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -10,7 +10,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { showToast } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 export const DesignationsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -45,11 +45,11 @@ export const DesignationsPage: React.FC = () => {
         mutationFn: (id: string) => designationService.deleteDesignation(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
-            showToast.success('Designation deleted successfully');
+            showToast.success(t('organization.designationDeleted'));
         },
-        onError: (err: any) => {
-            const backendMessage = err.response?.data?.message;
-            const axiosMessage = err.message;
+        onError: (err: unknown) => {
+            const backendMessage = (err as {response?: {data?: {message?: string}}}).response?.data?.message;
+            const axiosMessage = (err as {message?: string}).message;
             showToast.error(backendMessage || `Error: ${axiosMessage}`);
         },
     });
@@ -61,8 +61,8 @@ export const DesignationsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
             showToast.success(`Designation ${!variables.is_active ? 'activated' : 'deactivated'} successfully`);
         },
-        onError: (err: any) => {
-            showToast.error(err.response?.data?.message || err.message || 'Failed to update designation status');
+        onError: (err: unknown) => {
+            showToast.error((err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || 'Failed to update designation status');
         },
     });
 

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { aiService, SkillGap } from '@/services/ai.service';
+import { aiService } from '@/services/ai.service';
 import { Card } from '@/components/ui/Card';
-import { PageTransition } from '@/components/common/PageTransition';
 import { Brain, Lightbulb, Loader2, Search } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

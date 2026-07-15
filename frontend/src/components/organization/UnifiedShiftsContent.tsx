@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input';
 export const UnifiedShiftsContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const [searchParams, setSearchParams] = useSearchParams();
-    const initialTab = (searchParams.get('subtab') as any) || 'roster';
+    const initialTab = (searchParams.get('subtab') as 'roster' | 'manage') || 'roster';
     const [activeTab, setActiveTab] = useState<'roster' | 'manage'>(initialTab);
     const [rosterSearch, setRosterSearch] = useState('');
 
@@ -30,9 +30,9 @@ export const UnifiedShiftsContent: React.FC = () => {
     useEffect(() => {
         const urlSubtab = searchParams.get('subtab');
         if (urlSubtab && urlSubtab !== activeTab) {
-            setActiveTab(urlSubtab as any);
+            setActiveTab(urlSubtab as 'roster' | 'manage');
         }
-    }, [searchParams]);
+    }, [searchParams, activeTab]);
 
     return (
         <div className="h-full flex flex-col">

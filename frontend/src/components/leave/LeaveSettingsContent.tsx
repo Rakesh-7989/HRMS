@@ -161,7 +161,7 @@ export const LeaveSettingsContent: React.FC = () => {
     // Run Accrual Mutation
     const runAccrualMutation = useMutation({
         mutationFn: () => leaveService.runAccrual(),
-        onSuccess: (data: any) => {
+        onSuccess: (data: { accruals_processed?: number }) => {
             queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             showToast.success(t('leaveSettings.allocationCompleted', { count: data.accruals_processed }));
@@ -558,7 +558,7 @@ export const LeaveSettingsContent: React.FC = () => {
                                         <TableCell className="font-medium">{policy.name}</TableCell>
                                         <TableCell>
                                             <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                                                {(policy as any).leave_type_name || policy.leave_type?.name || 'N/A'}
+                                                {(policy as { leave_type_name?: string }).leave_type_name || policy.leave_type?.name || 'N/A'}
                                             </span>
                                         </TableCell>
                                         <TableCell>
@@ -774,7 +774,7 @@ export const LeaveSettingsContent: React.FC = () => {
                             <select
                                 id="policy-accrual-type"
                                 value={policyForm.accrual_type}
-                                onChange={(e) => setPolicyForm({ ...policyForm, accrual_type: e.target.value as any })}
+                                onChange={(e) => setPolicyForm({ ...policyForm, accrual_type: e.target.value as 'MONTHLY' | 'YEARLY' | 'FIXED' })}
                                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                             >
                                 <option value="MONTHLY">{t('leaveSettings.monthly')}</option>

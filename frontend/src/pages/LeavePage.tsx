@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -11,21 +11,21 @@ import { DelegationContent } from '@/components/leave/DelegationContent';
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { PermissionAction } from '@/services/permissions.service';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 export const LeavePage: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
   const [searchParams] = useSearchParams();
 
-  const LEAVE_TABS: { id: string; label: string; action: PermissionAction; minPlan?: number }[] = [
+  const LEAVE_TABS = useMemo((): { id: string; label: string; action: PermissionAction; minPlan?: number }[] => [
     { id: 'my-leave', label: t('leave.tabs.myLeave'), action: 'create' },
     { id: 'team-requests', label: t('leave.tabs.teamRequests'), action: 'approve' },
     { id: 'allocation', label: t('leave.tabs.allocation'), action: 'manage_policies' },
     { id: 'balances', label: t('leave.tabs.balances'), action: 'view_balances' },
     { id: 'delegations', label: 'Delegations', action: 'approve' },
     { id: 'settings', label: t('leave.tabs.settings'), action: 'manage_settings' },
-  ];
+  ], [t]);
 
   type TabId = typeof LEAVE_TABS[number]['id'];
   const tabParam = searchParams.get('tab') as TabId | null;
@@ -52,7 +52,7 @@ export const LeavePage: React.FC = () => {
         setActiveTab(tabParam);
       }
     }
-  }, [tabParam, hasPermission]);
+  }, [tabParam, hasPermission, LEAVE_TABS]);
 
   return (
     <DashboardLayout
@@ -97,4 +97,4 @@ export const LeavePage: React.FC = () => {
     </DashboardLayout>
   );
 };
-export default LeavePage;
+

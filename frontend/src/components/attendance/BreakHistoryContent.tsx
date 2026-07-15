@@ -9,7 +9,8 @@ import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { usersService } from '@/services/users.service';
-import { DataTable } from '@/components/ui/DataTable';
+import { DataTable, Column } from '@/components/ui/DataTable';
+import { BreakRecord } from '@/services/attendance.service';
 import { useTranslation } from 'react-i18next';
 
 export const BreakHistoryContent: React.FC = () => {
@@ -82,30 +83,30 @@ export const BreakHistoryContent: React.FC = () => {
                     columns={[
                         {
                             header: t('common.employee'),
-                            accessorKey: 'first_name' as any,
-                            cell: (record: any) => `${record.first_name} ${record.last_name}`,
+                            accessorKey: 'first_name' as const,
+                            cell: (record: BreakRecord) => `${record.first_name || ''} ${record.last_name || ''}`,
                         },
                         {
                             header: t('attendance.breakHistory.startTime'),
-                            cell: (record: any) => formatTime12Hour(record.start_time, user?.timezone),
+                            cell: (record: BreakRecord) => formatTime12Hour(record.start_time, user?.timezone),
                         },
                         {
                             header: t('attendance.breakHistory.endTime'),
-                            cell: (record: any) => record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-',
+                            cell: (record: BreakRecord) => record.end_time ? formatTime12Hour(record.end_time, user?.timezone) : '-',
                         },
                         {
                             header: t('attendance.breakHistory.duration'),
-                            cell: (record: any) => record.duration_minutes ? `${Math.round(record.duration_minutes)} mins` : '-',
+                            cell: (record: BreakRecord) => record.duration_minutes ? `${Math.round(record.duration_minutes)} mins` : '-',
                         },
                         {
                             header: t('common.status'),
-                            cell: (record: any) => record.end_time ? (
+                            cell: (record: BreakRecord) => record.end_time ? (
                                 <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">{t('attendance.breakHistory.completed')}</span>
                             ) : (
                                 <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900 dark:text-orange-300">{t('attendance.breakHistory.ongoing')}</span>
                             ),
                         },
-                    ]}
+                    ] as Column<BreakRecord>[]}
                     loading={isLoading}
                     emptyMessage={t('attendance.breakHistory.noRecords')}
                 />

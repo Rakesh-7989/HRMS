@@ -15,6 +15,21 @@ import { Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
+type Payslip = {
+    id: string;
+    employee_name?: string;
+    employee_email?: string;
+    date?: string;
+    period_month?: number;
+    period_year?: number;
+    gross?: number;
+    deductions?: number;
+    net?: number;
+    payroll_run_id?: string;
+    payrollRunId?: string;
+    payrun_id?: string;
+};
+
 export const PayslipsContent: React.FC = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -51,13 +66,13 @@ export const PayslipsContent: React.FC = () => {
         };
     }, [selectedPeriod, customFromDate, customToDate]);
 
-    const { data: payslips = [], isLoading: payslipsLoading } = useQuery({
+    const { data: payslips = [], isLoading: payslipsLoading } = useQuery<Payslip[]>({
         queryKey: ['payslips', dateRange, user?.role, activeSubSection],
-        queryFn: () => {
+        queryFn: async (): Promise<Payslip[]> => {
             if (activeSubSection === 'staff' && (user?.role === 'ADMIN' || user?.role === 'HR')) {
-                return payrollService.listPayslips(dateRange);
+                return payrollService.listPayslips(dateRange) as Promise<Payslip[]>;
             }
-            return payrollService.getMyPayslips();
+            return payrollService.getMyPayslips() as Promise<Payslip[]>;
         },
         enabled: activeSection === 'payslips'
     });
@@ -68,15 +83,15 @@ export const PayslipsContent: React.FC = () => {
         amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
     // Demo/mock data to display while backend is not populated
-    const displayPayslips = payslips || [];
+    const displayPayslips: Payslip[] = payslips || [];
 
-    const exportCSV = (rows: any[], filename = 'export.csv') => {
+    const exportCSV = (rows: Payslip[], filename = 'export.csv') => {
         if (!rows?.length) return;
         // Exclude internal IDs and technical fields
         const excludeFields = ['id', 'tenant_id', 'payroll_run_id', 'payrun_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'employee_id', 'assignment_id'];
-        const headers = Object.keys(rows[0]).filter(h => !excludeFields.includes(h));
+        const headers = Object.keys(rows[0] as Record<string, unknown>).filter(h => !excludeFields.includes(h));
 
-        const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
+        const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r as Record<string, unknown>)[h] ?? ''}"`).join(','))].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -95,10 +110,11 @@ export const PayslipsContent: React.FC = () => {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['payslips'] });
             setGenDialogOpen(false);
-            alert(t('payroll.generatedSuccess', { count: data?.total_employees ?? 0 }));
+            alert(t('payroll.generatedSuccess', { count: (data as Record<string, unknown>)?.total_employees as number ?? 0 }));
         },
-        onError: (err: any) => {
-            alert(t('payroll.generateFailed', { error: err?.response?.data?.message || err?.message || t('payroll.unknownError') }));
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(t('payroll.generateFailed', { error: error.response?.data?.message || error.message || t('payroll.unknownError') }));
         }
     });
 
@@ -106,13 +122,14 @@ export const PayslipsContent: React.FC = () => {
         generateMut.mutate({ month: genMonth, year: genYear });
     };
 
-    const downloadPayslip = async (p: any) => {
+    const downloadPayslip = async (p: unknown) => {
         try {
-            const blob = await payrollService.downloadPayslip(p.id);
+            const payslip = p as Payslip;
+            const blob = await payrollService.downloadPayslip(payslip.id);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `payslip-${(p.employee_name || '').replace(/\s+/g, '-') || p.id}-${p.date}.pdf`;
+            a.download = `payslip-${(payslip.employee_name || '').replace(/\s+/g, '-') || payslip.id}-${payslip.date}.pdf`;
             a.click();
             window.URL.revokeObjectURL(url);
         } catch (err) {
@@ -121,9 +138,10 @@ export const PayslipsContent: React.FC = () => {
         }
     };
 
-    const viewPayslip = async (p: any) => {
+    const viewPayslip = async (p: unknown) => {
         try {
-            const blob = await payrollService.downloadPayslip(p.id);
+            const payslip = p as Payslip;
+            const blob = await payrollService.downloadPayslip(payslip.id);
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
         } catch (err) {
@@ -137,16 +155,20 @@ export const PayslipsContent: React.FC = () => {
         onSuccess: () => {
             alert(t('payroll.emailedSuccess'));
         },
-        onError: () => alert(t('payroll.sendEmailFailed'))
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(t('payroll.sendEmailFailed') + ': ' + (error.response?.data?.message || error.message || 'Unknown error'));
+        }
     });
 
     const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-    const [emailTargetPayslip, setEmailTargetPayslip] = useState<any | null>(null);
+    const [emailTargetPayslip, setEmailTargetPayslip] = useState<Payslip | null>(null);
     const [emailAddress, setEmailAddress] = useState('');
 
-    const emailPayslip = (p: any) => {
-        setEmailTargetPayslip(p);
-        setEmailAddress(p.employee_email || '');
+    const emailPayslip = (p: unknown) => {
+        const payslip = p as Payslip;
+        setEmailTargetPayslip(payslip);
+        setEmailAddress(payslip.employee_email || '');
         setEmailDialogOpen(true);
     };
 
@@ -157,17 +179,21 @@ export const PayslipsContent: React.FC = () => {
     };
 
     const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-    const [historyEmployee, setHistoryEmployee] = useState<any | null>(null);
+    const [historyEmployee, setHistoryEmployee] = useState<Payslip | null>(null);
 
-    const { data: payslipHistory = [], isLoading: payslipHistoryLoading } = useQuery({
+    const { data: payslipHistory = [], isLoading: payslipHistoryLoading } = useQuery<Payslip[]>({
         queryKey: ['payslip-history', historyEmployee?.id],
-        queryFn: () => payrollService.listPayslipHistory({ employee_id: historyEmployee?.id }),
+        queryFn: async (): Promise<Payslip[]> => {
+            const employee = historyEmployee as Payslip;
+            const data = await payrollService.listPayslipHistory({ employee_id: employee.id });
+            return data as Payslip[];
+        },
         enabled: !!historyEmployee && historyDialogOpen,
     });
 
     // Delete payslip confirmation
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-    const [deleteTargetPayslip, setDeleteTargetPayslip] = useState<any | null>(null);
+    const [deleteTargetPayslip, setDeleteTargetPayslip] = useState<Payslip | null>(null);
 
     const deletePayslipMut = useMutation({
         mutationFn: ({ payrunId, itemId }: { payrunId: string; itemId: string }) =>
@@ -177,26 +203,28 @@ export const PayslipsContent: React.FC = () => {
             setDeleteConfirmOpen(false);
             setDeleteTargetPayslip(null);
         },
-        onError: (err: any) => {
-            alert(t('payroll.deleteFailed', { error: err?.response?.data?.message || err?.message || t('payroll.unknownError') }));
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(t('payroll.deleteFailed', { error: error.response?.data?.message || error.message || t('payroll.unknownError') }));
         }
     });
 
-    const confirmDeletePayslip = (p: any) => {
-        setDeleteTargetPayslip(p);
+    const confirmDeletePayslip = (p: unknown) => {
+        const payslip = p as Payslip;
+        setDeleteTargetPayslip(payslip);
         setDeleteConfirmOpen(true);
     };
 
     const handleDeletePayslip = () => {
         if (!deleteTargetPayslip) return;
-        const payrunId = deleteTargetPayslip.payroll_run_id || deleteTargetPayslip.payrollRunId || deleteTargetPayslip.payrun_id;
+        const payslip = deleteTargetPayslip;
+        const payrunId = payslip.payroll_run_id || payslip.payrollRunId || payslip.payrun_id;
         if (!payrunId) {
             alert(t('payroll.unableDeterminePayrun'));
             return;
         }
-        deletePayslipMut.mutate({ payrunId, itemId: deleteTargetPayslip.id });
+        deletePayslipMut.mutate({ payrunId: payrunId as string, itemId: payslip.id });
     };
-
 
 
     return (
@@ -214,16 +242,16 @@ export const PayslipsContent: React.FC = () => {
                             ].map((b) => {
                                 if (!b.roles.includes(user?.role || '')) return null;
                                 return (
-                                     <Button variant="ghost" 
+                                    <Button variant="ghost"
                                         key={b.id}
-                                        onClick={() => setActiveSection(b.id as any)}
+                                        onClick={() => setActiveSection(b.id as 'payslips' | 'settings')}
                                         className={`flex items-center px-4 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${activeSection === b.id
                                             ? 'bg-white dark:bg-gray-800 text-brand-500 shadow-elev-1 ring-1 ring-black/5'
-                         : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-                            }`}
-                    >
-                        {t('payroll.myPayslips')}
-                    </Button>
+                                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                                            }`}
+                                    >
+                                        {t('payroll.myPayslips')}
+                                    </Button>
                                 );
                             })}
                         </div>
@@ -256,7 +284,7 @@ export const PayslipsContent: React.FC = () => {
             {/* Sub-tabs for HR/Admin under Payslips Report */}
             {activeSection === 'payslips' && (user?.role === 'ADMIN' || user?.role === 'HR') && (
                 <div className="flex gap-2 p-1 bg-white/50 dark:bg-gray-800/30 rounded-lg w-fit border border-gray-100 dark:border-gray-800/50">
-                     <Button variant="ghost" 
+                     <Button variant="ghost"
                         onClick={() => setActiveSubSection('personal')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'personal'
                             ? 'bg-brand-500 text-white shadow-elev-3'
@@ -265,7 +293,7 @@ export const PayslipsContent: React.FC = () => {
                     >
                         {t('payroll.myPayslips')}
                     </Button>
-                     <Button variant="ghost" 
+                     <Button variant="ghost"
                         onClick={() => setActiveSubSection('staff')}
                         className={`text-xs font-semibold px-4 py-1.5 rounded-md transition-all duration-200 ${activeSubSection === 'staff'
                             ? 'bg-brand-500 text-white shadow-elev-3'
@@ -352,7 +380,7 @@ export const PayslipsContent: React.FC = () => {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    displayPayslips.map((p: any) => (
+                                    displayPayslips.map((p: Payslip) => (
                                         <TableRow key={p.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50 border-gray-50 dark:border-gray-800 transition-colors">
                                             <TableCell className="px-6 py-4 font-bold text-gray-700 dark:text-gray-300 text-xs">
                                                 {p.period_month && p.period_year
@@ -388,7 +416,6 @@ export const PayslipsContent: React.FC = () => {
                     </div>
                 </Card>
             )}
-
 
 
             {/* Generate payslips dialog */}
@@ -434,12 +461,12 @@ export const PayslipsContent: React.FC = () => {
             <Dialog open={historyDialogOpen} onOpenChange={(open) => { setHistoryDialogOpen(open); if (!open) setHistoryEmployee(null); }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('payroll.payrollHistory')}{historyEmployee ? ` — ${historyEmployee.employee_name}` : ''}</DialogTitle>
+                        <DialogTitle>{t('payroll.payrollHistory')}{historyEmployee ? ` — ${(historyEmployee as Payslip).employee_name}` : ''}</DialogTitle>
                     </DialogHeader>
 
                     {payslipHistoryLoading ? (
                         <div className="p-4">{t('payroll.loading')}</div>
-                    ) : !payslipHistory || payslipHistory.length === 0 ? (
+                    ) : !payslipHistory || (payslipHistory as Payslip[]).length === 0 ? (
                         <div className="p-4">{t('payroll.noPayslipHistory')}</div>
                     ) : (
                         <Table>
@@ -453,16 +480,16 @@ export const PayslipsContent: React.FC = () => {
                                 </tr>
                             </TableHeader>
                             <TableBody>
-                                {payslipHistory.map((h: any) => (
+                                {(payslipHistory as Payslip[]).map((h: Payslip) => (
                                     <TableRow key={h.id}>
                                         <TableCell>{h.date}</TableCell>
-                                        <TableCell>{formatINR(h.gross)}</TableCell>
-                                        <TableCell>{formatINR(h.deductions)}</TableCell>
-                                        <TableCell>{formatINR(h.net)}</TableCell>
+                                        <TableCell>{formatINR((h as Record<string, unknown>).gross as number)}</TableCell>
+                                        <TableCell>{formatINR((h as Record<string, unknown>).deductions as number)}</TableCell>
+                                        <TableCell>{formatINR((h as Record<string, unknown>).net as number)}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>{t('payroll.download')}</Button>
-                                                <Button size="sm" variant="outline" onClick={() => emailPayslip(h)}>{t('payroll.email')}</Button>
+                                                <Button size="sm" variant="outline" onClick={() => downloadPayslip(h as Payslip)}>{t('payroll.download')}</Button>
+                                                <Button size="sm" variant="outline" onClick={() => emailPayslip(h as Payslip)}>{t('payroll.email')}</Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -470,20 +497,19 @@ export const PayslipsContent: React.FC = () => {
                             </TableBody>
                         </Table>
                     )}
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>{t('payroll.close')}</Button>
-                    </DialogFooter>
                 </DialogContent>
-            </Dialog>
 
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setHistoryDialogOpen(false)}>{t('payroll.close')}</Button>
+                </DialogFooter>
+            </Dialog>
 
 
             {/* Email Payslip Dialog */}
             <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('payroll.emailPayslipTitle')}{emailTargetPayslip ? ` — ${emailTargetPayslip.employee_name}` : ''}</DialogTitle>
+                        <DialogTitle>{t('payroll.emailPayslipTitle')}{emailTargetPayslip ? ` — ${(emailTargetPayslip as Payslip).employee_name}` : ''}</DialogTitle>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 gap-4 mt-2">

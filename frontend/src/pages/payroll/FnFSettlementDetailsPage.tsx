@@ -6,10 +6,11 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ArrowLeft, Printer } from 'lucide-react';
-import payrollService from '@/services/payroll.service';
+import payrollService, { FnFSettlement } from '@/services/payroll.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveImageUrl } from '@/utils/image';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const FnFSettlementDetailsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ const FnFSettlementDetailsPage: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    const { data: settlement, isLoading, error } = useQuery({
+    const { data: settlement, isLoading, error } = useQuery<FnFSettlement>({
         queryKey: ['payroll', 'fnf', id],
         queryFn: () => payrollService.getFnFSettlementById(id!),
         enabled: !!id
@@ -70,7 +71,7 @@ const FnFSettlementDetailsPage: React.FC = () => {
             ]}
             actions={
                 <div className="space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => navigate('/payroll/fnf')}>
+                    <Button size="sm" variant="outline" onClick={() => navigate(ROUTES.PAYROLL_FNF)}>
                         <ArrowLeft size={16} className="mr-2" /> Back
                     </Button>
                     <Button size="sm" variant="outline" onClick={handlePrint}>
@@ -99,14 +100,14 @@ const FnFSettlementDetailsPage: React.FC = () => {
                                     />
                                 )}
                                 <h1 className="text-xl font-bold uppercase tracking-wider text-gray-900">
-                                    {user?.tenant_settings?.company_name || 'Company Name'}
+                                    {(user?.tenant_settings?.company_name as string) || 'Company Name'}
                                 </h1>
-                                {user?.tenant_settings?.address && (
+                                {(user?.tenant_settings?.address as string) && (
                                     <div className="text-sm text-gray-500 mt-1">
-                                        {user.tenant_settings.address}
-                                        {user.tenant_settings.city ? `, ${user.tenant_settings.city}` : ''}
-                                        {user.tenant_settings.state ? `, ${user.tenant_settings.state}` : ''}
-                                        {user.tenant_settings.zip_code ? ` - ${user.tenant_settings.zip_code}` : ''}
+                                        {user?.tenant_settings?.address as string}
+                                        {user?.tenant_settings?.city ? `, ${user?.tenant_settings?.city as string}` : ''}
+                                        {user?.tenant_settings?.state ? `, ${user?.tenant_settings?.state as string}` : ''}
+                                        {user?.tenant_settings?.zip_code ? ` - ${user?.tenant_settings?.zip_code as string}` : ''}
                                     </div>
                                 )}
                             </div>
@@ -234,4 +235,4 @@ const FnFSettlementDetailsPage: React.FC = () => {
     );
 };
 
-export default FnFSettlementDetailsPage;
+export { FnFSettlementDetailsPage };

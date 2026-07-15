@@ -23,6 +23,7 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/Dialog';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 interface ProfileDropdownProps {
     onClose: () => void;
@@ -55,7 +56,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
         else if (expiryOption === '4h') expiryDate.setHours(expiryDate.getHours() + 4);
         else if (expiryOption === 'today') expiryDate.setHours(23, 59, 59, 999);
         else if (expiryOption === 'week') expiryDate.setDate(expiryDate.getDate() + 7);
-        else expiryDate = null as any;
+        else expiryDate = null as unknown as Date;
 
         updateMyStatusMessage(message, expiryDate ? expiryDate.toISOString() : null);
         setView('main');
@@ -146,7 +147,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="relative group cursor-pointer" onClick={() => setView('photo')}>
+                            <div className="relative group cursor-pointer" role="button" tabIndex={0} onClick={() => setView('photo')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('photo'); } }}>
                                 <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 p-0.5 shadow-elev-1 ring-1 ring-gray-100 dark:ring-gray-700">
                                     <div className="h-full w-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl font-bold text-gray-500 dark:text-gray-400 relative">
                                         {user?.profile_photo_url ? (
@@ -187,7 +188,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                     <span className="text-gray-400 italic">{t('profile.profileDropdown.setAStatus')}</span>
                                 )}
                                  <Button variant="ghost" 
-                                    onClick={() => { onClose(); navigate('/profile'); }}
+                                    onClick={() => { onClose(); navigate(ROUTES.PROFILE); }}
                                     className="text-xs font-medium text-brand-500 hover:text-brand-600 hover:underline flex items-center gap-1"
                                 >
                                     Manage Profile <ExternalLink size={10} />
@@ -235,7 +236,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                     <div className="p-2">
                          <Button variant="ghost" 
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all group"
-                            onClick={() => { onClose(); navigate('/settings'); }}
+                            onClick={() => { onClose(); navigate(ROUTES.SETTINGS); }}
                         >
                             <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center group-hover:rotate-45 transition-transform duration-500">
                                 <Settings size={16} />
@@ -358,15 +359,15 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onClose }) => 
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 maxLength={100}
-                                autoFocus
                             />
                             <Edit3 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Clear after</label>
+                            <label htmlFor="clear-after" className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Clear after</label>
                             <div className="relative">
                                 <select
+                                    id="clear-after"
                                     className="w-full pl-3 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all appearance-none cursor-pointer"
                                     value={expiryOption}
                                     onChange={(e) => setExpiryOption(e.target.value)}

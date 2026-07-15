@@ -4,14 +4,16 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { projectsService } from '@/services/projects.service';
+import { projectsService, type Project, type Client } from '@/services/projects.service';
 import { Users, Briefcase, Calendar, Download, IndianRupee, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslation } from 'react-i18next';
 import { showToast } from '@/utils/toast';
 
 type ReportType = 'project' | 'client';
 
 export const ProjectReports: React.FC = () => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<ReportType>('project');
     const [selectedProject, setSelectedProject] = useState<string>('');
     const [selectedClient, setSelectedClient] = useState<string>('');
@@ -19,13 +21,13 @@ export const ProjectReports: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
 
     // Fetch Lists
-    const { data: projects = [] } = useQuery({
+    const { data: projects = [] } = useQuery<Project[]>({
         queryKey: ['projects'],
         queryFn: () => projectsService.getProjects(),
         enabled: activeTab === 'project',
     });
 
-    const { data: clients = [] } = useQuery({
+    const { data: clients = [] } = useQuery<Client[]>({
         queryKey: ['clients'],
         queryFn: () => projectsService.getClients(),
         enabled: activeTab === 'client',
@@ -83,7 +85,7 @@ export const ProjectReports: React.FC = () => {
 
         try {
             if (activeTab === 'project' && projectReport) {
-                const projectName = projects.find((p: any) => p.id === selectedProject)?.name || 'Project';
+                const projectName = projects.find((p: { id: string; name: string }) => p.id === selectedProject)?.name || 'Project';
                 const rows: string[][] = [
                     ['Project Report'],
                     ['Project', projectName],
@@ -95,10 +97,10 @@ export const ProjectReports: React.FC = () => {
                     ['Total Timesheets', String(projectReport.total_timesheets || 0)],
                 ];
                 downloadCSV(rows, `project_report_${projectName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Project report exported successfully!');
+                showToast.success(t('projects.projectReportExported'));
 
             } else if (activeTab === 'client' && clientReport) {
-                const clientName = clients.find((c: any) => c.id === selectedClient)?.name || 'Client';
+                const clientName = clients.find((c: { id: string; name: string }) => c.id === selectedClient)?.name || 'Client';
                 const rows: string[][] = [
                     ['Client Report'],
                     ['Client', clientName],
@@ -114,16 +116,16 @@ export const ProjectReports: React.FC = () => {
                     ...(clientReport.projects || []).map((p: string) => [p]),
                 ];
                 downloadCSV(rows, `client_report_${clientName.replace(/\s+/g, '_')}_${dateRange}.csv`);
-                showToast.success('Client report exported successfully!');
+                showToast.success(t('projects.clientReportExported'));
 
 
 
             } else {
-                showToast.error('No data available to export. Please select filters and load report first.');
+                showToast.error(t('projects.noExportData'));
             }
         } catch (error) {
             console.error('Export error:', error);
-            showToast.error('Failed to export report. Please try again.');
+            showToast.error(t('projects.exportFailedRetry'));
         }
     };
 
@@ -163,7 +165,7 @@ export const ProjectReports: React.FC = () => {
                                 onChange={(e) => setSelectedProject(e.target.value)}
                             >
                                 <option value="">-- Select Project --</option>
-                                {projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                {projects.map((p: Project) => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                         </div>
                     )}
@@ -176,7 +178,7 @@ export const ProjectReports: React.FC = () => {
                                 onChange={(e) => setSelectedClient(e.target.value)}
                             >
                                 <option value="">-- Select Client --</option>
-                                {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                {clients.map((c: Client) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                     )}

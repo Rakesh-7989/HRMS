@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { engagementService } from '@/services/engagement.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { ClipboardCheck, Plus, BarChart3, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 

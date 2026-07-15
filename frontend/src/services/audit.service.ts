@@ -7,8 +7,8 @@ export interface AuditLog {
     target_table: string;
     target_id: string;
     created_at: string;
-    old_data?: any;
-    new_data?: any;
+    old_data?: Record<string, unknown>;
+    new_data?: Record<string, unknown>;
     actor_email?: string;
     actor_role?: string;
     actor_first_name?: string;

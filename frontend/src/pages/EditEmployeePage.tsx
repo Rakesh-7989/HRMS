@@ -8,6 +8,7 @@ import { CreateEmployeeForm } from '@/components/forms/CreateEmployeeForm';
 import { usersService } from '@/services/users.service';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const EditEmployeePage: React.FC = () => {
   const { t } = useTranslation();
@@ -42,7 +43,7 @@ export const EditEmployeePage: React.FC = () => {
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                             The employee you're trying to edit doesn't exist.
                         </p>
-                        <Button onClick={() => navigate('/dashboard/employees')}>
+                        <Button onClick={() => navigate(ROUTES.EMPLOYEES)}>
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Employees
                         </Button>
@@ -88,4 +89,4 @@ export const EditEmployeePage: React.FC = () => {
     );
 };
 
-export default EditEmployeePage;
+

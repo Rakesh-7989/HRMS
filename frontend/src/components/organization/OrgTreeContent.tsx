@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useMotionValue } from 'framer-motion';
@@ -9,10 +9,9 @@ import {
     ChevronsUp,
     Maximize,
     Building2,
-    Briefcase,
-    Grab
+    Briefcase
 } from 'lucide-react';
-import { usersService } from '@/services/users.service';
+import { usersService, OrgTreeNode } from '@/services/users.service';
 import { cn } from '@/utils/cn';
 
 // Role-based styling
@@ -24,14 +23,25 @@ const ROLE_CONFIG: Record<string, { color: string; bg: string; border: string; l
     'EMPLOYEE': { color: 'text-slate-600', bg: 'bg-neutral-50 dark:bg-neutral-500/10', border: 'border-neutral-200 dark:border-slate-800/50', label: 'Employee' }
 };
 
+interface OrgNodeData {
+    id: string;
+    name: string;
+    role?: string;
+    initials?: string;
+    employeeId?: string;
+    designation_name?: string;
+    department_name?: string;
+    children?: OrgNodeData[];
+}
+
 const OrgNode: React.FC<{
-    node: any;
+    node: OrgNodeData;
     isRoot?: boolean;
     hasChildren?: boolean;
     isExpanded?: boolean;
     onToggle?: () => void;
 }> = ({ node, isRoot, hasChildren, isExpanded, onToggle }) => {
-    const config = ROLE_CONFIG[node.role] || ROLE_CONFIG['EMPLOYEE'];
+    const config = ROLE_CONFIG[node.role ?? 'EMPLOYEE'] || ROLE_CONFIG['EMPLOYEE'];
     const initials = node.initials || (node.name || '').charAt(0);
 
     return (
@@ -100,13 +110,14 @@ const OrgNode: React.FC<{
 };
 
 const RecursiveOrgNode: React.FC<{
-    node: any;
+    node: OrgNodeData;
     isExpanded: (id: string) => boolean;
     toggleNode: (id: string) => void;
     isRoot?: boolean;
 }> = ({ node, isExpanded, toggleNode, isRoot }) => {
     const hasChildren = node.children && node.children.length > 0;
     const expanded = isExpanded(node.id);
+    const children = node.children || [];
 
     return (
         <div className="flex flex-col items-center">
@@ -123,20 +134,20 @@ const RecursiveOrgNode: React.FC<{
                     {/* The horizontal line container */}
                     <div className="relative flex justify-center">
                         <div className="flex gap-16 pt-8">
-                            {node.children.map((child: any, idx: number) => (
+                            {children.map((child: OrgNodeData, idx: number) => (
                                 <div key={child.id} className="flex flex-col items-center relative">
                                     {/* Line connecting to horizontal bar */}
                                     <div className="absolute -top-8 w-0.5 h-8 bg-gray-300 dark:bg-gray-700"></div>
 
                                     {/* Horizontal arm logic */}
-                                    {node.children.length > 1 && (
+                                    {children.length > 1 && (
                                         <>
                                             {/* Left side arm */}
                                             {idx > 0 && (
                                                 <div className="absolute -top-8 right-1/2 w-[calc(50%+2rem)] h-0.5 bg-gray-300 dark:bg-gray-700"></div>
                                             )}
                                             {/* Right side arm */}
-                                            {idx < node.children.length - 1 && (
+                                            {idx < children.length - 1 && (
                                                 <div className="absolute -top-8 left-1/2 w-[calc(50%+2rem)] h-0.5 bg-gray-300 dark:bg-gray-700"></div>
                                             )}
                                         </>
@@ -168,39 +179,31 @@ export const OrgTreeContent: React.FC = () => {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
 
-    const { data: treeData, isLoading: treeLoading } = useQuery({
+    const { data: treeData, isLoading: treeLoading } = useQuery<OrgNodeData | null>({
         queryKey: ['org-tree'],
-        queryFn: () => usersService.getOrgTree(),
+        queryFn: async () => {
+            const data = await usersService.getOrgTree();
+            if (!data) return null;
+            const transform = (node: OrgTreeNode): OrgNodeData => ({
+                id: node.id,
+                name: `${node.first_name} ${node.last_name}`.trim(),
+                role: node.designation,
+                employeeId: node.employee_id,
+                designation_name: node.designation,
+                department_name: node.department,
+                children: node.children?.map(transform),
+            });
+            return transform(data);
+        },
     });
 
     const isExpanded = (id: string) => !!expandedIds[id];
     const toggleNode = (id: string) => setExpandedIds((s) => ({ ...s, [id]: !s[id] }));
 
-    // Expand limited depth on load
-    useEffect(() => {
-        if (treeData) {
-            const initialExpanded: Record<string, boolean> = {};
-            // Expand ONLY the root and its immediate children (depth <= 1)
-            const walk = (n: any, depth: number) => {
-                if (depth <= 1) {
-                    initialExpanded[n.id] = true;
-                }
-                if (depth < 1) {
-                    (n.children || []).forEach((c: any) => walk(c, depth + 1));
-                }
-            };
-            walk(treeData, 0);
-            setExpandedIds(initialExpanded);
-
-            // Initial centering
-            setTimeout(handleFitToScreen, 500);
-        }
-    }, [treeData]);
-
     const expandAll = () => {
         if (!treeData) return;
         const all: Record<string, boolean> = {};
-        const walk = (n: any) => {
+        const walk = (n: OrgNodeData) => {
             all[n.id] = true;
             (n.children || []).forEach(walk);
         };
@@ -210,7 +213,7 @@ export const OrgTreeContent: React.FC = () => {
 
     const collapseAll = () => setExpandedIds({});
 
-    const handleFitToScreen = () => {
+    const handleFitToScreen = useCallback(() => {
         if (!containerRef.current || !contentRef.current) return;
 
         const container = containerRef.current.getBoundingClientRect();
@@ -232,7 +235,28 @@ export const OrgTreeContent: React.FC = () => {
         setScale(Math.max(0.3, targetScale));
         x.set(0);
         y.set(0);
-    };
+    }, [setScale, x, y]);
+
+    // Expand limited depth on load
+    useEffect(() => {
+        if (treeData) {
+            const initialExpanded: Record<string, boolean> = {};
+            // Expand ONLY the root and its immediate children (depth <= 1)
+            const walk = (n: OrgNodeData, depth: number) => {
+                if (depth <= 1) {
+                    initialExpanded[n.id] = true;
+                }
+                if (depth < 1) {
+                    (n.children || []).forEach((c: OrgNodeData) => walk(c, depth + 1));
+                }
+            };
+            walk(treeData, 0);
+            setExpandedIds(initialExpanded);
+
+            // Initial centering
+            setTimeout(handleFitToScreen, 500);
+        }
+    }, [treeData, handleFitToScreen]);
 
     const handleZoom = (delta: number) => {
         setScale(prev => {
@@ -245,7 +269,23 @@ export const OrgTreeContent: React.FC = () => {
         <div
             className="relative h-full w-full bg-[#f8fafc] dark:bg-gray-950/40 rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-800/50 shadow-inner"
             ref={containerRef}
+            role="button"
+            tabIndex={0}
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            onMouseDown={(e) => { if (e.button === 0) { setIsDragging(true); e.preventDefault(); } }}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
+            onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                    setIsDragging(false);
+                }
+            }}
+            onMouseMove={(e) => {
+                if (isDragging) {
+                    x.set(x.get() + e.movementX);
+                    y.set(y.get() + e.movementY);
+                }
+            }}
         >
             {/* Background pattern for depth */}
             <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -269,85 +309,49 @@ export const OrgTreeContent: React.FC = () => {
                         onClick={() => handleZoom(-0.1)}
                         className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><Minus size={20} /></Button>
-                     <Button variant="ghost" 
-                        title="Reset"
-                        onClick={() => { setScale(1); x.set(0); y.set(0); }}
-                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90 font-mono text-xs font-bold"
-                    >100%</Button>
-                </div>
-
-                <div className="flex flex-col gap-2 p-1.5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-elev-6 border border-white/40 dark:border-gray-700/40">
+                    <div className="h-px bg-gray-200 dark:bg-gray-800 mx-2"></div>
                      <Button variant="ghost" 
                         title="Expand All"
                         onClick={expandAll}
-                        className="p-2.5 rounded-xl hover:bg-blue-500/10 text-gray-600 dark:text-gray-300 hover:text-blue-500 transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><ChevronsDown size={20} /></Button>
                      <Button variant="ghost" 
                         title="Collapse All"
                         onClick={collapseAll}
-                        className="p-2.5 rounded-xl hover:bg-error-500/10 text-gray-600 dark:text-gray-300 hover:text-error-500 transition-all active:scale-90"
+                        className="p-2.5 rounded-xl hover:bg-brand-500/10 text-gray-600 dark:text-gray-300 hover:text-brand-500 transition-all active:scale-90"
                     ><ChevronsUp size={20} /></Button>
                 </div>
             </div>
 
-            {/* Viewport Hints */}
-            <div className="absolute left-6 bottom-6 z-20 pointer-events-none">
-                <div className="flex items-center gap-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 dark:border-gray-800/20 shadow-elev-1">
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500">
-                        <Grab size={12} />
-                        Drag to Pan
-                    </div>
-                    <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                    <div className="text-[10px] uppercase tracking-widest font-bold text-brand-500">
-                        Scale: {(scale * 100).toFixed(0)}%
-                    </div>
-                </div>
-            </div>
-
-            {/* Tree Container */}
-            <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
+            {/* Tree Canvas */}
+            <motion.div
+                ref={contentRef}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                    x,
+                    y,
+                    scale,
+                    transformOrigin: 'center center',
+                }}
+            >
                 {treeLoading ? (
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="relative w-16 h-16">
-                            <div className="absolute inset-0 border-4 border-brand-500/20 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 animate-pulse">Building Hierarchy...</p>
+                    <div className="flex items-center justify-center h-full w-full">
+                        <div className="animate-spin rounded-full h-10 w-10 border-3 border-brand-500 border-t-transparent"></div>
                     </div>
-                ) : !treeData ? (
-                    <div className="flex flex-col items-center justify-center gap-4 text-center max-w-sm">
-                        <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded-3xl">
-                            <Building2 className="text-gray-300 dark:text-gray-600 w-16 h-16 mb-4" />
-                            <h3 className="font-bold text-gray-900 dark:text-white">Structural Vacuum Detected</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                We couldn't map the hierarchy. Please ensure employees have assigned "Reporting Managers" in their profiles.
-                            </p>
-                        </div>
-                    </div>
+                ) : treeData ? (
+                    <RecursiveOrgNode
+                        node={treeData}
+                        isExpanded={isExpanded}
+                        toggleNode={toggleNode}
+                        isRoot={true}
+                    />
                 ) : (
-                    <motion.div
-                        drag
-                        dragElastic={0.1}
-                        dragMomentum={true}
-                        style={{ x, y, scale }}
-                        onDragStart={() => setIsDragging(true)}
-                        onDragEnd={() => setIsDragging(false)}
-                        className="touch-none select-none will-change-transform flex items-center justify-center min-w-max min-h-max"
-                    >
-                        <div
-                            ref={contentRef}
-                            className="p-32 flex items-start justify-center"
-                        >
-                            <RecursiveOrgNode
-                                node={treeData}
-                                isExpanded={isExpanded}
-                                toggleNode={toggleNode}
-                                isRoot={true}
-                            />
-                        </div>
-                    </motion.div>
+                    <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                        <Building2 size={48} className="mx-auto mb-4 opacity-50" />
+                        <p className="text-lg">No organizational data available</p>
+                    </div>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 };

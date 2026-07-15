@@ -5,7 +5,7 @@ import { MapPin, Briefcase, Clock, IndianRupee, Heart, Zap, Users, BookOpen, Cof
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { SEO } from '@/components/SEO';
-import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 interface Position {
   id: string;
@@ -36,7 +36,6 @@ const benefits = [
 
 export const CareersPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [selectedDept, setSelectedDept] = useState('All');
   const depts = ['All', ...new Set(positions.map(p => p.department))];
   const filtered = selectedDept === 'All' ? positions : positions.filter(p => p.department === selectedDept);
@@ -53,7 +52,7 @@ export const CareersPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link to="/features" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">Features</Link>
             <Link to="/blog" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">Blog</Link>
-            <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>Start Free Trial</Button>
+            <Button variant="premium" size="sm" onClick={() => navigate(ROUTES.PRICING)}>Start Free Trial</Button>
           </div>
         </div>
       </nav>

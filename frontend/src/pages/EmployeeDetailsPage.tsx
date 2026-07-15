@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -36,10 +36,11 @@ import {
     Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+import { showToast } from '@/utils/toast';
 
 import { SalaryAssignmentSection } from '@/components/payroll/SalaryAssignmentSection';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 type TabType = 'personal' | 'employment' | 'financial' | 'documents';
 
@@ -89,12 +90,12 @@ export const EmployeeDetailsPage: React.FC = () => {
                     return next;
                 });
             }, 10000);
-        } catch (err: any) {
-            showToast.error(err.message || 'Failed to reveal field');
+        } catch (err: unknown) {
+            showToast.error((err as {message?: string}).message || t('employees.failedToRevealField'));
         } finally {
             setRevealingField(null);
         }
-    }, [id, revealedFields]);
+    }, [id, revealedFields, t]);
 
     // Queries
     const { data: employee, isLoading, error } = useQuery({
@@ -128,17 +129,17 @@ export const EmployeeDetailsPage: React.FC = () => {
     const toggleStatusMutation = useMutation({
         mutationFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
             usersService.updateStatus(userId, isActive),
-        onSuccess: (updatedUser: any, variables) => {
+        onSuccess: (updatedUser: unknown, variables) => {
             // Immediately update the employee details cache with the returned user
-            const userId = (updatedUser && updatedUser.id) || variables.userId || id;
+            const userId = ((updatedUser as Record<string, unknown>)?.id as string) || variables.userId || id;
             if (updatedUser) {
                 queryClient.setQueryData(['employee', userId], updatedUser);
             }
             // Also invalidate the employee list so any lists refresh
             queryClient.invalidateQueries({ queryKey: ['employees'] });
-            showToast.success('Employee status updated');
+            showToast.success(t('employees.statusUpdated'));
         },
-        onError: (err: Error) => showToast.error(err.message),
+        onError: (err: Error) => showToast.error((err as {message?: string}).message),
     });
 
     const terminateMutation = useMutation({
@@ -146,22 +147,23 @@ export const EmployeeDetailsPage: React.FC = () => {
             usersService.terminateEmployee(id!, data),
         onSuccess: (result, variables) => {
             // Optimistically update the employee details cache to show terminated state immediately
-            queryClient.setQueryData(['employee', id], (old: any) => {
+            queryClient.setQueryData(['employee', id], (old: unknown) => {
                 if (!old) return old;
+                const oldRecord = old as Record<string, unknown>;
                 return {
-                    ...old,
+                    ...oldRecord,
                     is_active: false,
                     is_terminated: true,
-                    termination_date: variables?.termination_date || old.termination_date,
-                    termination_reason: variables?.termination_reason || old.termination_reason,
+                    termination_date: variables?.termination_date || oldRecord.termination_date,
+                    termination_reason: variables?.termination_reason || oldRecord.termination_reason,
                 };
             });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
             setTerminateDialogOpen(false);
             showToast.success(result.message);
-            navigate('/dashboard/employees');
+            navigate(ROUTES.EMPLOYEES);
         },
-        onError: (err: Error) => showToast.error(err.message),
+        onError: (err: Error) => showToast.error((err as {message?: string}).message),
     });
 
 
@@ -181,8 +183,8 @@ export const EmployeeDetailsPage: React.FC = () => {
 
     const getShiftName = (shiftId?: string, legacyShift?: string) => {
         if (shiftId) {
-            const shift = shifts.find((s: any) => s.id === shiftId);
-            if (shift) return `${shift.name} (${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)})`;
+            const shift = (shifts as unknown as Record<string, unknown>[]).find((s: Record<string, unknown>) => s.id === shiftId);
+            if (shift) return `${shift.name as string} (${(shift.start_time as string).slice(0, 5)} - ${(shift.end_time as string).slice(0, 5)})`;
         }
         return legacyShift || 'Regular';
     };
@@ -216,7 +218,7 @@ export const EmployeeDetailsPage: React.FC = () => {
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                             The employee you're looking for doesn't exist or has been removed.
                         </p>
-                        <Button onClick={() => navigate('/dashboard/employees')}>
+                        <Button onClick={() => navigate(ROUTES.EMPLOYEES)}>
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Employees
                         </Button>
@@ -441,16 +443,16 @@ export const EmployeeDetailsPage: React.FC = () => {
                                     Leave Balances
                                 </h3>
                                 <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-                                    {leaveBalances.map((balance: any) => (
-                                        <div key={balance.leave_type_id || balance.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    {(leaveBalances as unknown as Record<string, unknown>[]).map((balance: Record<string, unknown>) => (
+                                        <div key={(balance.leave_type_id as string) || (balance.id as string)} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {balance.leave_type?.name || 'Leave'}
+                                                {((balance.leave_type as Record<string, unknown>)?.name as string) || 'Leave'}
                                             </p>
                                             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                                {balance.available || 0}
+                                                {(balance.available as number) || 0}
                                             </p>
                                             <p className="text-xs text-gray-400">
-                                                of {balance.entitled || 0} days
+                                                of {(balance.entitled as number) || 0} days
                                             </p>
                                         </div>
                                     ))}
@@ -484,8 +486,8 @@ export const EmployeeDetailsPage: React.FC = () => {
                                     <SensitiveInfoRow icon={FileText} label="Aadhaar Number" maskedValue={employee.aadhar_number || 'Not provided'} fieldName="aadhar_number" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.aadhar_number} />
                                     <InfoRow icon={Wallet} label="Annual Salary (CTC)" value={
                                         employee.annual_salary
-                                            ? `₹${Number(employee.annual_salary).toLocaleString('en-IN')}`
-                                            : (employee.ctc ? `₹${Number(employee.ctc).toLocaleString('en-IN')}` : 'Not provided')
+                                            ? `â‚¹${Number(employee.annual_salary).toLocaleString('en-IN')}`
+                                            : (employee.ctc ? `â‚¹${Number(employee.ctc).toLocaleString('en-IN')}` : 'Not provided')
                                     } />
                                     <SensitiveInfoRow icon={FileText} label="UAN" maskedValue={employee.uan || 'Not provided'} fieldName="uan" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.uan} />
                                     <SensitiveInfoRow icon={Wallet} label="PF A/C Number" maskedValue={employee.pf_account || 'Not provided'} fieldName="pf_account" revealedFields={revealedFields} revealingField={revealingField} onReveal={handleRevealField} hasValue={!!employee.pf_account} />
@@ -535,10 +537,11 @@ export const EmployeeDetailsPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label htmlFor="termination-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Termination Date *
                             </label>
                             <input
+                                id="termination-date"
                                 type="date"
                                 value={terminateData.termination_date}
                                 onChange={(e) => setTerminateData({ ...terminateData, termination_date: e.target.value })}
@@ -548,10 +551,11 @@ export const EmployeeDetailsPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label htmlFor="termination-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Reason for Termination
                             </label>
                             <textarea
+                                id="termination-reason"
                                 value={terminateData.termination_reason}
                                 onChange={(e) => setTerminateData({ ...terminateData, termination_reason: e.target.value })}
                                 rows={3}
@@ -650,4 +654,4 @@ const SensitiveInfoRow: React.FC<{
     );
 };
 
-export default EmployeeDetailsPage;
+

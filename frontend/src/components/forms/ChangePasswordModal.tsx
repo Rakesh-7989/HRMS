@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react'
+import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { showToast } from '@/utils/toast';
@@ -28,6 +29,7 @@ const validationSchema = Yup.object({
 });
 
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = React.useState(false);
     const [showCurrent, setShowCurrent] = React.useState(false);
     const [showNew, setShowNew] = React.useState(false);
@@ -48,11 +50,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                     values.newPassword,
                     values.confirmPassword
                 );
-                showToast.success('Password changed successfully');
+                showToast.success(t('auth.passwordChanged'));
                 formik.resetForm();
                 onClose();
-            } catch (err: any) {
-                const message = err.response?.data?.message || err.message || 'Failed to change password';
+            } catch (err: unknown) {
+                const error = err as { response?: { data?: { message?: string } }; message?: string };
+                const message = error.response?.data?.message || error.message || 'Failed to change password';
                 showToast.error(message);
             } finally {
                 setIsLoading(false);
@@ -79,9 +82,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                     <div className="space-y-4">
                         {/* Current Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium">Current Password</label>
+                            <label htmlFor="currentPassword" className="text-sm font-medium">Current Password</label>
                             <div className="relative">
                                 <input
+                                    id="currentPassword"
                                     type={showCurrent ? 'text' : 'password'}
                                     {...formik.getFieldProps('currentPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
@@ -102,9 +106,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
 
                         {/* New Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium">New Password</label>
+                            <label htmlFor="newPassword" className="text-sm font-medium">New Password</label>
                             <div className="relative">
                                 <input
+                                    id="newPassword"
                                     type={showNew ? 'text' : 'password'}
                                     {...formik.getFieldProps('newPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"
@@ -148,9 +153,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
 
                         {/* Confirm Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium">Confirm New Password</label>
+                            <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm New Password</label>
                             <div className="relative">
                                 <input
+                                    id="confirmPassword"
                                     type={showConfirm ? 'text' : 'password'}
                                     {...formik.getFieldProps('confirmPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-input bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-muted"

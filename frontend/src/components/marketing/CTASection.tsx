@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, IndianRupee, Shield, Building2 } from 'lucide-
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const CTASection: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export const CTASection: React.FC = () => {
 
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
           className="flex flex-col sm:flex_row items-center justify-center gap-4 mb-12">
-          <Button size="xl" variant="premium" className="rounded-xl px-10 group" onClick={() => navigate('/pricing')}>
+          <Button size="xl" variant="premium" className="rounded-xl px-10 group" onClick={() => navigate(ROUTES.PRICING)}>
             {t('marketing.cta.ctaPrimary')} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Button>
           <Button size="xl" variant="outline" className="rounded-xl px-10 border-white/20 text-white hover:bg-white/10" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>

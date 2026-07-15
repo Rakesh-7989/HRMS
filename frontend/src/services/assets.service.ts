@@ -7,10 +7,11 @@ export const generateBarcode = (): string => {
 };
 
 // Helper to extract user-friendly error messages from backend responses
-const extractErrorMessage = (error: any): string => {
+const extractErrorMessage = (error: unknown): string => {
+  const err = error as { response?: { data?: { details?: Array<{ message?: string; path?: string[] }>; message?: string; error?: string } }; message?: string };
   // Check for validation errors with details (Zod errors)
-  if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
-    const issues = error.response.data.details;
+  if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
+    const issues = err.response.data.details;
     // Return the first validation error message
     if (issues.length > 0 && issues[0].message) {
       return issues[0].message;
@@ -18,9 +19,9 @@ const extractErrorMessage = (error: any): string => {
   }
 
   // Fallback to standard error messages
-  return error.response?.data?.message ||
-    error.response?.data?.error ||
-    error.message ||
+  return err.response?.data?.message ||
+    err.response?.data?.error ||
+    err.message ||
     'An error occurred';
 };
 
@@ -204,7 +205,7 @@ export const assetsService = {
     try {
       const response = await api.post('/assets/requests/create', data);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       throw new Error(message);
     }
@@ -227,7 +228,7 @@ export const assetsService = {
     try {
       const response = await api.put(`/assets/requests/${id}`, data);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = extractErrorMessage(error);
       throw new Error(message);
     }

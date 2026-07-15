@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/utils/cn';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/constants';
 import {
   UserPlus,
   Clock,
@@ -74,7 +75,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ className, actions =
         })}
       </div>
        <Button variant="ghost" 
-        onClick={() => navigate('/activity')}
+        onClick={() => navigate(ROUTES.ACTIVITY)}
         className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs text-neutral-400 hover:text-brand-600 dark:hover:text-brand-400 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
       >
         <span>View all actions</span>

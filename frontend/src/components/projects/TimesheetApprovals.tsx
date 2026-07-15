@@ -9,8 +9,9 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { WeeklyTimesheetEntry } from '@/components/timesheets/WeeklyTimesheetEntry';
+import { Timesheet } from '@/types/project.types';
 import { timesheetService } from '@/services/timesheet.service';
-import { usersService } from '@/services/users.service';
+import { usersService, type User } from '@/services/users.service';
 import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
 
@@ -58,7 +59,7 @@ export const TimesheetApprovals: React.FC = () => {
     const [weekFilter, setWeekFilter] = useState<string>('');
 
     // Fetch Employees for filter
-    const { data: usersResponse } = useQuery({
+    const { data: usersResponse } = useQuery<{ data: User[] }>({
         queryKey: ['employees', 'list'],
         queryFn: () => usersService.getUsers(),
     });
@@ -76,13 +77,13 @@ export const TimesheetApprovals: React.FC = () => {
         queryKey: ['timesheets', 'history', employeeFilter, statusFilter, weekFilter],
         queryFn: () => timesheetService.getTimesheets({
             employee_id: employeeFilter || undefined,
-            status: (statusFilter || undefined) as any,
+            status: (statusFilter as import('@/types/project.types').TimesheetStatus) || undefined,
             week_start_date: weekFilter || undefined,
         }),
         enabled: activeTab === 'history',
     });
 
-    const timesheets = (activeTab === 'pending' ? (rawPendingData || []) : (rawHistoryData || [])) as unknown as WeekTimesheet[];
+    const timesheets = (activeTab === 'pending' ? (rawPendingData || []) : (rawHistoryData || [])) as WeekTimesheet[];
     const isLoading = activeTab === 'pending' ? loadingPending : loadingHistory;
 
     // Group timesheets by employee
@@ -107,9 +108,9 @@ export const TimesheetApprovals: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
             setSelectedTimesheet(null); // Close modal if open
-            showToast.success('Timesheet approved');
+            showToast.success(t('projects.timesheetApproved'));
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             showAlert({
                 title: 'Operation Failed',
                 message: error.message || 'Failed to approve timesheet',
@@ -134,7 +135,7 @@ export const TimesheetApprovals: React.FC = () => {
                 showToast.success(`Successfully approved ${data.results.length} entries`);
             }
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             showAlert({
                 title: 'Bulk Processing Failed',
                 message: error.message || 'Failed to process bulk approval',
@@ -150,9 +151,9 @@ export const TimesheetApprovals: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['timesheets'] });
             setSelectedIds([]);
             setSelectedTimesheet(null); // Close modal if open
-            showToast.success('Timesheet entry rejected');
+            showToast.success(t('projects.timesheetRejected'));
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             showAlert({
                 title: 'Operation Failed',
                 message: error.message || 'Failed to reject timesheet',
@@ -256,7 +257,7 @@ export const TimesheetApprovals: React.FC = () => {
                             className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all min-w-[140px]"
                         >
                             <option value="">{t('timesheets.allEmployees')}</option>
-                            {employees.map((emp: any) => (
+                            {employees.map((emp: User) => (
                                 <option key={emp.id} value={emp.employee_uuid || emp.id}>
                                     {emp.first_name} {emp.last_name}
                                 </option>
@@ -398,6 +399,8 @@ export const TimesheetApprovals: React.FC = () => {
                                                 <div key={ts.id}>
                                                     {/* Week-level row */}
                                                     <div
+                                                        role="button"
+                                                        tabIndex={0}
                                                         className={cn(
                                                             "flex items-center gap-4 px-6 py-5 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer",
                                                             isSelected && "bg-brand-500/5 hover:bg-brand-500/10"
@@ -406,6 +409,7 @@ export const TimesheetApprovals: React.FC = () => {
                                                             if ((e.target as HTMLElement).closest('button')) return;
                                                             handleViewDetails(ts);
                                                         }}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleViewDetails(ts); } }}
                                                     >
                                                         {/* Checkbox */}
                                                          <Button variant="ghost" 
@@ -522,7 +526,7 @@ export const TimesheetApprovals: React.FC = () => {
                             </div>
 
                             <WeeklyTimesheetEntry
-                                preloadedTimesheet={selectedTimesheet as unknown as any}
+                                preloadedTimesheet={selectedTimesheet as Timesheet}
                                 isApprovalMode={true}
                                 onApprove={async (id) => {
                                     await handleApprove(id);

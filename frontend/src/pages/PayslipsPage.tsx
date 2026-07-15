@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -39,25 +39,25 @@ export const PayslipsPage: React.FC = () => {
   // Fetch data for each section (placeholders / keyed queries)
   const { data: payslips = [], isLoading: payslipsLoading } = useQuery({
     queryKey: ['payslips', dateRange],
-    queryFn: () => payrollService.listPayslips(dateRange),
+    queryFn: () => payrollService.listPayslips(dateRange) as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'payslips'
   });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ['pay_schedules'],
-    queryFn: () => payrollService.listPaySchedules(),
+    queryFn: () => payrollService.listPaySchedules() as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'pay_schedule'
   });
 
   // Schedule edit dialog state
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<Record<string, unknown> | null>(null);
   const [scheduleCycle, setScheduleCycle] = useState<string>('Monthly');
   const [scheduleCreditDay, setScheduleCreditDay] = useState<number | ''>('');
   const [scheduleCutoffDay, setScheduleCutoffDay] = useState<number | ''>('');
 
   const updateScheduleMut = useMutation({
-    mutationFn: ({ scheduleId, payload }: { scheduleId: string; payload: any }) => payrollService.updatePaySchedule(scheduleId, payload),
+    mutationFn: ({ scheduleId, payload }: { scheduleId: string; payload: Record<string, unknown> }) => payrollService.updatePaySchedule(scheduleId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pay_schedules'] });
       setScheduleDialogOpen(false);
@@ -65,49 +65,49 @@ export const PayslipsPage: React.FC = () => {
     }
   });
 
-  const openScheduleDialog = (s: any) => {
+  const openScheduleDialog = (s: Record<string, unknown>) => {
     setEditingSchedule(s);
-    setScheduleCycle(s.cycle || s.frequency || 'Monthly');
-    setScheduleCreditDay(typeof s.credit_day === 'number' ? s.credit_day : (s.credit_day ? Number(s.credit_day) : ''));
-    setScheduleCutoffDay(typeof s.cutoff_day === 'number' ? s.cutoff_day : (s.cutoff_day ? Number(s.cutoff_day) : ''));
+    setScheduleCycle((s.cycle as string) || (s.frequency as string) || 'Monthly');
+    setScheduleCreditDay(typeof s.credit_day === 'number' ? s.credit_day as number : (s.credit_day ? Number(s.credit_day) : ''));
+    setScheduleCutoffDay(typeof s.cutoff_day === 'number' ? s.cutoff_day as number : (s.cutoff_day ? Number(s.cutoff_day) : ''));
     setScheduleDialogOpen(true);
   };
 
   const handleSaveSchedule = () => {
     if (!editingSchedule) return;
-    updateScheduleMut.mutate({ scheduleId: editingSchedule.id, payload: { cycle: scheduleCycle, credit_day: Number(scheduleCreditDay || 0), cutoff_day: Number(scheduleCutoffDay || 0) } });
+    updateScheduleMut.mutate({ scheduleId: editingSchedule.id as string, payload: { cycle: scheduleCycle, credit_day: Number(scheduleCreditDay || 0), cutoff_day: Number(scheduleCutoffDay || 0) } });
   };
 
   const { data: deductions = [], isLoading: deductionsLoading } = useQuery({
     queryKey: ['deductions', dateRange],
-    queryFn: () => payrollService.listDeductions(dateRange),
+    queryFn: () => payrollService.listDeductions(dateRange) as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'deductions'
   });
 
   const { data: incomeTax = [], isLoading: incomeTaxLoading } = useQuery({
     queryKey: ['income_tax', dateRange],
-    queryFn: () => payrollService.listIncomeTax(dateRange),
+    queryFn: () => payrollService.listIncomeTax(dateRange) as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'income_tax'
   });
 
   const { data: revisions = [], isLoading: revisionsLoading } = useQuery({
     queryKey: ['salary_revisions', dateRange],
-    queryFn: () => payrollService.listSalaryRevisions(dateRange),
+    queryFn: () => payrollService.listSalaryRevisions(dateRange) as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'salary_revision'
   });
 
   const formatINR = (amount: number | null | undefined) =>
-    amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+    amount == null ? 'â€”' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
 
 
-  const displayPayslips = payslips || [];
-  const displaySchedules = schedules || [];
-  const displayDeductions = deductions || [];
-  const displayIncomeTax = incomeTax || [];
-  const displayRevisions = revisions || [];
+  const displayPayslips: Record<string, unknown>[] = payslips || [];
+  const displaySchedules: Record<string, unknown>[] = schedules || [];
+  const displayDeductions: Record<string, unknown>[] = deductions || [];
+  const displayIncomeTax: Record<string, unknown>[] = incomeTax || [];
+  const displayRevisions: Record<string, unknown>[] = revisions || [];
 
-  const exportCSV = (rows: any[], filename = 'export.csv') => {
+  const exportCSV = (rows: Record<string, unknown>[], filename = 'export.csv') => {
     if (!rows?.length) return;
     const headers = Object.keys(rows[0]);
     const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
@@ -136,13 +136,13 @@ export const PayslipsPage: React.FC = () => {
     }
   });
 
-  const downloadPayslip = async (p: any) => {
+  const downloadPayslip = async (p: Record<string, unknown>) => {
     try {
-      const blob = await payrollService.downloadPayslip(p.id);
+      const blob = await payrollService.downloadPayslip(p.id as string);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `payslip-${(p.employee_name || '').replace(/\s+/g, '-') || p.id}-${p.date}.pdf`;
+      a.download = `payslip-${((p.employee_name as string) || '').replace(/\s+/g, '-') || (p.id as string)}-${p.date as string}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -159,25 +159,25 @@ export const PayslipsPage: React.FC = () => {
     onError: () => alert('Failed to send payslip email.')
   });
 
-  const emailPayslip = (p: any) => {
-    const to = (p as any).employee_email || prompt('Enter recipient email address', (p as any).employee_email || '');
+  const emailPayslip = (p: Record<string, unknown>) => {
+    const to = (p.employee_email as string) || prompt('Enter recipient email address', (p.employee_email as string) || '');
     if (!to) return;
-    emailPayslipMut.mutate({ payslipId: p.id, to });
+    emailPayslipMut.mutate({ payslipId: p.id as string, to });
   };
 
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [historyEmployee, setHistoryEmployee] = useState<any | null>(null);
+  const [historyEmployee, setHistoryEmployee] = useState<Record<string, unknown> | null>(null);
 
   const { data: payslipHistory = [], isLoading: payslipHistoryLoading } = useQuery({
-    queryKey: ['payslip-history', historyEmployee?.id],
-    queryFn: () => payrollService.listPayslipHistory({ employee_id: historyEmployee?.id }),
+    queryKey: ['payslip-history', historyEmployee?.id as string],
+    queryFn: () => payrollService.listPayslipHistory({ employee_id: historyEmployee?.id as string }) as Promise<Record<string, unknown>[]>,
     enabled: !!historyEmployee && historyDialogOpen,
   });
 
   // Deduction types & Add Deduction dialog state
   const { data: deductionTypes = [] } = useQuery({
     queryKey: ['deduction-types'],
-    queryFn: () => payrollService.listDeductionTypes(),
+    queryFn: () => payrollService.listDeductionTypes() as unknown as Promise<Record<string, unknown>[]>,
     enabled: activeSection === 'deductions',
   });
 
@@ -219,7 +219,7 @@ export const PayslipsPage: React.FC = () => {
               { id: 'income_tax', label: 'Income Tax' },
               { id: 'salary_revision', label: 'Salary Revision' },
             ].map((b) => (
-              <Button key={b.id} variant={activeSection === b.id ? 'primary' : 'outline'} size="sm" onClick={() => setActiveSection(b.id as any)}>
+              <Button key={b.id} variant={activeSection === b.id ? 'primary' : 'outline'} size="sm" onClick={() => setActiveSection(b.id as 'payslips' | 'pay_schedule' | 'deductions' | 'income_tax' | 'salary_revision')}>
                 <FileText className="mr-2" size={14} />
                 {b.label}
               </Button>
@@ -259,7 +259,7 @@ export const PayslipsPage: React.FC = () => {
           <Card>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium">Time Period</label>
+                <span className="text-sm font-medium">Time Period</span>
                 <div className="flex gap-3 mt-2">
                   <Button size="sm" variant={selectedPeriod === '7d' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('7d')}>7d</Button>
                   <Button size="sm" variant={selectedPeriod === '30d' ? 'primary' : 'outline'} onClick={() => setSelectedPeriod('30d')}>30d</Button>
@@ -308,13 +308,13 @@ export const PayslipsPage: React.FC = () => {
                 ) : displayPayslips.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={6}>No payslips for selected period</td></TableRow>
                 ) : (
-                  displayPayslips.map((p: any) => (
-                    <TableRow key={p.id}>
-                      <TableCell>{p.date}</TableCell>
-                      <TableCell>{p.employee_name}</TableCell>
-                      <TableCell>{formatINR(p.gross)}</TableCell>
-                      <TableCell>{formatINR(p.deductions)}</TableCell>
-                      <TableCell>{formatINR(p.net)}</TableCell>
+                  displayPayslips.map((p: Record<string, unknown>) => (
+                    <TableRow key={p.id as string}>
+                      <TableCell>{p.date as string}</TableCell>
+                      <TableCell>{p.employee_name as string}</TableCell>
+                      <TableCell>{formatINR(p.gross as number)}</TableCell>
+                      <TableCell>{formatINR(p.deductions as number)}</TableCell>
+                      <TableCell>{formatINR(p.net as number)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button size="sm" variant="outline">View</Button>
@@ -351,14 +351,16 @@ export const PayslipsPage: React.FC = () => {
                 ) : displaySchedules.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={6}>No schedules configured</td></TableRow>
                 ) : (
-                  displaySchedules.map((s: any) => (
-                    <TableRow key={s.id}>
-                      <TableCell>{s.name}</TableCell>
-                      <TableCell>{s.next_run}</TableCell>
-                      <TableCell>{s.cycle || s.frequency}</TableCell>
-                      <TableCell>{(s.credit_day ?? (s.credit_date || '—')) || '—'}</TableCell>
-                      <TableCell>{(s.cutoff_day ?? (s.cutoff_date || '—')) || '—'}</TableCell>
-                      <TableCell><Button size="sm" variant="outline" onClick={() => openScheduleDialog(s)}>Edit</Button></TableCell>
+                  displaySchedules.map((s: Record<string, unknown>) => (
+                    <TableRow key={s.id as string}>
+                      <TableCell>{s.name as string}</TableCell>
+                      <TableCell>{s.next_run as string}</TableCell>
+                      <TableCell>{(s.cycle as string) || (s.frequency as string) || '—'}</TableCell>
+                      <TableCell>{s.credit_day as number ?? s.payment_day as number ?? '—'}</TableCell>
+                      <TableCell>{s.cutoff_day as number ?? '—'}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => openScheduleDialog(s)}>Edit</Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -369,7 +371,7 @@ export const PayslipsPage: React.FC = () => {
             <Dialog open={scheduleDialogOpen} onOpenChange={(open) => { setScheduleDialogOpen(open); if (!open) setEditingSchedule(null); }}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Edit Pay Schedule {editingSchedule ? `— ${editingSchedule.name}` : ''}</DialogTitle>
+                  <DialogTitle>Edit Pay Schedule {editingSchedule ? `â€” ${editingSchedule.name}` : ''}</DialogTitle>
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
@@ -385,12 +387,12 @@ export const PayslipsPage: React.FC = () => {
 
                   <div>
                     <Label>Salary Credit Day (1-31)</Label>
-                    <Input type="number" min={1} max={31} value={scheduleCreditDay as any} onChange={(e) => setScheduleCreditDay(Number(e.target.value) || '')} className="mt-2" />
+                    <Input type="number" min={1} max={31} value={scheduleCreditDay} onChange={(e) => setScheduleCreditDay(Number(e.target.value) || '')} className="mt-2" />
                   </div>
 
                   <div>
                     <Label>Payroll Cutoff Day (1-31)</Label>
-                    <Input type="number" min={1} max={31} value={scheduleCutoffDay as any} onChange={(e) => setScheduleCutoffDay(Number(e.target.value) || '')} className="mt-2" />
+                    <Input type="number" min={1} max={31} value={scheduleCutoffDay} onChange={(e) => setScheduleCutoffDay(Number(e.target.value) || '')} className="mt-2" />
                   </div>
                 </div>
 
@@ -422,12 +424,12 @@ export const PayslipsPage: React.FC = () => {
                 ) : displayDeductions.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No deductions</td></TableRow>
                 ) : (
-                  displayDeductions.map((d: any) => (
-                    <TableRow key={d.id}>
-                      <TableCell>{d.employee_name}</TableCell>
-                      <TableCell>{d.type}</TableCell>
-                      <TableCell>{formatINR(d.amount)}</TableCell>
-                      <TableCell>{d.effective_date}</TableCell>
+                  displayDeductions.map((d: Record<string, unknown>) => (
+                    <TableRow key={d.id as string}>
+                      <TableCell>{d.employee_name as string}</TableCell>
+                      <TableCell>{d.type as string}</TableCell>
+                      <TableCell>{formatINR(d.amount as number)}</TableCell>
+                      <TableCell>{d.effective_date as string}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -454,12 +456,12 @@ export const PayslipsPage: React.FC = () => {
                 ) : displayIncomeTax.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No income tax records</td></TableRow>
                 ) : (
-                  displayIncomeTax.map((t: any) => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.employee_name}</TableCell>
-                      <TableCell>{t.fy}</TableCell>
-                      <TableCell>{formatINR(t.taxable_income)}</TableCell>
-                      <TableCell>{formatINR(t.tax_deducted)}</TableCell>
+                  displayIncomeTax.map((tx: Record<string, unknown>) => (
+                    <TableRow key={tx.id as string}>
+                      <TableCell>{tx.employee_name as string}</TableCell>
+                      <TableCell>{tx.fy as string}</TableCell>
+                      <TableCell>{formatINR(tx.taxable_income as number)}</TableCell>
+                      <TableCell>{formatINR(tx.tax_deducted as number)}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -486,12 +488,12 @@ export const PayslipsPage: React.FC = () => {
                 ) : revisions.length === 0 ? (
                   <TableRow><td className="p-4 text-center" colSpan={4}>No salary revisions</td></TableRow>
                 ) : (
-                  displayRevisions.map((r: any) => (
-                    <TableRow key={r.id}>
-                      <TableCell>{r.employee_name}</TableCell>
-                      <TableCell>{formatINR(r.old_salary)}</TableCell>
-                      <TableCell>{formatINR(r.new_salary)}</TableCell>
-                      <TableCell>{r.effective_date}</TableCell>
+                  displayRevisions.map((r: Record<string, unknown>) => (
+                    <TableRow key={r.id as string}>
+                      <TableCell>{r.employee_name as string}</TableCell>
+                      <TableCell>{formatINR(r.old_salary as number)}</TableCell>
+                      <TableCell>{formatINR(r.new_salary as number)}</TableCell>
+                      <TableCell>{r.effective_date as string}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -543,7 +545,7 @@ export const PayslipsPage: React.FC = () => {
         <Dialog open={historyDialogOpen} onOpenChange={(open) => { setHistoryDialogOpen(open); if (!open) setHistoryEmployee(null); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Payslip History {historyEmployee ? `— ${historyEmployee.employee_name}` : ''}</DialogTitle>
+              <DialogTitle>Payslip History {historyEmployee ? `â€” ${historyEmployee.employee_name}` : ''}</DialogTitle>
             </DialogHeader>
 
             {payslipHistoryLoading ? (
@@ -562,12 +564,12 @@ export const PayslipsPage: React.FC = () => {
                   </tr>
                 </TableHeader>
                 <TableBody>
-                  {payslipHistory.map((h: any) => (
-                    <TableRow key={h.id}>
-                      <TableCell>{h.date}</TableCell>
-                      <TableCell>{formatINR(h.gross)}</TableCell>
-                      <TableCell>{formatINR(h.deductions)}</TableCell>
-                      <TableCell>{formatINR(h.net)}</TableCell>
+                  {payslipHistory.map((h: Record<string, unknown>) => (
+                    <TableRow key={h.id as string}>
+                      <TableCell>{h.date as string}</TableCell>
+                      <TableCell>{formatINR(h.gross as number)}</TableCell>
+                      <TableCell>{formatINR(h.deductions as number)}</TableCell>
+                      <TableCell>{formatINR(h.net as number)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline" onClick={() => downloadPayslip(h)}>{t('common.download')}</Button>
@@ -602,7 +604,7 @@ export const PayslipsPage: React.FC = () => {
               <div>
                 <Label>Type</Label>
                 <select value={newDeductionType} onChange={(e) => setNewDeductionType(e.target.value)} className="mt-2 p-2 border rounded-md w-full">
-                  {deductionTypes && deductionTypes.length ? deductionTypes.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>) : (
+                  {deductionTypes && deductionTypes.length ? deductionTypes.map((d: Record<string, unknown>) => <option key={d.id as string} value={d.id as string}>{d.name as string}</option>) : (
                     <>
                       <option value="pf">Provident Fund</option>
                       <option value="pt">Professional Tax</option>
@@ -617,7 +619,7 @@ export const PayslipsPage: React.FC = () => {
 
               <div>
                 <Label>Amount</Label>
-                <Input type="number" value={newDeductionAmount as any} onChange={(e) => setNewDeductionAmount(Number(e.target.value) || '')} className="mt-2" />
+                <Input type="number" value={newDeductionAmount} onChange={(e) => setNewDeductionAmount(Number(e.target.value) || '')} className="mt-2" />
               </div>
 
               <div>
@@ -644,4 +646,4 @@ export const PayslipsPage: React.FC = () => {
   );
 };
 
-export default PayslipsPage;
+

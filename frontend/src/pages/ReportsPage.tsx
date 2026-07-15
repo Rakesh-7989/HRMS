@@ -91,7 +91,7 @@ export const ReportsPage: React.FC = () => {
   };
 
   // CSV Export Helper Function
-  const downloadCSV = (data: any[], filename: string, headers: string[]) => {
+  const downloadCSV = (data: Record<string, unknown>[], filename: string, headers: string[]) => {
     if (!data || data.length === 0) {
       alert('No data available to export');
       return;
@@ -291,7 +291,7 @@ export const ReportsPage: React.FC = () => {
                 <div className="flex items-center gap-2 flex-1 sm:flex-none">
                   <select
                     value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value as any)}
+                    onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'custom')}
                     className="w-full sm:w-auto px-3 py-2 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50"
                   >
                     <option value="7d">{t('reports.last7Days')}</option>

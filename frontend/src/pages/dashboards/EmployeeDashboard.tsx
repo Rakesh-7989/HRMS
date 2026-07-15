@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -29,6 +29,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { showToast } from '@/utils/toast';
+import { ROUTES } from '@/utils/constants';
 
 const STATUS_COLORS: Record<string, string> = {
   DONE: '#10b981',
@@ -49,7 +50,7 @@ const StatCard = ({
   title: string;
   value: number | string;
   subtitle?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   gradient: string;
   delay?: number;
 }) => (
@@ -95,7 +96,9 @@ const StatCard = ({
 
 const ActionButton = ({
   icon: Icon, title, subtitle, onClick, colorClass, gradientClass, delay = 0
-}: any) => (
+}: {
+  icon: React.ComponentType<{ className?: string }>; title: string; subtitle: string; onClick?: () => void; colorClass?: string; gradientClass?: string; delay?: number
+}) => (
   <motion.button
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
@@ -116,7 +119,7 @@ const ActionButton = ({
   </motion.button>
 );
 
-const ChartCard = ({ title, subtitle, children, delay = 0 }: any) => (
+const ChartCard = ({ title, subtitle, children, delay = 0 }: { title: string; subtitle?: string; children: React.ReactNode; delay?: number }) => (
   <motion.div
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
@@ -183,8 +186,9 @@ export const EmployeeDashboard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       showToast.success(t('attendance.clockedIn'));
     },
-    onError: (error: any) => {
-      const serverMessage = error.response?.data?.message || error.message || '';
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const serverMessage = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || '';
       showToast.error(serverMessage || t('attendance.failedClockIn'));
     },
   });
@@ -196,8 +200,9 @@ export const EmployeeDashboard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
       showToast.success(t('attendance.clockedOut'));
     },
-    onError: (error: any) => {
-      const serverMessage = error.response?.data?.message || error.message || '';
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const serverMessage = (err as {response?: {data?: {message?: string}}}).response?.data?.message || (err as {message?: string}).message || '';
       showToast.error(serverMessage || t('attendance.failedClockOut'));
     },
   });
@@ -210,12 +215,12 @@ export const EmployeeDashboard: React.FC = () => {
         return;
       }
       clockInMutation.mutate({
-        latitude: check.position?.coords.latitude!,
-        longitude: check.position?.coords.longitude!,
+        latitude: check.position!.coords.latitude,
+        longitude: check.position!.coords.longitude,
         device: detectDeviceType()
       });
     } else {
-      clockInMutation.mutate({ device: detectDeviceType() } as any);
+      clockInMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
     }
   };
 
@@ -237,12 +242,12 @@ export const EmployeeDashboard: React.FC = () => {
         return;
       }
       clockOutMutation.mutate({
-        latitude: check.position?.coords.latitude!,
-        longitude: check.position?.coords.longitude!,
+        latitude: check.position!.coords.latitude,
+        longitude: check.position!.coords.longitude,
         device: detectDeviceType()
       });
     } else {
-      clockOutMutation.mutate({ device: detectDeviceType() } as any);
+      clockOutMutation.mutate({ device: detectDeviceType() } as unknown as { latitude: number; longitude: number; device?: string });
     }
   };
 
@@ -261,15 +266,15 @@ export const EmployeeDashboard: React.FC = () => {
   const getWorkingTime = () => {
     if (!todayStatus.check_in_time) return null;
 
-    const checkInUtc = (todayStatus as any).check_in_time_utc;
-    const checkOutUtc = (todayStatus as any).check_out_time_utc;
+    const checkInUtc = (todayStatus as unknown as Record<string, unknown>).check_in_time_utc as string | undefined;
+    const checkOutUtc = (todayStatus as unknown as Record<string, unknown>).check_out_time_utc as string | undefined;
     const useUtc = !!checkInUtc;
 
     let checkIn: Date;
     let checkOut: Date;
 
     if (useUtc) {
-      // UTC timestamps — use real Date objects throughout
+      // UTC timestamps â€” use real Date objects throughout
       checkIn = new Date(checkInUtc);
       if (checkOutUtc) {
         checkOut = new Date(checkOutUtc);
@@ -279,7 +284,7 @@ export const EmployeeDashboard: React.FC = () => {
         checkOut = new Date(); // current real time
       }
     } else {
-      // Time-only strings (HH:mm) — use a fixed date for comparison
+      // Time-only strings (HH:mm) â€” use a fixed date for comparison
       checkIn = new Date(`2000-01-01T${todayStatus.check_in_time}`);
       if (todayStatus.check_out_time) {
         checkOut = new Date(`2000-01-01T${todayStatus.check_out_time}`);
@@ -303,35 +308,37 @@ export const EmployeeDashboard: React.FC = () => {
   const workingTime = getWorkingTime();
 
   const attendanceChartData = monthlyAttendance
-    .reduce((acc: any[], att: any) => {
-      const date = format(new Date(att.date), 'MMM dd');
-      const sortDate = new Date(att.date).getTime();
+    .reduce((acc: Record<string, unknown>[], att: Record<string, unknown>) => {
+      const date = format(new Date(att.date as string), 'MMM dd');
+      const sortDate = new Date(att.date as string).getTime();
       let existing = acc.find((item) => item.date === date);
       if (!existing) {
         existing = { date, sortDate, Present: 0, Late: 0, Absent: 0 };
         acc.push(existing);
       }
-      if (att.type === 'ON_TIME' || att.type === 'PRESENT') existing.Present += Number(att.count);
-      else if (att.type === 'LATE') existing.Late += Number(att.count);
-      else if (att.type === 'ABSENT') existing.Absent += Number(att.count);
+      if (att.type === 'ON_TIME' || att.type === 'PRESENT') existing.Present = (existing.Present as number) + Number(att.count);
+      else if (att.type === 'LATE') existing.Late = (existing.Late as number) + Number(att.count);
+      else if (att.type === 'ABSENT') existing.Absent = (existing.Absent as number) + Number(att.count);
       return acc;
     }, [])
-    .sort((a: any, b: any) => a.sortDate - b.sortDate);
+    .sort((a: Record<string, unknown>, b: Record<string, unknown>) => (a.sortDate as number) - (b.sortDate as number));
 
   const weeklyHoursData = useMemo(() => {
     if (!data?.weeklyActivity) return [];
-    return data.weeklyActivity.map((day: any) => {
+    return data.weeklyActivity.map((day: Record<string, unknown>) => {
       let hours = 0;
-      if (day.check_in_time && day.check_out_time) {
-        const [h1, m1] = day.check_in_time.split(':').map(Number);
-        const [h2, m2] = day.check_out_time.split(':').map(Number);
+      const checkInTime = day.check_in_time as string;
+      const checkOutTime = day.check_out_time as string;
+      if (checkInTime && checkOutTime) {
+        const [h1, m1] = checkInTime.split(':').map(Number);
+        const [h2, m2] = checkOutTime.split(':').map(Number);
         const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
         hours = Math.max(0, parseFloat((diff / 60).toFixed(1)));
       }
       return {
-        date: format(new Date(day.date), 'EEE'), // Mon, Tue...
+        date: format(new Date(day.date as string), 'EEE'),
         hours,
-        fullDate: day.date
+        fullDate: day.date as string
       };
     });
   }, [data?.weeklyActivity]);
@@ -477,7 +484,7 @@ export const EmployeeDashboard: React.FC = () => {
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-lg font-medium flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-500" />
-                {profile?.designation || t('common.teamMember')} • {profile?.department || t('common.general')}
+                {profile?.designation || t('common.teamMember')} â€¢ {profile?.department || t('common.general')}
               </p>
             </div>
 
@@ -582,14 +589,14 @@ export const EmployeeDashboard: React.FC = () => {
               <h3 className="text-lg font-black text-slate-800 dark:text-white px-2">{t('dashboard.quickActions')}</h3>
               <ActionButton
                 icon={CalendarPlus} title={t('leave.applyLeave')} subtitle={t('leave.requestTimeOff')}
-                onClick={() => navigate('/leave')}
+                onClick={() => navigate(ROUTES.LEAVE)}
                 colorClass="bg-white dark:bg-neutral-900 border-brand-100 dark:border-brand-500/20 hover:border-brand-300 dark:hover:border-brand-500"
                 gradientClass="bg-gradient-to-br from-brand-500 to-brand-600"
                 delay={0.4}
               />
               <ActionButton
                 icon={Calendar} title={t('leave.myAttendance')} subtitle={t('leave.viewHistory')}
-                onClick={() => navigate('/attendance')}
+                onClick={() => navigate(ROUTES.ATTENDANCE)}
                 colorClass="bg-white dark:bg-neutral-900 border-emerald-100 dark:border-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500"
                 gradientClass="bg-gradient-to-br from-emerald-500 to-teal-600"
                 delay={0.5}
@@ -599,15 +606,15 @@ export const EmployeeDashboard: React.FC = () => {
             {/* Celebrations */}
             <ChartCard title={t('dashboard.celebrations')} delay={0.6}>
               <div className="space-y-3">
-                {[...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])].slice(0, 3).map((evt: any, i: number) => (
+                {([...(peopleEventsData?.birthdays || []), ...(peopleEventsData?.anniversaries || []), ...(peopleEventsData?.joiners || [])] as unknown as Record<string, unknown>[]).slice(0, 3).map((evt: Record<string, unknown>, i: number) => (
                   <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-500/10 transition-all">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-elev-4 border border-white/10 group-hover:rotate-6 transition-transform ${evt.type === 'BIRTHDAY' ? 'bg-pink-500 shadow-pink-500/20' : evt.type === 'JOINER' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-amber-500 shadow-amber-500/20'}`}>
                       {evt.type === 'BIRTHDAY' ? <Cake className="w-6 h-6" /> : evt.type === 'JOINER' ? <UserPlus className="w-6 h-6" /> : <Award className="w-6 h-6" />}
                     </div>
                     <div>
-                      <p className="font-black text-slate-900 dark:text-white text-base">{evt.name}</p>
+                      <p className="font-black text-slate-900 dark:text-white text-base">{evt.name as string}</p>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                        {evt.date} <span className="text-neutral-200 dark:text-neutral-700 mx-1">•</span> {evt.type === 'BIRTHDAY' ? t('dashboard.birthday') : evt.type === 'JOINER' ? 'New Joiner' : t('dashboard.anniversary')}
+                        {evt.date as string} <span className="text-neutral-200 dark:text-neutral-700 mx-1">â€¢</span> {evt.type === 'BIRTHDAY' ? t('dashboard.birthday') : evt.type === 'JOINER' ? 'New Joiner' : t('dashboard.anniversary')}
                       </p>
                     </div>
                   </div>
@@ -708,9 +715,9 @@ export const EmployeeDashboard: React.FC = () => {
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
                       <Tooltip
                         cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '3 3' }}
-                        content={({ active, payload, label }: any) => {
-                          if (active && payload && payload.length) {
-                            const actual = payload[0].value;
+                        content={(({ active, payload, label }: { active?: boolean; payload?: Array<Record<string, unknown>>; label?: string }) => {
+                          if (active && payload && (payload as Array<Record<string, unknown>>).length) {
+                            const actual = (payload[0] as Record<string, unknown>).value as number;
                             const target = 9;
                             return (
                               <div className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-elev-5 border border-neutral-100 dark:border-white/5 min-w-[140px]">
@@ -731,7 +738,8 @@ export const EmployeeDashboard: React.FC = () => {
                             );
                           }
                           return null;
-                        }}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        }) as any}
                       />
                       <Area type="monotone" dataKey="hours" stroke="none" fill="url(#colorHours)" />
                       <Line
@@ -761,27 +769,30 @@ export const EmployeeDashboard: React.FC = () => {
                       <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
                     </div>
                   ) : (departmentMembers?.data?.length || 0) > 0 ? (
-                    departmentMembers?.data?.filter((m: any) => m.id !== user?.id).slice(0, 6).map((member: any) => (
-                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors">
+                      (departmentMembers?.data as unknown as Record<string, unknown>[])?.filter((m) => (m as Record<string, unknown>).id !== user?.id).slice(0, 6).map((member) => {
+                        const m = member as Record<string, unknown>;
+                        return (
+                      <div key={m.id as string} className="flex items-center gap-3 p-3 rounded-2xl bg-neutral-50 dark:bg-white/5 border border-neutral-100 dark:border-white/5 group hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors">
                         <div className="relative">
                           <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-brand-600 font-bold overflow-hidden border border-white dark:border-slate-800 shadow-elev-1">
-                            {member.profile_image ? (
-                              <img src={member.profile_image} alt="" className="w-full h-full object-cover" />
+                            {m.profile_image ? (
+                              <img src={m.profile_image as string} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-xs">{member.first_name?.[0] || ''}{member.last_name?.[0] || ''}</span>
+                              <span className="text-xs">{((m.first_name as string)?.[0] || '')}{((m.last_name as string)?.[0] || '')}</span>
                             )}
                           </div>
-                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${member.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${m.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.first_name} {member.last_name}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-widest">{member.designation_name || 'Team Member'}</p>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{m.first_name as string} {m.last_name as string}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-widest">{m.designation_name as string || 'Team Member'}</p>
                         </div>
-                        <Button variant="ghost" size="icon" aria-label={`View profile for ${member.first_name} ${member.last_name}`}>
+                        <Button variant="ghost" size="sm" aria-label={`View profile for ${m.first_name as string} ${m.last_name as string}`}>
                           <ExternalLink size={14} />
                         </Button>
                       </div>
-                    ))
+                        );
+                      })
                   ) : (
                     <EmptyState
                       icon={<Users className="w-6 h-6" />}
@@ -818,9 +829,9 @@ export const EmployeeDashboard: React.FC = () => {
                       <Legend
                         verticalAlign="bottom"
                         height={48}
-                        formatter={(value, entry: any) => (
+                        formatter={(value: unknown, entry: Record<string, unknown>) => (
                           <span className="text-slate-600 dark:text-slate-400 font-bold ml-2">
-                            {value} <span className="text-slate-400 dark:text-slate-500 font-normal">({entry.payload.value})</span>
+                            {value as string} <span className="text-slate-400 dark:text-slate-500 font-normal">({((entry.payload as Record<string, unknown>).value as string)})</span>
                           </span>
                         )}
                       />
@@ -836,21 +847,21 @@ export const EmployeeDashboard: React.FC = () => {
                 <div className="mt-4">
                   {(upcomingLeaves?.length || 0) > 0 ? (
                     <div className="space-y-3">
-                      {upcomingLeaves.slice(0, 4).map((leave: any, i: number) => (
+                      {(upcomingLeaves as Record<string, unknown>[]).slice(0, 4).map((leave: Record<string, unknown>, i: number) => (
                         <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-neutral-50 dark:bg-slate-800/50 border border-neutral-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-brand-500/5 group">
                           <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/30 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                             <Coffee className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{leave.leave_type}</p>
+                            <p className="font-bold text-slate-800 dark:text-white text-sm truncate">{leave.leave_type as string}</p>
                             <p className="text-xs font-semibold text-slate-400">
-                              {format(new Date(leave.start_date), 'MMM dd')} - {format(new Date(leave.end_date), 'MMM dd')}
+                              {format(new Date(leave.start_date as string), 'MMM dd')} - {format(new Date(leave.end_date as string), 'MMM dd')}
                             </p>
                           </div>
                           <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${leave.status === 'APPROVED' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' :
                             leave.status === 'PENDING' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-slate-100 text-slate-600'
                             }`}>
-                            {leave.status}
+                            {leave.status as string}
                           </span>
                         </div>
                       ))}
@@ -908,4 +919,4 @@ export const EmployeeDashboard: React.FC = () => {
   );
 };
 
-export default EmployeeDashboard;
+

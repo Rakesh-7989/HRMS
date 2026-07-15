@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/utils/cn';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -31,34 +31,33 @@ import { documentsService } from '@/services/documents.service';
 import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { resolveImageUrl } from '@/utils/image';
-import { showToast } from '@/utils/toast';
 import { FormError } from '@/components/ui/FormError';
 import { Dialog, DialogFooter } from '@/components/ui/Dialog';
 import { useTimezones } from '@/utils/timezone';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 
 const profileValidationSchema = Yup.object({
   first_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
+    .matches(/^[A-Za-z\s\-.]+$/, 'Enter a valid name (letters only)')
     .required('First name is required'),
   last_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Enter a valid name (letters only)')
+    .matches(/^[A-Za-z\s\-.]+$/, 'Enter a valid name (letters only)')
     .required('Last name is required'),
   phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .matches(/^[0-9+\s.]*$/, 'Phone number must contain numbers and dial code')
     .min(5, 'Too short')
     .max(25, 'Too long'),
   emergency_phone: Yup.string()
-    .matches(/^[0-9+\s\.]*$/, 'Phone number must contain numbers and dial code')
+    .matches(/^[0-9+\s.]*$/, 'Phone number must contain numbers and dial code')
     .min(5, 'Too short')
     .max(25, 'Too long'),
   email: Yup.string().email('Invalid email'),
   bank_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.&]+$/, 'Bank name must contain only letters'),
+    .matches(/^[A-Za-z\s\-.&]+$/, 'Bank name must contain only letters'),
   account_name: Yup.string()
-    .matches(/^[A-Za-z\s\-\.]+$/, 'Account name must contain only letters'),
+    .matches(/^[A-Za-z\s\-.]+$/, 'Account name must contain only letters'),
   account_number: Yup.string()
     .test('digits-only', 'Account number must contain only digits', function (value) {
       if (!value) return true;
@@ -74,7 +73,7 @@ const profileValidationSchema = Yup.object({
 export const ProfilePage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { alert: showAlert } = useConfirm();
+  const { alert: showAlert, confirm } = useConfirm();
   const { timezones } = useTimezones();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -102,8 +101,8 @@ export const ProfilePage: React.FC = () => {
           return next;
         });
       }, 10000);
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to reveal field');
+    } catch (err: unknown) {
+      showToast.error((err as {message?: string}).message || 'Failed to reveal field');
     } finally {
       setRevealingField(null);
     }
@@ -143,7 +142,7 @@ export const ProfilePage: React.FC = () => {
     queryFn: () => usersService.getUsers({ search: profile?.email }),
     enabled: !!profile?.email,
   });
-  const usersList: any[] = usersResponse?.data || [];
+  const usersList: Record<string, unknown>[] = (usersResponse?.data || []) as unknown as Record<string, unknown>[];
 
   const [photoMenuOpen, setPhotoMenuOpen] = React.useState(false);
   const [viewPhotoOpen, setViewPhotoOpen] = React.useState(false);
@@ -157,7 +156,7 @@ export const ProfilePage: React.FC = () => {
 
   const removePhotoMutation = useMutation({
     mutationFn: () => usersService.removeProfilePhoto(),
-    onSuccess: (_updatedProfile) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       if (user) {
         const updatedUser = { ...user, profile_photo_url: undefined } as User;
@@ -167,8 +166,8 @@ export const ProfilePage: React.FC = () => {
       showToast.success('Profile photo removed');
       setPhotoMenuOpen(false);
     },
-    onError: (error: any) => {
-      showToast.error(error.message || 'Failed to remove photo');
+    onError: (error: unknown) => {
+      showToast.error((error as {message?: string}).message || 'Failed to remove photo');
     }
   });
 
@@ -232,24 +231,24 @@ export const ProfilePage: React.FC = () => {
       // Update global auth state
       if (user) {
         // The response from upload might be user object or { status, message, data: user }
-        const newPhotoUrl = updatedProfile.profile_photo_url || (updatedProfile as any).profile_photo_url;
+        const newPhotoUrl = updatedProfile.profile_photo_url || (updatedProfile as unknown as Record<string, unknown>).profile_photo_url;
         const updatedUser = { ...user, profile_photo_url: newPhotoUrl } as User;
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setAuthUser(updatedUser);
       }
       showToast.success('Profile photo updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       showAlert({
         title: 'Photo Upload Failed',
-        message: error.message || 'Failed to upload photo',
+        message: (error as {message?: string}).message || 'Failed to upload photo',
         confirmText: 'OK'
       });
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => usersService.updateMyProfile(data),
+    mutationFn: (data: Record<string, unknown>) => usersService.updateMyProfile(data),
     onSuccess: (updatedProfile) => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       // Update global auth state if current user updated their own profile
@@ -261,10 +260,10 @@ export const ProfilePage: React.FC = () => {
       setIsEditing(false);
       showToast.success('Profile updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       showAlert({
         title: 'Profile Update Failed',
-        message: error.response?.data?.message || error.message || 'Failed to update profile. Please try again.',
+        message: (error as {response?: {data?: {message?: string}}}).response?.data?.message || (error as {message?: string}).message || 'Failed to update profile. Please try again.',
         confirmText: 'OK'
       });
     }
@@ -317,7 +316,7 @@ export const ProfilePage: React.FC = () => {
 
   if (!profile) return <div>Profile not found</div>;
 
-  const employeeUuid = usersList.find((u: any) => u.id === profile?.id)?.employee_uuid || profile?.id;
+  const employeeUuid = usersList.find((u: Record<string, unknown>) => (u.id as string) === profile?.id)?.employee_uuid as string || profile?.id;
 
   const getDeptName = (id?: string) => departments.find(d => d.id === id)?.name || '-';
   const getDesigName = (id?: string) => designations.find(d => d.id === id)?.name || '-';
@@ -351,7 +350,10 @@ export const ProfilePage: React.FC = () => {
 
               {/* Photo Overlay / Toggle */}
               <div
+                role="button"
+                tabIndex={0}
                 onClick={() => setPhotoMenuOpen(!photoMenuOpen)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPhotoMenuOpen(!photoMenuOpen); } }}
                 className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               >
                 <div className="flex flex-col items-center">
@@ -501,8 +503,9 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 {isEditing ? (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Preferred Timezone</label>
+                    <label htmlFor="timezone" className="text-sm font-medium text-gray-700 dark:text-gray-200">Preferred Timezone</label>
                     <SearchableSelect
+                      id="timezone"
                       name="timezone"
                       value={formik.values.timezone}
                       onChange={(val) => formik.setFieldValue('timezone', val)}
@@ -649,6 +652,7 @@ export const ProfilePage: React.FC = () => {
             }
           >
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-inner">
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Camera preview, captions not applicable */}
               <video
                 ref={videoRef}
                 autoPlay
@@ -674,7 +678,16 @@ export const ProfilePage: React.FC = () => {
 
 // Helper Components
 
-const FormField = ({ label, id, type = 'text', formik, isEditing, required, options }: any) => {
+const FormField = ({ label, id, type = 'text', formik, isEditing, required, options }: {
+  label: string;
+  id: string;
+  type?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formik: any;
+  isEditing: boolean;
+  required?: boolean;
+  options?: (string | { label: string; value: string })[];
+}) => {
   const isError = formik.touched[id] && formik.errors[id];
 
   if (!isEditing) {
@@ -684,7 +697,7 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
   const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
     if (id === 'first_name' || id === 'last_name' || id === 'emergency_name') {
-      target.value = target.value.replace(/[^A-Za-z\s\-\.]/g, '');
+      target.value = target.value.replace(/[^A-Za-z\s\-.]/g, '');
     } else if (id === 'phone' || id === 'emergency_phone') {
       target.value = target.value.replace(/[^0-9+]/g, '');
     }
@@ -709,7 +722,7 @@ const FormField = ({ label, id, type = 'text', formik, isEditing, required, opti
           } bg-white dark:bg-gray-900`}
         >
           <option value="">Select {label}</option>
-          {options?.map((opt: any) => {
+          {options?.map((opt: string | { label: string; value: string }) => {
             const label = typeof opt === 'string' ? opt : opt.label;
             const value = typeof opt === 'string' ? opt : opt.value;
             return <option key={value} value={value}>{label}</option>;
@@ -763,7 +776,17 @@ const DisplayField = ({ label, value }: { label: string, value: string | undefin
 );
 
 // Sensitive form field with eye-icon reveal in display mode, regular input in edit mode
-const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedFields, revealingField, onReveal }: any) => {
+const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedFields, revealingField, onReveal }: {
+  label: string;
+  id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formik: any;
+  isEditing: boolean;
+  fieldName: string;
+  revealedFields: Record<string, string>;
+  revealingField: string | null;
+  onReveal: (fieldName: string) => Promise<void>;
+}) => {
   if (isEditing) {
     return <FormField label={label} id={id} formik={formik} isEditing={isEditing} />;
   }
@@ -808,6 +831,7 @@ const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedF
 };
 
 const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
+  const { t: _t } = useTranslation();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
@@ -837,9 +861,9 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
       queryClient.invalidateQueries({ queryKey: ['employee-documents', employeeId] });
       showToast.success('Document uploaded successfully');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Upload failed:', error);
-      const msg = error?.response?.data?.message || 'Failed to upload document';
+      const msg = (error as {response?: {data?: {message?: string}}}).response?.data?.message || 'Failed to upload document';
       showToast.error(msg);
     }
   });
@@ -879,7 +903,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
-            placeholder={t('common.searchDocuments')}
+            placeholder={_t('common.searchDocuments')}
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500/50 bg-transparent text-gray-900 dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -891,7 +915,7 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} />
             <Button onClick={() => fileInputRef.current?.click()} isLoading={uploadMutation.isPending} className="flex items-center gap-2">
               <Upload size={16} />
-              Upload {t('common.new')}
+              Upload {_t('common.new')}
             </Button>
           </>
         )}
@@ -901,38 +925,38 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
         {(() => {
           const columns = [
             {
-              header: t('common.documentName'),
-              cell: (doc: any) => (
+              header: _t('common.documentName'),
+              cell: (doc: Record<string, unknown>) => (
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-brand-500/10 rounded-lg text-brand-500">
                     <FileText size={18} />
                   </div>
-                  <span className="font-medium text-gray-900 dark:text-white">{doc.file_name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{doc.file_name as string}</span>
                 </div>
               ),
             },
             {
-              header: t('common.type'),
-              cell: (doc: any) => (
-                <span className="text-xs text-gray-500">{doc.file_type || t('common.unknown')}</span>
+              header: _t('common.type'),
+              cell: (doc: Record<string, unknown>) => (
+                <span className="text-xs text-gray-500">{doc.file_type as string || _t('common.unknown')}</span>
               ),
             },
             {
-              header: t('common.uploadedOn'),
-              cell: (doc: any) => (
-                <span className="text-xs text-gray-500">{format(new Date(doc.created_at), 'MMM d, yyyy')}</span>
+              header: _t('common.uploadedOn'),
+              cell: (doc: Record<string, unknown>) => (
+                <span className="text-xs text-gray-500">{format(new Date(doc.created_at as string), 'MMM d, yyyy')}</span>
               ),
             },
             {
-              header: t('common.actions'),
-              cell: (doc: any) => (
+              header: _t('common.actions'),
+              cell: (doc: Record<string, unknown>) => (
                 <div className="flex items-center justify-end gap-2">
                   <a
-                    href={doc.file_url}
+                    href={doc.file_url as string}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-                    title={t('common.download')}
+                    title={_t('common.download')}
                   >
                     <Download size={16} />
                   </a>
@@ -940,18 +964,18 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
                      <Button variant="ghost" 
                       onClick={async () => {
                         const result = await confirm({
-                          title: t('profile.deleteDocumentTitle'),
-                          message: t('profile.deleteDocumentMessage', { name: doc.file_name }),
+                          title: _t('profile.deleteDocumentTitle'),
+                          message: _t('profile.deleteDocumentMessage', { name: doc.file_name }),
                           type: 'destructive',
-                          confirmText: t('common.delete'),
-                          cancelText: t('common.cancel')
+                          confirmText: _t('common.delete'),
+                          cancelText: _t('common.cancel')
                         });
                         if (result) {
-                          deleteMutation.mutate(doc.id);
+                          deleteMutation.mutate(doc.id as string);
                         }
                       }}
                       className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600"
-                      title={t('common.delete')}
+                      title={_t('common.delete')}
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -963,10 +987,10 @@ const DocumentsTab = ({ employeeId }: { employeeId: string }) => {
           return (
             <DataTable
               columns={columns}
-              data={filteredDocs}
-              isLoading={isLoading}
+              data={filteredDocs as unknown as Record<string, unknown>[]}
+              loading={isLoading}
               pageSize={10}
-              emptyMessage={t('common.noDocuments')}
+              emptyMessage={_t('common.noDocuments')}
             />
           );
         })()}

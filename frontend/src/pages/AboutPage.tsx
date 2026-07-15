@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Users, Target, Heart, Shield, ArrowRight } from 'lucide-react';
+import { Target, Heart, Shield, ArrowRight } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const team = [
   { name: 'Arun Mehta', role: 'CEO & Co-Founder', avatar: 'AM', color: 'from-brand-500 to-brand-700', bio: 'Ex-Zoho, 15+ years in HR tech' },
@@ -132,7 +133,7 @@ export const AboutPage: React.FC = () => {
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">{t('marketing.about.ctaTitle')}</h2>
           <p className="text-neutral-300 mb-8">Join 10,000+ Indian businesses using WellZo.</p>
-          <Button variant="premium" size="xl" onClick={() => navigate('/pricing')}>
+          <Button variant="premium" size="xl" onClick={() => navigate(ROUTES.PRICING)}>
             {t('marketing.about.ctaButton')} <ArrowRight size={20} />
           </Button>
         </div>

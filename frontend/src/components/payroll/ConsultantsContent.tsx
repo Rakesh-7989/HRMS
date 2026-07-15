@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -45,6 +46,7 @@ interface Invoice {
 }
 
 export const ConsultantsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
@@ -94,13 +96,14 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Consultant added');
+            showToast.success(t('payroll.consultantAdded'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultants'] });
             setAddConsultantOpen(false);
             resetConsultantForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to add consultant');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error?.response?.data?.message || 'Failed to add consultant');
         }
     });
 
@@ -111,13 +114,14 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Invoice created');
+            showToast.success(t('payroll.invoiceCreated'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
             setAddInvoiceOpen(false);
             resetInvoiceForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to create invoice');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error?.response?.data?.message || 'Failed to create invoice');
         }
     });
 
@@ -128,7 +132,7 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Invoice approved');
+            showToast.success(t('payroll.invoiceApproved'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
         }
     });
@@ -140,7 +144,7 @@ export const ConsultantsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Invoice marked as paid');
+            showToast.success(t('payroll.invoicePaid'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'consultant-invoices'] });
         }
     });
@@ -161,7 +165,7 @@ export const ConsultantsContent: React.FC = () => {
 
     const handleCreateConsultant = () => {
         if (!name || !email) {
-            showToast.error('Name and email are required');
+            showToast.error(t('payroll.nameEmailRequired'));
             return;
         }
         createConsultantMutation.mutate({
@@ -175,7 +179,7 @@ export const ConsultantsContent: React.FC = () => {
 
     const handleCreateInvoice = () => {
         if (!selectedConsultant || !invoiceAmount) {
-            showToast.error('Consultant and amount are required');
+            showToast.error(t('payroll.consultantAmountRequired'));
             return;
         }
         createInvoiceMutation.mutate({

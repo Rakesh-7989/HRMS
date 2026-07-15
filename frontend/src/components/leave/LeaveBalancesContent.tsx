@@ -61,12 +61,12 @@ export const LeaveBalancesContent: React.FC = () => {
         },
     });
 
-    const handleSelectEmployee = (user: any) => {
+    const handleSelectEmployee = (user: { employee_uuid?: string; id: string; first_name?: string; last_name?: string; email: string; employee_id?: string }) => {
         setSelectedEmployee({
             id: user.employee_uuid || user.id,
-            name: `${user.first_name} ${user.last_name}`,
+            name: `${user.first_name || ''} ${user.last_name || ''}`,
             email: user.email,
-            code: user.employee_code,
+            code: user.employee_id,
         });
         setSearchQuery('');
     };
@@ -131,7 +131,7 @@ export const LeaveBalancesContent: React.FC = () => {
                                 <div className="p-4 text-center text-sm text-gray-500">{t('leave.noEmployeesFound')}</div>
                             ) : (
                                 <ul className="py-1">
-                                    {searchResults.map((user: any) => (
+                                    {searchResults.map((user: { id: string; employee_uuid?: string; first_name?: string; last_name?: string; email: string; employee_id?: string }) => (
                                         <li key={user.id}>
                                              <Button variant="ghost" 
                                                 className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -140,13 +140,13 @@ export const LeaveBalancesContent: React.FC = () => {
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="font-medium text-sm text-gray-900 dark:text-white">
-                                                            {user.first_name} {user.last_name}
+                                                            {(user.first_name || '')} {(user.last_name || '')}
                                                         </p>
                                                         <p className="text-xs text-gray-500">{user.email}</p>
                                                     </div>
-                                                    {user.employee_code && (
+                                                    {user.employee_id && (
                                                         <span className="text-[10px] font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-500">
-                                                            {user.employee_code}
+                                                            {user.employee_id}
                                                         </span>
                                                     )}
                                                 </div>

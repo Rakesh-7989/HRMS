@@ -7,7 +7,7 @@ import { auditService, AuditLog } from '@/services/audit.service';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 // Utility for polling
 function useInterval(callback: () => void, delay: number | null) {
@@ -134,7 +134,9 @@ export const ActivityPage: React.FC = () => {
       cell: (row: AuditLog) => {
         // More detailed summary
         if (row.old_data && row.new_data) {
-          const changes = Object.keys(row.new_data).filter(k => row.new_data[k] !== row.old_data[k]);
+          const oldData = row.old_data;
+          const newData = row.new_data;
+          const changes = Object.keys(newData).filter(k => newData[k] !== oldData[k]);
           return (
             <span className="text-xs text-muted">
               Changed: {changes.slice(0, 3).join(', ')} {changes.length > 3 ? `+${changes.length - 3} more` : ''}
@@ -224,7 +226,10 @@ export const ActivityPage: React.FC = () => {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             {/* Live Updates Toggle */}
             <div
+              role="button"
+              tabIndex={0}
               onClick={() => setIsLive(!isLive)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsLive(!isLive); } }}
               className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-elev-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
             >
               <span className="text-sm font-medium text-gray-700 dark:text-gray-200 select-none">Live Updates</span>

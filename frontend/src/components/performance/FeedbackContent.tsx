@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { performanceService, FeedbackRequest } from '@/services/performance.service';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { performanceService } from '@/services/performance.service';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { MessageSquare, Plus, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { showToast } from '@/utils/toast';

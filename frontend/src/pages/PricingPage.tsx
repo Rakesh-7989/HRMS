@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -17,10 +17,11 @@ import { ContactSalesModal } from '@/components/ContactSalesModal';
 import { SEO } from '@/components/SEO';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { ROUTES } from '@/utils/constants';
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: unknown;
   }
 }
 
@@ -47,7 +48,7 @@ const formatFeatureLabel = (key: string) => {
 
 const BillingCycleSelector: React.FC<{
   current: string;
-  onChange: (cycle: any) => void;
+  onChange: React.Dispatch<React.SetStateAction<string>>;
   availableCycles: string[];
 }> = ({ current, onChange, availableCycles }) => {
   return (
@@ -87,7 +88,7 @@ export const PricingPage: React.FC = () => {
   const [employeeCount] = React.useState<number>(1);
   const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
 
-  const getCategoryLabel = (key: string) => t('marketing.pricing.categories.' + key);
+  const getCategoryLabel = useCallback((key: string) => t('marketing.pricing.categories.' + key), [t]);
   const getPlanMeta = () => ({
     STANDARD: {
       subtitle: t('marketing.pricing.plans.STANDARD.subtitle'),
@@ -109,7 +110,7 @@ export const PricingPage: React.FC = () => {
     },
   });
 
-  const countEnabledFeatures = (features: Record<string, any>): string[] => {
+  const countEnabledFeatures = useCallback((features: Record<string, unknown>): string[] => {
     const enabledList: string[] = [];
     Object.entries(features).forEach(([category, value]) => {
       if (category === 'contact_sales') return;
@@ -127,7 +128,7 @@ export const PricingPage: React.FC = () => {
       }
     });
     return enabledList;
-  };
+  }, [t, getCategoryLabel]);
 
 // ── Feature Mapping (New Key -> DB Key) ──
 const featureMapping: Record<string, string> = {
@@ -192,7 +193,7 @@ const featureMapping: Record<string, string> = {
 const FeatureCategory: React.FC<{
   label: string;
   features: string[];
-  plans: any[];
+  plans: { id: string; name: string; features: Record<string, unknown>; prices?: { id: string; interval: string; unit_amount: number }[] }[];
   categoryKey: string;
 }> = ({ label, features, plans, categoryKey }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -202,7 +203,7 @@ const FeatureCategory: React.FC<{
     if (!plans) return [];
     return plans.filter(p => ['STANDARD', 'PREMIUM', 'ELITE'].includes(p.name))
       .sort((a, b) => {
-        const order: any = { 'STANDARD': 1, 'PREMIUM': 2, 'ELITE': 3 };
+        const order: Record<string, number> = { 'STANDARD': 1, 'PREMIUM': 2, 'ELITE': 3 };
         return order[a.name] - order[b.name];
       });
   }, [plans]);
@@ -263,7 +264,7 @@ const FeatureCategory: React.FC<{
                     </td>
                     {displayPlans.map((plan) => {
                       const dbKey = featureMapping[featureKey] || featureKey;
-                      const categoryFeatures = (plan.features as any)?.[categoryKey] || {};
+                      const categoryFeatures = plan.features?.[categoryKey] as Record<string, unknown> | undefined || {};
 
                       // Check for mapped value first, then fallback to plan-based logic for demo "wow" factor
                       let isEnabled = categoryFeatures[dbKey] === true;
@@ -342,10 +343,10 @@ const FeatureCategory: React.FC<{
 
       // Find price for current billing cycle
       // Backend returns 'prices' with 'interval'
-      const priceObj = plan.prices?.find((p: any) => p.interval === billingCycle);
+      const priceObj = plan.prices?.find((p) => (p as {interval: string}).interval === billingCycle);
 
       // Fallback to old variations if prices missing (backward comp)
-      const oldVar = plan.variations?.find((v: any) => v.frequency === billingCycle);
+      const oldVar = plan.variations?.find((v) => (v as {frequency: string}).frequency === billingCycle);
 
       // ---------------------------------------------------------
       // PRICING CALCULATION LOGIC (Corrected)
@@ -358,9 +359,9 @@ const FeatureCategory: React.FC<{
       let basePriceForCycle = 0; // Cost for 1 user for the full cycle (excl tax)
 
       // Find the exact price for the selected billing cycle
-      const exactPriceObj = plan.prices?.find((p: any) => p.interval === billingCycle);
+      const exactPriceObj = plan.prices?.find((p) => (p as {interval: string}).interval === billingCycle);
       // Find the MONTHLY price as fallback base
-      const monthlyPriceObj = plan.prices?.find((p: any) => p.interval === 'MONTHLY');
+      const monthlyPriceObj = plan.prices?.find((p) => (p as {interval: string}).interval === 'MONTHLY');
 
       if (exactPriceObj) {
         // Case 1: Exact price exists for this cycle in DB (e.g. Premium QUARTERLY = 201)
@@ -383,7 +384,7 @@ const FeatureCategory: React.FC<{
       if (plan.name === 'CUSTOM' && setupFee === 0) setupFee = 10000;
 
       // Calculate Totals
-      let totalBeforeTax = basePriceForCycle * employeeCount;
+      const totalBeforeTax = basePriceForCycle * employeeCount;
 
       const discountedTotal = totalBeforeTax;
 
@@ -417,25 +418,25 @@ const FeatureCategory: React.FC<{
         duration: durationMonths,
         popular: isMiddlePlan,
         maxEmployees: plan.max_employees,
-        features: countEnabledFeatures(plan.features),
+        features: countEnabledFeatures(plan.features as unknown as Record<string, unknown>),
       };
     });
-  }, [plans, billingCycle, employeeCount]);
+  }, [plans, billingCycle, employeeCount, countEnabledFeatures]);
 
   const availableCycles = React.useMemo(() => {
     const cycles = new Set<string>();
     plans?.forEach(p => {
-      p.prices?.forEach((pr: any) => cycles.add(pr.interval));
-      p.variations?.forEach((v: any) => cycles.add(v.frequency));
+      p.prices?.forEach((pr) => { cycles.add(pr.interval); });
+      p.variations?.forEach((v) => { cycles.add(v.frequency); });
     });
     const available = Array.from(cycles).sort((a, b) => {
-      const order: any = { 'MONTHLY': 1, 'QUARTERLY': 2, 'HALF_YEARLY': 3, 'YEARLY': 4 };
+      const order: Record<string, number> = { 'MONTHLY': 1, 'QUARTERLY': 2, 'HALF_YEARLY': 3, 'YEARLY': 4 };
       return order[a] - order[b];
     });
     return available.length > 0 ? available : ['MONTHLY', 'YEARLY'];
   }, [plans]);
 
-  const handlePlanSelection = async (plan: any) => {
+  const handlePlanSelection = async (plan: Record<string, unknown>) => {
     const couponQuery = '';
     if (!isTenantAdmin) {
       if (tenantId) {
@@ -447,11 +448,12 @@ const FeatureCategory: React.FC<{
     }
 
     try {
-      const result = await subscriptionService.createOrder(plan.id, billingCycle, employeeCount);
+      const result = await subscriptionService.createOrder(plan.id as string, billingCycle, employeeCount);
       
       if (result.payment_session_id) {
           // Initialize Cashfree
-          const cashfree = (window as any).Cashfree({
+          const Cashfree = (window as unknown as Record<string, unknown>).Cashfree as (config: Record<string, unknown>) => { checkout: (config: Record<string, unknown>) => Promise<void> };
+          const cashfree = Cashfree({
               mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox'
           });
 
@@ -464,8 +466,8 @@ const FeatureCategory: React.FC<{
       } else {
         showToast.success(t('marketing.pricing.subscriptionInitiated'));
       }
-    } catch (error: any) {
-      setErrorConfig({ isOpen: true, title: t('marketing.pricing.actionFailed'), message: error.message || t('marketing.pricing.errorInitiatingPayment') });
+    } catch (error: unknown) {
+      setErrorConfig({ isOpen: true, title: t('marketing.pricing.actionFailed'), message: (error as {message?: string}).message || t('marketing.pricing.errorInitiatingPayment') });
     }
   };
 
@@ -479,7 +481,7 @@ return (
       <div className="h-screen overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white selection:bg-brand-500/30 transition-colors duration-300">
         <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="flex items-center gap-2 cursor-pointer" role="button" tabIndex={0} onClick={() => navigate(ROUTES.HOME)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(ROUTES.HOME); } }}>
               <AnimatedLogo size="sm" />
             </div>
             <div className="flex items-center gap-6">
@@ -497,7 +499,7 @@ return (
               ) : (
                 <div className="flex items-center gap-6">
                   <ThemeToggle />
-                   <Button variant="ghost" onClick={() => navigate('/login')} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">{t('marketing.hero.signIn')}</Button>
+                   <Button variant="ghost" onClick={() => navigate(ROUTES.LOGIN)} className="text-xs font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-colors">{t('marketing.hero.signIn')}</Button>
                 </div>
               )}
             </div>
@@ -734,7 +736,7 @@ return (
                 key={category}
                 label={getCategoryLabel(category)}
                 features={features}
-                plans={plans || []}
+                plans={plans as unknown as { id: string; name: string; features: Record<string, unknown>; prices?: { id: string; interval: string; unit_amount: number }[] }[] || []}
                 categoryKey={category}
               />
             ))}

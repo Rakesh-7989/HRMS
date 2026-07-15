@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { tenantRegistrationService } from '@/services/tenantRegistration.service';
 import api from '@/services/api';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const STORAGE_KEY = 'WellZo_registration_draft';
 
@@ -30,8 +31,8 @@ export const RegisterPage: React.FC = () => {
     const [otpCode, setOtpCode] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [planData, setPlanData] = useState<any>(null);
-    const [couponData, setCouponData] = useState<any>(null);
+    const [planData, setPlanData] = useState<Record<string, unknown> | null>(null);
+    const [couponData, setCouponData] = useState<Record<string, unknown> | null>(null);
 
 
     React.useEffect(() => {
@@ -111,9 +112,9 @@ export const RegisterPage: React.FC = () => {
 
                 // If all good, proceed to review
                 setStep('review');
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Submission error in Step 1:", err);
-                setError(err?.response?.data?.message || t('registration.verifyFailed'));
+                setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || t('registration.verifyFailed'));
             } finally {
                 setLoading(false);
             }
@@ -130,7 +131,7 @@ export const RegisterPage: React.FC = () => {
         if (idToFetch) {
             import('@/services/superAdmin.service').then(({ superAdminService }) => {
                 superAdminService.getPlans().then(plans => {
-                    const plan = plans.find((p: any) => p.id === idToFetch);
+                    const plan = plans.find((p: Record<string, unknown>) => p.id === idToFetch);
                     if (plan) setPlanData(plan);
                 });
             });
@@ -144,7 +145,7 @@ export const RegisterPage: React.FC = () => {
                 })
                 .catch(console.error);
         }
-    }, [planId, formik.values.planId, formik.values.coupon]);
+    }, [planId, formik.values.planId, formik.values.coupon, couponData]);
 
     const handleDomainBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
         formik.handleBlur(e);
@@ -190,10 +191,10 @@ export const RegisterPage: React.FC = () => {
                 setCouponData(response.data.data);
                 setError(null);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             setCouponData(null);
             // We don't block the form for an invalid coupon, just show error
-            setError(err?.response?.data?.message || t('registration.invalidCoupon'));
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || t('registration.invalidCoupon'));
         }
     };
 
@@ -203,8 +204,8 @@ export const RegisterPage: React.FC = () => {
         try {
             await tenantRegistrationService.sendOtp(formik.values.email, formik.values.domain, formik.values.phone);
             setStep('otp');
-        } catch (err: any) {
-            setError(err?.response?.data?.message || t('registration.sendOtpFailed'));
+        } catch (err: unknown) {
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || t('registration.sendOtpFailed'));
         } finally {
             setLoading(false);
         }
@@ -215,8 +216,8 @@ export const RegisterPage: React.FC = () => {
         setLoading(true);
         try {
             await tenantRegistrationService.sendOtp(formik.values.email, formik.values.domain, formik.values.phone);
-        } catch (err: any) {
-            setError(err?.response?.data?.message || t('registration.resendOtpFailed'));
+        } catch (err: unknown) {
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || t('registration.resendOtpFailed'));
         } finally {
             setLoading(false);
         }
@@ -235,30 +236,31 @@ export const RegisterPage: React.FC = () => {
             const response = await tenantRegistrationService.registerTenant({
                 ...formik.values,
                 plan_id: formik.values.planId || planId || undefined,
-                billing_cycle: cycle as any || formik.values.cycle || 'MONTHLY',
+                billing_cycle: cycle || formik.values.cycle || 'MONTHLY',
                 employee_count: formik.values.employee_count,
                 coupon_code: formik.values.coupon || undefined
             });
 
-            const resultData = response.data;
-            const paymentRequired = resultData?.paymentRequired;
-            const paymentData = resultData?.paymentData;
+            const resultData = response.data as Record<string, unknown>;
+            const paymentRequired = resultData?.paymentRequired as boolean;
+            const paymentData = resultData?.paymentData as Record<string, unknown>;
 
             if (paymentRequired && paymentData) {
                 // If amount is 0, backend might say skip_checkout
-                if ((paymentData as any).skip_checkout) {
+                if ((paymentData as Record<string, unknown>).skip_checkout) {
                     try {
-                        await tenantRegistrationService.verifyPaymentPublic((paymentData as any).order_id);
+                        await tenantRegistrationService.verifyPaymentPublic((paymentData as Record<string, unknown>).order_id as string);
                         setStep('success');
                     } catch (vErr) {
                         console.error('Verification failed for free subscription:', vErr);
-                        navigate(`/payment-success?order_id=${(paymentData as any).order_id}`);
+                        navigate(`/payment-success?order_id=${(paymentData as Record<string, unknown>).order_id}`);
                     }
                     return;
                 }
 
                 try {
-                    const cashfree = (window as any).Cashfree({ mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox' });
+                    const Cashfree = (window as unknown as Record<string, unknown>).Cashfree as (config: Record<string, unknown>) => { checkout: (config: Record<string, unknown>) => Promise<void> };
+                    const cashfree = Cashfree({ mode: import.meta.env.VITE_CASHFREE_ENVIRONMENT || 'sandbox' });
                     await cashfree.checkout({
                         paymentSessionId: paymentData.payment_session_id,
                         redirectTarget: "_self"
@@ -267,24 +269,24 @@ export const RegisterPage: React.FC = () => {
                     console.error('Cashfree SDK Error:', cfErr);
                     // Fallback to manual payment page if SDK fails
                     const params = new URLSearchParams({
-                        tenant_id: resultData.tenantId,
-                        email: resultData.adminEmail
+                        tenant_id: resultData.tenantId as string,
+                        email: resultData.adminEmail as string
                     });
                     window.location.href = `/complete-payment?${params.toString()}`;
                 }
             } else if (paymentRequired) {
                 console.warn('Payment required but paymentData missing. Redirecting to recovery page.');
                 const params = new URLSearchParams({
-                    tenant_id: resultData.tenantId,
-                    email: resultData.adminEmail
+                    tenant_id: resultData.tenantId as string,
+                    email: resultData.adminEmail as string
                 });
                 window.location.href = `/complete-payment?${params.toString()}`;
             } else {
                 setStep('success');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Registration/Verification Error:', err);
-            setError(err?.response?.data?.message || t('registration.registrationFailed'));
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || t('registration.registrationFailed'));
         } finally {
             setLoading(false);
         }
@@ -308,17 +310,17 @@ export const RegisterPage: React.FC = () => {
         else if (currentCycle === 'HALF_YEARLY') duration = 6;
         else if (currentCycle === 'YEARLY') duration = 12;
 
-        const isPremium = planData?.name?.toUpperCase() === 'PREMIUM' || planId?.includes('premium') || formik.values.planId?.includes('premium');
+        const isPremium = (planData?.name as string)?.toUpperCase() === 'PREMIUM' || planId?.includes('premium') || formik.values.planId?.includes('premium');
         
         // Correct realistic fallbacks based on your pricing configuration
         const fallbackUnitPrice = isPremium ? 70 : 55;
         const fallbackSetup = isPremium ? 6000 : 5000;
 
-        const periodPriceEntry = planData?.prices?.find((p: any) => p.interval === currentCycle);
-        let basePrice = parseFloat(periodPriceEntry?.unit_amount || planData?.current_price || planData?.price || fallbackUnitPrice);
+        const periodPriceEntry = (planData?.prices as Record<string, unknown>[])?.find((p: Record<string, unknown>) => p.interval === currentCycle);
+        let basePrice = parseFloat(periodPriceEntry?.unit_amount as string || planData?.current_price as string || planData?.price as string || fallbackUnitPrice.toString());
         if (basePrice <= 0) basePrice = fallbackUnitPrice;
 
-        let setupFee = parseFloat(planData?.setup_fee || 0);
+        let setupFee = parseFloat(planData?.setup_fee as string || '0');
         // Use the official setup fee from the DB if available, else use the verified fallbacks
         if (setupFee <= 0) setupFee = fallbackSetup;
 
@@ -328,9 +330,9 @@ export const RegisterPage: React.FC = () => {
         let discount = 0;
         if (couponData) {
             if (couponData.discount_type === 'PERCENT') {
-                discount = Math.ceil((totalTaxable * couponData.discount_value) / 100);
+                discount = Math.ceil((totalTaxable * (couponData.discount_value as number)) / 100);
             } else {
-                discount = Math.min(totalTaxable, couponData.discount_value);
+                discount = Math.min(totalTaxable, couponData.discount_value as number);
             }
         }
 
@@ -460,14 +462,14 @@ export const RegisterPage: React.FC = () => {
                                                     <label className="block text-[10px] font-black uppercase text-[#e9f225] bg-[#e9f225]/10 px-2 py-0.5 rounded italic mb-1 ml-1 tracking-widest w-fit">{t('registration.couponCode')}</label>
                                                     <input name="coupon" value={formik.values.coupon} onChange={formik.handleChange} onBlur={handleCouponBlur}
                                                         className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border-2 border-dashed ${couponData ? 'border-green-500 bg-green-500/5' : 'border-[#e9f225]/30'} focus:border-[#e9f225] outline-none text-sm transition-all uppercase placeholder:normal-case font-bold`} placeholder={t('registration.couponPlaceholder')} />
-                                                    {couponData && <p className="text-[9px] text-green-500 mt-1 ml-1 font-black italic uppercase italic">✓ {t('registration.appliedDiscount', { discount: couponData.discount_type === 'PERCENT' ? `${couponData.discount_value}% Off` : `₹${couponData.discount_value} Off` })}</p>}
+                                                    {couponData && <p className="text-[9px] text-green-500 mt-1 ml-1 font-black italic uppercase italic">✓ {t('registration.appliedDiscount', { discount: (couponData.discount_type as string) === 'PERCENT' ? `${couponData.discount_value as number}% Off` : `₹${couponData.discount_value as number} Off` })}</p>}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-white/10">
-                                         <Button variant="ghost" type="button" onClick={() => navigate('/pricing')} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-500 transition-all">
+                                         <Button variant="ghost" type="button" onClick={() => navigate(ROUTES.PRICING)} className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-brand-500 transition-all">
                                             <ArrowLeft size={16} /> {t('registration.abort')}
                                         </Button>
                                         <Button type="submit" isLoading={loading} className="h-12 px-12 rounded-xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/30 animate-in fade-in slide-in-from-right-4">
@@ -501,7 +503,7 @@ export const RegisterPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">{t('registration.plan')}</span>
-                                                <span className="text-xs font-black text-brand-500 uppercase italic">{planData?.name || t('registration.standard')}</span>
+                                                <span className="text-xs font-black text-brand-500 uppercase italic">{(planData?.name as string) || t('registration.standard')}</span>
                                             </div>
                                             <div className="flex justify-between border-b border-gray-100 dark:border-white/5 pb-1.5">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">{t('registration.cycle')}</span>
@@ -615,7 +617,7 @@ export const RegisterPage: React.FC = () => {
                                 <CheckCircle2 className="text-green-500 mx-auto mb-8" size={80} />
                                 <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tighter">{t('registration.welcomeAboard')}</h1>
                                 <p className="text-lg text-gray-500 dark:text-gray-400 mb-10 max-w-sm mx-auto font-bold italic leading-relaxed">{t('registration.orgActive')}</p>
-                                <Button onClick={() => navigate('/login')} className="px-12 h-14 rounded-2xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/20">{t('registration.goToDashboard')}</Button>
+                                <Button onClick={() => navigate(ROUTES.LOGIN)} className="px-12 h-14 rounded-2xl text-sm font-black tracking-widest uppercase shadow-elev-5 shadow-brand-500/20">{t('registration.goToDashboard')}</Button>
                             </div>
                         )}
                     </div>

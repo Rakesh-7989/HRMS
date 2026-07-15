@@ -33,7 +33,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const CalendarContent: React.FC = () => {
     const { t } = useTranslation();
-    const { user: _user } = useAuth();
+    useAuth();
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -130,8 +130,9 @@ export const CalendarContent: React.FC = () => {
             setImportStatus({ type: 'success', message: `Successfully imported ${data.imported} holidays for ${data.years.join(', ')}` });
             setImportFile(null);
         },
-        onError: (error: any) => {
-            setImportStatus({ type: 'error', message: error?.response?.data?.message || error.message || 'Import failed' });
+        onError: (error: unknown) => {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            setImportStatus({ type: 'error', message: err.response?.data?.message || err.message || 'Import failed' });
         }
     });
 
@@ -216,7 +217,7 @@ export const CalendarContent: React.FC = () => {
                         <Button
                             onClick={prevMonth}
                             variant="ghost"
-                            size="icon"
+                            size="sm"
                             aria-label="Previous month"
                         >
                             <ChevronLeft size={16} />
@@ -231,7 +232,7 @@ export const CalendarContent: React.FC = () => {
                         <Button
                             onClick={nextMonth}
                             variant="ghost"
-                            size="icon"
+                            size="sm"
                             aria-label="Next month"
                         >
                             <ChevronRight size={16} />
@@ -583,6 +584,9 @@ export const CalendarContent: React.FC = () => {
                     <div className="space-y-6 mt-4">
                         {/* Drag & Drop Area */}
                         <div
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { fileInputRef.current?.click(); } }}
                             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={(e) => {

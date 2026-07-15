@@ -1,7 +1,7 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE' | (string & {});
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'HR' | 'MANAGER' | 'EMPLOYEE' | string;
 export interface TenantSettings {
   logo_url?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface User {
@@ -64,6 +64,8 @@ export interface AuthResponse {
   user: User;
   planType?: number;
   mustChangePassword?: boolean;
+  status?: string;
+  preAuthToken?: string;
 }
 
 export interface LoginCredentials {
@@ -72,7 +74,7 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   status: 'success' | 'error';
   message?: string;
   data?: T;
@@ -87,17 +89,17 @@ export interface DashboardMetrics {
   attendanceRate?: number;
   leaveBalance?: number;
   upcomingHolidays?: number;
-  recentActivity?: any[];
+  recentActivity?: Record<string, unknown>[];
 }
 
 export interface DashboardData {
   metrics: DashboardMetrics;
   charts?: {
-    attendance?: any[];
-    leaves?: any[];
-    department?: any[];
+    attendance?: Record<string, unknown>[];
+    leaves?: Record<string, unknown>[];
+    department?: Record<string, unknown>[];
   };
-  recent?: any[];
+  recent?: Record<string, unknown>[];
 }
 
 export type AssetStatus = 'AVAILABLE' | 'ASSIGNED' | 'UNDER_REPAIR' | 'RETIRED' | 'REQUESTED' | 'DOA' | 'LOST' | 'WRITTEN_OFF' | 'DISPOSED';

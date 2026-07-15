@@ -138,8 +138,9 @@ export const StatutorySettingsContent: React.FC = () => {
             showToast.success(t('payroll.statutory.toast.configSaved'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'statutory-config'] });
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.saveFailed'));
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error.response?.data?.message || t('payroll.statutory.toast.saveFailed'));
         }
     });
 
@@ -155,8 +156,9 @@ export const StatutorySettingsContent: React.FC = () => {
             setAddPtOpen(false);
             resetPtForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.ptSlabAddFailed'));
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error.response?.data?.message || t('payroll.statutory.toast.ptSlabAddFailed'));
         }
     });
 
@@ -184,8 +186,9 @@ export const StatutorySettingsContent: React.FC = () => {
             setAddDeductionOpen(false);
             resetDeductionForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || t('payroll.statutory.toast.deductionAddFailed'));
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error.response?.data?.message || t('payroll.statutory.toast.deductionAddFailed'));
         }
     });
 

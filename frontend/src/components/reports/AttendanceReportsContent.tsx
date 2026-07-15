@@ -323,7 +323,7 @@ export const AttendanceReportsContent: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <Label className="text-sm font-medium">Time Period</Label>
-                            <RadioGroup value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
+                            <RadioGroup value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as '7d' | '30d' | '90d' | 'custom')}>
                                 <div className="flex gap-4 mt-2">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="7d" id="7d" />
@@ -362,7 +362,7 @@ export const AttendanceReportsContent: React.FC = () => {
                         {selectedView === 'reports' && (
                             <div>
                                 <Label className="text-sm font-medium">Report Type</Label>
-                                <RadioGroup value={reportType} onValueChange={(value: any) => setReportType(value)}>
+                                <RadioGroup value={reportType} onValueChange={(value) => setReportType(value as 'summary' | 'detailed' | 'compliance' | 'trends')}>
                                     <div className="flex gap-4 mt-2">
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="summary" id="summary" />

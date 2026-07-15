@@ -36,7 +36,7 @@ export const deleteShift = async (id: string): Promise<void> => {
     await api.delete(`/shifts/${id}`);
 };
 
-export const assignShift = async (shiftId: string, employeeIds: string[], assignToAll: boolean): Promise<any> => {
+export const assignShift = async (shiftId: string, employeeIds: string[], assignToAll: boolean): Promise<{ status: string; data: unknown }> => {
     const response = await api.post('/shifts/assign', { shiftId, employeeIds, assignToAll });
     return response.data;
 };

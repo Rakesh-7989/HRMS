@@ -3,7 +3,8 @@ const db = require("../../../config/db");
 const { format } = require('date-fns');
 
 const generateForm16PartB = async (tenantId, employeeId, fy) => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
+        (async () => {
         try {
             // 1. Fetch Employee Details
             const empRes = await db.query(
@@ -214,6 +215,7 @@ const generateForm16PartB = async (tenantId, employeeId, fy) => {
             });
             reject(error);
         }
+        })();
     });
 };
 

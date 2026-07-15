@@ -82,7 +82,9 @@ export const adminService = {
                         ...(data.settings || {})
                     }
                 };
-            } catch (e) { }
+            } catch (e) {
+                console.error('Error updating tenant profile in localStorage:', e);
+            }
         }
 
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
@@ -93,7 +95,7 @@ export const adminService = {
         } catch (err) {
             console.warn('Backend profile update failed, used localStorage fallback.', err);
             // Suppress error if it's a 404/405/501 (not implemented) to avoid user frustration
-            const status = (err as any).response?.status;
+            const status = err instanceof Error ? (err as { response?: { status?: number } }).response?.status : undefined;
             if (status === 404 || status === 405 || status === 501) {
                 return;
             }
@@ -104,7 +106,7 @@ export const adminService = {
     uploadTenantLogo: async (file: File): Promise<{ logo_url: string }> => {
         const formData = new FormData();
         formData.append('logo', file);
-        const response = await api.put<any>('/admin/tenant/logo', formData, {
+        const response = await api.put('/admin/tenant/logo', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -125,7 +127,9 @@ export const adminService = {
                     }
                 };
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-            } catch (e) { }
+            } catch (e) {
+                console.error('Error saving logo URL to localStorage:', e);
+            }
         }
 
         return logoData;
@@ -147,7 +151,9 @@ export const adminService = {
                     }
                 };
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-            } catch (e) { }
+            } catch (e) {
+                console.error('Error deleting logo URL from localStorage:', e);
+            }
         }
     }
 };

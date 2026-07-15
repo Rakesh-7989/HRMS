@@ -42,6 +42,22 @@ const chatRouter = require('../modules/chat/chat.router');
 const commonRouter = require('../modules/common/common.router');
 const router = express.Router();
 
+const { pool } = require('../config/database');
+
+// Health check (no auth, for monitoring)
+router.get('/health', async (req, res) => {
+  const health = { status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() };
+  try {
+    await pool.query('SELECT 1');
+    health.database = 'connected';
+  } catch {
+    health.database = 'disconnected';
+    health.status = 'degraded';
+  }
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
+});
+
 // Always attach RLS/ALS context
 router.use(dbSessionContext);
 

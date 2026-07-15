@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Search, Calendar, Clock, ArrowRight, Tag, ChevronRight } from 'lucide-react';
+import { Search, Calendar, Clock, ArrowRight, ChevronRight } from 'lucide-react';
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { SEO } from '@/components/SEO';
 import { useTranslation } from 'react-i18next';
-import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 interface BlogPost {
   slug: string;
@@ -149,7 +149,7 @@ export const BlogListPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link to="/features" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">{t('marketing.nav.features')}</Link>
             <Link to="/pricing" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-medium">{t('marketing.nav.pricing')}</Link>
-            <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>{t('marketing.hero.ctaPrimary')}</Button>
+            <Button variant="premium" size="sm" onClick={() => navigate(ROUTES.PRICING)}>{t('marketing.hero.ctaPrimary')}</Button>
           </div>
         </div>
       </nav>
@@ -233,7 +233,6 @@ export const BlogListPage: React.FC = () => {
 
 export const BlogPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const post = posts.find(p => p.slug === slug);
 
   if (!post) {

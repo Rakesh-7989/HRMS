@@ -12,7 +12,7 @@ interface ConfirmContextType {
 const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 export const ConfirmProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [dialogConfig, setDialogConfig] = useState<(ConfirmOptions & { resolve: (val: any) => void }) | null>(null);
+    const [dialogConfig, setDialogConfig] = useState<(ConfirmOptions & { resolve: (val: string | boolean | undefined) => void }) | null>(null);
 
     const confirm = useCallback((options: ConfirmOptions) => {
         return new Promise<string | boolean | undefined>((resolve) => {
@@ -38,7 +38,7 @@ export const ConfirmProvider: React.FC<{ children: ReactNode }> = ({ children })
             setDialogConfig({
                 ...options,
                 type: 'prompt',
-                resolve,
+                resolve: resolve as (val: string | boolean | undefined) => void,
             });
         });
     }, []);
@@ -60,18 +60,23 @@ export const ConfirmProvider: React.FC<{ children: ReactNode }> = ({ children })
     return (
         <ConfirmContext.Provider value={{ confirm, alert, prompt }}>
             {children}
-            {dialogConfig && (
-                <ConfirmDialog
-                    isOpen={!!dialogConfig}
-                    onClose={handleClose}
-                    onConfirm={handleConfirm}
-                    {...dialogConfig}
-                />
-            )}
+            {dialogConfig && (() => {
+                const { resolve, ...safeProps } = dialogConfig;
+                void resolve;
+                return (
+                    <ConfirmDialog
+                        isOpen={!!dialogConfig}
+                        onClose={handleClose}
+                        onConfirm={handleConfirm}
+                        {...safeProps}
+                    />
+                );
+            })()}
         </ConfirmContext.Provider>
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useConfirm = () => {
     const context = useContext(ConfirmContext);
     if (!context) {

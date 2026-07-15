@@ -59,10 +59,10 @@ const TenantsPage = React.lazy(() => import('@/pages/TenantsPage').then(m => ({ 
 const PlansPage = React.lazy(() => import('@/pages/PlansPage').then(m => ({ default: m.PlansPage })));
 const CouponsPage = React.lazy(() => import('@/pages/CouponsPage').then(m => ({ default: m.CouponsPage })));
 const RolesPermissionsPage = React.lazy(() => import('@/pages/RolesPermissionsPage').then(m => ({ default: m.RolesPermissionsPage })));
-const OrganisationPage = React.lazy(() => import('@/pages/OrganisationPage'));
+const OrganisationPage = React.lazy(() => import('@/pages/OrganisationPage').then(m => ({ default: m.OrganisationPage })));
 const ShiftsPage = React.lazy(() => import('@/pages/organization/ShiftsPage').then(m => ({ default: m.ShiftsPage })));
 const ShiftRosterPage = React.lazy(() => import('@/pages/organization/ShiftRosterPage').then(m => ({ default: m.ShiftRosterPage })));
-const InboxPage = React.lazy(() => import('./pages/InboxPage'));
+const InboxPage = React.lazy(() => import('@/pages/InboxPage').then(m => ({ default: m.InboxPage })));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage').then(m => ({ default: m.ChatPage })));
 const PerformancePage = React.lazy(() => import('@/pages/performance/PerformancePage').then(m => ({ default: m.PerformancePage })));
 const RecruitmentPage = React.lazy(() => import('@/pages/recruitment/RecruitmentPage').then(m => ({ default: m.RecruitmentPage })));
@@ -72,25 +72,25 @@ const ComplianceReportsPage = React.lazy(() => import('@/pages/compliance/Compli
 const AIInsightsPage = React.lazy(() => import('@/pages/ai/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 
 // Payroll
-const Payroll = React.lazy(() => import('@/pages/Payroll'));
+const Payroll = React.lazy(() => import('@/pages/Payroll').then(m => ({ default: m.Payroll })));
 const PayrollDashboard = React.lazy(() => import('@/pages/payroll/PayrollDashboard').then(m => ({ default: m.PayrollDashboard })));
 const RiverProcess = React.lazy(() => import('@/pages/payroll/RiverProcess').then(m => ({ default: m.RiverProcess })));
-const FnFSettlementsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementsPage'));
-const FnFSettlementDetailsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementDetailsPage'));
+const FnFSettlementsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementsPage').then(m => ({ default: m.FnFSettlementsPage })));
+const FnFSettlementDetailsPage = React.lazy(() => import('@/pages/payroll/FnFSettlementDetailsPage').then(m => ({ default: m.FnFSettlementDetailsPage })));
 const ArrearsPage = React.lazy(() => import('@/pages/payroll/ArrearsPage').then(m => ({ default: m.ArrearsPage })));
-const PayRunPage = React.lazy(() => import('@/pages/payroll/PayRunPage'));
-const SalaryTemplatesPage = React.lazy(() => import('@/pages/payroll/SalaryTemplatesPage'));
-const StatutoryPage = React.lazy(() => import('@/pages/payroll/StatutoryPage'));
-const TaxDeclarationsPage = React.lazy(() => import('@/pages/payroll/TaxDeclarationsPage'));
+const PayRunPage = React.lazy(() => import('@/pages/payroll/PayRunPage').then(m => ({ default: m.PayRunPage })));
+const SalaryTemplatesPage = React.lazy(() => import('@/pages/payroll/SalaryTemplatesPage').then(m => ({ default: m.SalaryTemplatesPage })));
+const StatutoryPage = React.lazy(() => import('@/pages/payroll/StatutoryPage').then(m => ({ default: m.StatutoryPage })));
+const TaxDeclarationsPage = React.lazy(() => import('@/pages/payroll/TaxDeclarationsPage').then(m => ({ default: m.TaxDeclarationsPage })));
 
 // Payroll standalone pages
 const PayslipsPage = React.lazy(() => import('@/pages/PayslipsPage').then(m => ({ default: m.PayslipsPage })));
-const SalaryDetailsPage = React.lazy(() => import('@/pages/SalaryDetailsPage'));
-const ExpensesPage = React.lazy(() => import('@/pages/ExpensesPage'));
-const LoansPage = React.lazy(() => import('@/pages/LoansPage'));
-const LoanTypesPage = React.lazy(() => import('@/pages/LoanTypesPage'));
-const MerchantsPage = React.lazy(() => import('@/pages/MerchantsPage'));
-const CostCentersPage = React.lazy(() => import('@/pages/CostCentersPage'));
+const SalaryDetailsPage = React.lazy(() => import('@/pages/SalaryDetailsPage').then(m => ({ default: m.SalaryDetailsPage })));
+const ExpensesPage = React.lazy(() => import('@/pages/ExpensesPage').then(m => ({ default: m.ExpensesPage })));
+const LoansPage = React.lazy(() => import('@/pages/LoansPage').then(m => ({ default: m.LoansPage })));
+const LoanTypesPage = React.lazy(() => import('@/pages/LoanTypesPage').then(m => ({ default: m.LoanTypesPage })));
+const MerchantsPage = React.lazy(() => import('@/pages/MerchantsPage').then(m => ({ default: m.MerchantsPage })));
+const CostCentersPage = React.lazy(() => import('@/pages/CostCentersPage').then(m => ({ default: m.CostCentersPage })));
 const SubscriptionPage = React.lazy(() => import('@/pages/SubscriptionPage').then(m => ({ default: m.SubscriptionPage })));
 
 // Asset sub-pages
@@ -128,6 +128,7 @@ import {
 
 
 // Smart redirect component
+// eslint-disable-next-line react-refresh/only-export-components
 const DashboardRedirect = () => {
   const { user, loading } = useAuth();
 

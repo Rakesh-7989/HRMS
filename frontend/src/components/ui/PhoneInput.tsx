@@ -8,7 +8,7 @@ interface PhoneInputProps {
   name: string;
   value: string;
   onChange: (value: string) => void;
-  onBlur?: (e: any) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   error?: boolean;
   placeholder?: string;
   className?: string;
@@ -30,7 +30,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     const match = countries.sort((a, b) => b.dial_code.length - a.dial_code.length)
       .find(c => value.startsWith(c.dial_code));
     return match || countries.find(c => c.code === 'IN') || countries[0];
-  }, []);
+  }, [value]);
 
   const [selectedCountry, setSelectedCountry] = useState<Country>(initialCountry);
   const [isOpen, setIsOpen] = useState(false);
@@ -103,7 +103,6 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  autoFocus
                   type="text"
                   placeholder="Search country or code..."
                   value={search}

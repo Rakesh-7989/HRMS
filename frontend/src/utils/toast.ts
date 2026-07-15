@@ -19,15 +19,15 @@ export const showToast = {
             },
         });
     },
-    error: (error: any) => {
+    error: (error: unknown) => {
         let message = 'An error occurred';
 
         if (typeof error === 'string') {
             message = error;
-        } else if (error?.response?.data?.message) {
-            message = error.response.data.message;
-        } else if (error?.message) {
-            message = error.message;
+        } else if ((error as { response?: { data?: { message?: string } } })?.response?.data?.message) {
+            message = (error as { response: { data: { message: string } } }).response.data.message;
+        } else if ((error as { message?: string })?.message) {
+            message = (error as { message: string }).message;
         }
 
         toast.error(message, {

@@ -15,7 +15,7 @@ export const PlanGuard: React.FC<PlanGuardProps> = ({
     fallback,
     showLock = false
 }) => {
-    const { atLeastPlan } = useAuth() as any;
+    const { atLeastPlan } = useAuth() as unknown as { atLeastPlan: (min: number) => boolean };
 
     const isAllowed = atLeastPlan ? atLeastPlan(minPlan) : false;
 

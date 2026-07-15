@@ -155,8 +155,8 @@ export const timesheetService = {
         end_date?: string;
         limit?: number;
         offset?: number;
-    }): Promise<{ entries: any[]; pagination: any }> => {
-        const response = await api.get<{ status: string; data: any[]; pagination: any }>(
+    }): Promise<{ entries: unknown[]; pagination: Record<string, unknown> }> => {
+        const response = await api.get<{ status: string; data: unknown[]; pagination: Record<string, unknown> }>(
             '/projects/timesheets/my-entries',
             { params }
         );
@@ -168,8 +168,8 @@ export const timesheetService = {
      * Bulk approve timesheets
      * POST /api/projects/timesheets/bulk-approve
      */
-    bulkApproveTimesheets: async (timesheetIds: string[]): Promise<{ results: string[]; errors: any[] }> => {
-        const response = await api.post<{ status: string; data: { results: string[]; errors: any[] } }>(
+    bulkApproveTimesheets: async (timesheetIds: string[]): Promise<{ results: string[]; errors: string[] }> => {
+        const response = await api.post<{ status: string; data: { results: string[]; errors: string[] } }>(
             '/projects/timesheets/bulk-approve',
             { timesheetIds }
         );
@@ -222,7 +222,7 @@ export const timesheetService = {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 30);
 
-        const response = await api.get<{ status: string; data: any[] }>('/projects/timesheets/my-entries', {
+        const response = await api.get<{ status: string; data: Record<string, unknown>[] }>('/projects/timesheets/my-entries', {
             params: {
                 start_date: startDate.toISOString().split('T')[0],
                 end_date: endDate.toISOString().split('T')[0],
@@ -258,7 +258,7 @@ export const timesheetService = {
             const daysEntries = entries.filter(e => {
                 if (!e.work_date) return false;
                 // Normalize both to YYYY-MM-DD for comparison
-                const entryDate = new Date(e.work_date).toISOString().split('T')[0];
+                const entryDate = new Date(e.work_date as string).toISOString().split('T')[0];
                 return entryDate === date;
             });
             const hours = daysEntries.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
@@ -272,7 +272,7 @@ export const timesheetService = {
         const billableVsNonBillable = last7Days.map(date => {
             const daysEntries = entries.filter(e => {
                 if (!e.work_date) return false;
-                const entryDate = new Date(e.work_date).toISOString().split('T')[0];
+                const entryDate = new Date(e.work_date as string).toISOString().split('T')[0];
                 return entryDate === date;
             });
             const billable = daysEntries.filter(e => e.is_billable !== false).reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
@@ -288,14 +288,16 @@ export const timesheetService = {
         const projectMap: Record<string, number> = {};
         const taskMap: Record<string, number> = {};
 
-        entries.forEach(e => {
-            const pName = e.project?.name || 'Unassigned';
+        entries.forEach((e: Record<string, unknown>) => {
+            const project = e.project as Record<string, unknown> | undefined;
+            const task = e.task as Record<string, unknown> | undefined;
+            const pName = (project?.name as string) || 'Unassigned';
             projectMap[pName] = (projectMap[pName] || 0) + (Number(e.hours) || 0);
 
             // Task breakdown - use task title or fall back to project name if task is missing
-            let tName = e.task?.title;
+            let tName = task?.title as string | undefined;
             if (!tName) {
-                tName = e.project?.name ? `${e.project.name} (General)` : 'Unassigned Work';
+                tName = project?.name ? `${project.name as string} (General)` : 'Unassigned Work';
             }
 
             taskMap[tName] = (taskMap[tName] || 0) + (Number(e.hours) || 0);

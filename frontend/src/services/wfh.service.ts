@@ -62,11 +62,11 @@ const handleApiError = (error: unknown): never => {
 
 // Helper to extract data from response
 const extractData = <T>(response: { data: T | { data: T; status?: string } }): T => {
-    const responseData = response.data as any;
+    const responseData = response.data as unknown as Record<string, unknown>;
     if (responseData && typeof responseData === 'object' && 'data' in responseData) {
-        return responseData.data;
+        return responseData.data as T;
     }
-    return responseData;
+    return responseData as T;
 };
 
 // ============================================================================

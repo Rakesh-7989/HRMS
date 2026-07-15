@@ -40,7 +40,7 @@ const PeopleEventsCard: React.FC<Props> = ({
   const processedAnniversaries = processList(anniversaries, 4);
   const processedJoiners = processList(newJoiners, 4);
 
-  const Section = ({ title, icon: Icon, accentColor, items, emptyText }: any) => (
+  const Section = ({ title, icon: Icon, accentColor, items, emptyText }: { title: string; icon: React.ComponentType<{ size?: number | string; className?: string }>; accentColor: { headerBg: string; text: string; iconBg: string; avatarBg: string; badgeBorder: string; emptyBg: string }; items: Person[]; emptyText: string }) => (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ const PeopleEventsCard: React.FC<Props> = ({
               visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
             }}
           >
-            {items.map((person: any) => (
+            {items.map((person: Person) => (
               <motion.div
                 key={person.id}
                 variants={{

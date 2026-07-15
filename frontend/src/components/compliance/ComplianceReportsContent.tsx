@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { complianceService, ComplianceReport } from '@/services/compliance.service';
+import { complianceService } from '@/services/compliance.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Download, RefreshCw, Loader2, FileText } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { showToast } from '@/utils/toast';

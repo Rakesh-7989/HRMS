@@ -9,17 +9,7 @@ import {
 import { AnimatedText } from '@/components/ui/AnimatedText';
 import { Button } from '@/components/ui/Button';
 import { SEO } from '@/components/SEO';
-import { cn } from '@/utils/cn';
-
-interface Feature {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  color: string;
-  description: string;
-  details: string[];
-  indiaBadge?: string;
-}
+import { ROUTES } from '@/utils/constants';
 
 const categories = [
   {
@@ -111,7 +101,7 @@ export const FeaturesPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <Link to="/pricing" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors font-medium">Pricing</Link>
             <Link to="/about" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors font-medium">About</Link>
-            <Button variant="premium" size="sm" onClick={() => navigate('/pricing')}>Start Free Trial</Button>
+            <Button variant="premium" size="sm" onClick={() => navigate(ROUTES.PRICING)}>Start Free Trial</Button>
           </div>
         </div>
       </nav>
@@ -202,7 +192,7 @@ export const FeaturesPage: React.FC = () => {
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Ready to See It in Action?</h2>
           <p className="text-neutral-300 mb-8">Start your 14-day free trial. No credit card needed. Full access to all features including PF/ESI compliance.</p>
-          <Button variant="premium" size="xl" onClick={() => navigate('/pricing')}>
+          <Button variant="premium" size="xl" onClick={() => navigate(ROUTES.PRICING)}>
             Start Free Trial <ArrowRight size={20} />
           </Button>
         </div>

@@ -20,9 +20,9 @@ const PayRunPage: React.FC = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
-    const { data: runs = [], isLoading } = useQuery<PayRun[]>({
+    const { data: runs = [] as PayRun[], isLoading } = useQuery<PayRun[], Error, PayRun[]>({
         queryKey: ['payroll', 'runs'],
-        queryFn: () => payrollService.getPayRuns(),
+        queryFn: (): Promise<PayRun[]> => payrollService.getPayRuns() as Promise<PayRun[]>,
     });
 
     const [createOpen, setCreateOpen] = useState(false);
@@ -59,8 +59,9 @@ const PayRunPage: React.FC = () => {
             setDeleteConfirmOpen(false);
             setTargetRun(null);
         },
-        onError: (err: any) => {
-            alert(`Failed to delete payrun: ${err?.response?.data?.message || err?.message}`);
+        onError: (err: unknown) => {
+            const e = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(`Failed to delete payrun: ${e.response?.data?.message || e.message}`);
         }
     });
 
@@ -71,8 +72,9 @@ const PayRunPage: React.FC = () => {
             setVoidConfirmOpen(false);
             setTargetRun(null);
         },
-        onError: (err: any) => {
-            alert(`Failed to void payrun: ${err?.response?.data?.message || err?.message}`);
+        onError: (err: unknown) => {
+            const e = err as { response?: { data?: { message?: string } }; message?: string };
+            alert(`Failed to void payrun: ${e.response?.data?.message || e.message}`);
         }
     });
 
@@ -254,4 +256,4 @@ const PayRunPage: React.FC = () => {
     );
 };
 
-export default PayRunPage;
+export { PayRunPage };

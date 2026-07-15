@@ -14,13 +14,13 @@ import { useTranslation } from 'react-i18next';
 const CostCentersPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { data: costCenters = [], isLoading, refetch } = useQuery<any[]>({ queryKey: ['payroll', 'cost-centers'], queryFn: () => payrollService.listCostCenters() });
+  const { data: costCenters = [], isLoading, refetch } = useQuery<Record<string, unknown>[]>({ queryKey: ['payroll', 'cost-centers'], queryFn: () => payrollService.listCostCenters() });
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [allocated, setAllocated] = useState<number | ''>('');
 
-  const createMut = useMutation({ mutationFn: (payload: any) => (payrollService as any).createCostCenter?.(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centers'] }) });
+  const createMut = useMutation({ mutationFn: (payload: unknown) => (payrollService as unknown as { createCostCenter: (payload: unknown) => Promise<unknown> }).createCostCenter(payload), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centers'] }) });
 
   const handleCreate = () => {
     if (!name) return;
@@ -53,7 +53,7 @@ const CostCentersPage: React.FC = () => {
             ) : costCenters.length === 0 ? (
               <TableRow><TableCell>No cost centers</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></TableRow>
             ) : (
-              costCenters.map((c: any) => (<TableRow key={c.id}><TableCell>{c.name}</TableCell><TableCell>{c.allocated}</TableCell><TableCell>{c.spent}</TableCell></TableRow>))
+              costCenters.map((c: Record<string, unknown>) => (<TableRow key={c.id as string}><TableCell>{c.name as string}</TableCell><TableCell>{c.allocated as number}</TableCell><TableCell>{c.spent as number}</TableCell></TableRow>))
             )}
           </TableBody>
         </Table>
@@ -68,7 +68,7 @@ const CostCentersPage: React.FC = () => {
             <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
             <Label>Allocated</Label>
-            <Input value={allocated as any} onChange={(e) => setAllocated(Number(e.target.value))} type="number" />
+            <Input value={allocated} onChange={(e) => setAllocated(Number(e.target.value))} type="number" />
           </div>
           <DialogFooter>
             <Button onClick={handleCreate}>Create</Button>
@@ -81,4 +81,4 @@ const CostCentersPage: React.FC = () => {
   );
 };
 
-export default CostCentersPage;
+export { CostCentersPage };

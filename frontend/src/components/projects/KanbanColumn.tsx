@@ -14,9 +14,9 @@ interface KanbanColumnProps {
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps & { className?: string }> = ({ id, title, tasks, className, onTaskClick, onEditTask }) => {
-    const { setNodeRef } = useDroppable({
+    const { setNodeRef: setDroppableNodeRef } = useDroppable({
         id: id,
-    });
+    }) as { setNodeRef: (element: HTMLDivElement | null) => void };
 
     const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
@@ -47,7 +47,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps & { className?: string }> 
                 </div>
             </div>
 
-            <div ref={setNodeRef} className="flex-1 p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+            <div ref={setDroppableNodeRef} className="flex-1 p-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                 <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2 min-h-full">
                         {tasks.map((task) => (

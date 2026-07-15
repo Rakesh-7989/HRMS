@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '@/services/api';
 import { Button } from '@/components/ui/Button';
@@ -18,10 +18,11 @@ import {
     ResponsiveContainer, Cell
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const STAGES = ['REVIEW', 'INITIATE', 'VERIFY', 'RELEASE'];
-const STAGE_ICONS: any = { REVIEW: Eye, INITIATE: Zap, VERIFY: Shield, RELEASE: Send };
-const STAGE_COLORS: any = {
+const STAGE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = { REVIEW: Eye, INITIATE: Zap, VERIFY: Shield, RELEASE: Send };
+const STAGE_COLORS: Record<string, string> = {
     REVIEW: 'indigo', INITIATE: 'blue', VERIFY: 'purple', RELEASE: 'emerald'
 };
 
@@ -38,7 +39,7 @@ const formatCurrency = (val: number) => {
     return `${sign}₹${absVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const COLOR_CLASSES: any = {
+const COLOR_CLASSES: Record<string, { active?: string; text: string; bg: string; icon: string }> = {
     indigo: {
         active: 'border-brand-500 bg-brand-500/20 text-brand-400 ring-indigo-500/10',
         text: 'text-brand-500 dark:text-brand-400',
@@ -82,19 +83,17 @@ const COLOR_CLASSES: any = {
 
 const CHART_COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
-export const RiverProcess = () => {
+export const RiverProcess: React.FC = () => {
     const { t } = useTranslation();
     const { runId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [stage, setStage] = useState('REVIEW');
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<Record<string, unknown> | null>(null);
     const isFirstLoad = useRef(true);
 
-    useEffect(() => { fetchStageData(); }, [runId, stage]);
-
-    const fetchStageData = async () => {
+    const fetchStageData = useCallback(async () => {
         try {
             setLoading(true);
             let endpoint = `/payroll/river/review/${runId}`;
@@ -114,15 +113,17 @@ export const RiverProcess = () => {
             } else if (isFirstLoad.current) {
                 isFirstLoad.current = false;
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            showToast.error(error.response?.data?.error || t('riverProcess.fetchFailed'));
+            showToast.error((error as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || t('riverProcess.fetchFailed'));
         } finally {
             setLoading(false);
         }
-    };
+    }, [runId, stage, t]);
 
-    const handleAction = async (action: string, payload: any = {}) => {
+    useEffect(() => { fetchStageData(); }, [fetchStageData]);
+
+    const handleAction = async (action: string, payload: Record<string, unknown> = {}) => {
         if (actionLoading) return;
         try {
             setActionLoading(true);
@@ -144,8 +145,8 @@ export const RiverProcess = () => {
                 setStage('RELEASE');
                 fetchStageData();
             }
-        } catch (err: any) {
-            showToast.error(err.response?.data?.error || t('riverProcess.actionFailed'));
+        } catch (err: unknown) {
+            showToast.error((err as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || t('riverProcess.actionFailed'));
         } finally {
             setActionLoading(false);
         }
@@ -168,7 +169,7 @@ export const RiverProcess = () => {
         <DashboardLayout title={t('payroll.payrollManagement') || t('riverProcess.title')}>
             <div className="space-y-6">
                 <div className="flex items-center gap-4 mb-6">
-                     <Button variant="ghost"                         onClick={() => navigate('/payroll')}
+                     <Button variant="ghost"                         onClick={() => navigate(ROUTES.PAYROLL)}
                         className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -189,7 +190,7 @@ export const RiverProcess = () => {
                             const styles = COLOR_CLASSES[color] || COLOR_CLASSES.indigo;
 
                             return (
-                                <div key={s} className="flex-1 flex flex-col items-center relative cursor-pointer" onClick={() => setStage(s)}>
+                                <div key={s} className="flex-1 flex flex-col items-center relative cursor-pointer" onClick={() => setStage(s)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setStage(s)}>
                                     {idx > 0 && (
                                         <div className={`absolute top-5 right-1/2 w-full h-0.5 -z-10 transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'}`} />
                                     )}
@@ -216,16 +217,20 @@ export const RiverProcess = () => {
                     {stage === 'REVIEW' && <ReviewStage data={data} onNext={() => setStage('INITIATE')} />}
                     {stage === 'INITIATE' && <InitiateStage data={data} onInitiate={() => handleAction('INITIATE')} onBack={() => setStage('REVIEW')} loading={actionLoading} />}
                     {stage === 'VERIFY' && <VerifyStage data={data} onApprove={(c: string) => handleAction('APPROVE', { comments: c })} onReject={(c: string) => handleAction('REJECT', { comments: c })} onNext={() => setStage('RELEASE')} loading={actionLoading} />}
-                    {stage === 'RELEASE' && <ReleaseStage data={data} runId={runId} onRelease={() => handleAction('RELEASE')} loading={actionLoading} />}
+                    {stage === 'RELEASE' && <ReleaseStage data={data} runId={runId as string} onRelease={() => handleAction('RELEASE')} loading={actionLoading} />}
                 </div>
             </div>
         </DashboardLayout>
     );
 };
 
-const ReviewStage = ({ data, onNext }: any) => {
+const ReviewStage = ({ data, onNext }: { data: Record<string, unknown> | null; onNext: () => void }) => {
     const { t } = useTranslation();
-    const { categories, checklist, variance } = data || {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const d = (data || {}) as any;
+    const categories = d.categories;
+    const checklist = d.checklist;
+    const variance = d.variance;
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
     const toggleSection = (section: string) => {
@@ -262,7 +267,7 @@ const ReviewStage = ({ data, onNext }: any) => {
                         icon: Shield, color: 'indigo', section: null
                     }
                 ].map((card, idx) => {
-                    const cardStyles: any = {
+                    const cardStyles: Record<string, { text: string; bg: string; icon: string }> = {
                         blue: { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', icon: 'text-blue-500 dark:text-blue-400' },
                         amber: { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', icon: 'text-amber-500 dark:text-amber-400' },
                         purple: { text: 'text-brand-600 dark:text-brand-400', bg: 'bg-brand-50 dark:bg-brand-500/10', icon: 'text-brand-500 dark:text-brand-400' },
@@ -276,6 +281,9 @@ const ReviewStage = ({ data, onNext }: any) => {
                             key={idx}
                             className={`bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/40 rounded-xl p-4 shadow-elev-1 transition-all duration-200 ${card.section ? 'cursor-pointer hover:border-gray-300 dark:hover:border-gray-600/60 hover:-translate-y-0.5 hover:shadow-elev-3' : ''}`}
                             onClick={() => card.section && toggleSection(card.section)}
+                            role={card.section ? 'button' : undefined}
+                            tabIndex={card.section ? 0 : undefined}
+                            onKeyDown={(e) => card.section && e.key === 'Enter' && toggleSection(card.section)}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
@@ -307,9 +315,9 @@ const ReviewStage = ({ data, onNext }: any) => {
                     title={t('riverProcess.newJoiners')}
                     icon={<Users className="w-4 h-4 text-blue-400" />}
                     columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('calendar.startDate')]}
-                    rows={categories.headcount.newJoinerDetails.map((e: any) => [
-                        `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
-                        new Date(e.join_date).toLocaleDateString()
+                    rows={categories.headcount.newJoinerDetails.map((e: Record<string, unknown>) => [
+                        `${e.first_name as string} ${e.last_name as string}`, (e.emp_code as string) || '-', (e.department as string) || '-',
+                        new Date((e.join_date as string)).toLocaleDateString()
                     ])}
                 />
             )}
@@ -319,9 +327,9 @@ const ReviewStage = ({ data, onNext }: any) => {
                     title={t('riverProcess.employeesLop')}
                     icon={<Calendar className="w-4 h-4 text-amber-400" />}
                     columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('riverProcess.lopDays')]}
-                    rows={categories.attendance.lopDetails.map((e: any) => [
-                        `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
-                        e.lop_days
+                    rows={categories.attendance.lopDetails.map((e: Record<string, unknown>) => [
+                        `${e.first_name as string} ${e.last_name as string}`, (e.emp_code as string) || '-', (e.department as string) || '-',
+                        e.lop_days as number
                     ])}
                 />
             )}
@@ -331,9 +339,9 @@ const ReviewStage = ({ data, onNext }: any) => {
                     title={t('riverProcess.salaryRevisionsTitle')}
                     icon={<IndianRupee className="w-4 h-4 text-brand-400" />}
                     columns={[t('riverProcess.employee'), 'Emp Code', t('riverProcess.structure'), t('riverProcess.annualCtc'), t('riverProcess.effectiveFrom')]}
-                    rows={categories.finance.revisionDetails.map((e: any) => [
-                        `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.structure_name || '-',
-                        formatCurrency(e.annual_ctc), new Date(e.effective_from).toLocaleDateString()
+                    rows={categories.finance.revisionDetails.map((e: Record<string, unknown>) => [
+                        `${e.first_name as string} ${e.last_name as string}`, (e.emp_code as string) || '-', (e.structure_name as string) || '-',
+                        formatCurrency(e.annual_ctc as number), new Date((e.effective_from as string)).toLocaleDateString()
                     ])}
                 />
             )}
@@ -343,9 +351,9 @@ const ReviewStage = ({ data, onNext }: any) => {
                     title={t('riverProcess.pendingArrears')}
                     icon={<Receipt className="w-4 h-4 text-error-400" />}
                     columns={[t('riverProcess.employee'), 'Emp Code', t('departments.title'), t('riverProcess.amount'), t('riverProcess.reason')]}
-                    rows={categories.arrears.details.map((e: any) => [
-                        `${e.first_name} ${e.last_name}`, e.emp_code || '-', e.department || '-',
-                        formatCurrency(e.amount), e.reason || '-'
+                    rows={categories.arrears.details.map((e: Record<string, unknown>) => [
+                        `${e.first_name as string} ${e.last_name as string}`, (e.emp_code as string) || '-', (e.department as string) || '-',
+                        formatCurrency(e.amount as number), (e.reason as string) || '-'
                     ])}
                 />
             )}
@@ -402,31 +410,31 @@ const ReviewStage = ({ data, onNext }: any) => {
                     <div className="space-y-2">
                         {checklist?.length === 0 ?
                             <p className="text-gray-500 text-sm">{t('riverProcess.noItemsPending')}</p> :
-                            checklist?.map((item: any) => (
+                            (checklist as Array<Record<string, unknown>>)?.map((item: Record<string, unknown>) => (
                                 <div
-                                    key={item.id}
-                                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${item.status === 'COMPLETED'
+                                    key={item.id as string}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${(item.status as string) === 'COMPLETED'
                                         ? 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-500/20'
-                                        : item.status === 'WARNING'
+                                        : (item.status as string) === 'WARNING'
                                             ? 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20'
                                             : 'bg-gray-50 dark:bg-gray-700/20 border-gray-200 dark:border-gray-700/40'
                                         }`}
                                 >
-                                    {item.status === 'COMPLETED' ?
+                                    {(item.status as string) === 'COMPLETED' ?
                                         <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" /> :
-                                        item.status === 'WARNING' ?
+                                        (item.status as string) === 'WARNING' ?
                                             <AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0" /> :
                                             <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
                                     }
                                     <div className="flex-1">
-                                        <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{item.item_name}</p>
-                                        <p className="text-xs text-gray-500">{item.comment}</p>
+                                        <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{item.item_name as string}</p>
+                                        <p className="text-xs text-gray-500">{item.comment as string}</p>
                                     </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.status === 'COMPLETED' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                                        item.status === 'WARNING' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${(item.status as string) === 'COMPLETED' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                                        (item.status as string) === 'WARNING' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400' :
                                             'bg-gray-100 dark:bg-gray-600/30 text-gray-500 dark:text-gray-400'
                                         }`}>
-                                        {item.status.toLowerCase()}
+                                        {(item.status as string).toLowerCase()}
                                     </span>
                                 </div>
                             ))
@@ -446,8 +454,10 @@ const ReviewStage = ({ data, onNext }: any) => {
     );
 };
 
-const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
+const InitiateStage = ({ data: rawData, onInitiate, onBack, loading }: { data: Record<string, unknown> | null; onInitiate: () => void; onBack: () => void; loading: boolean }) => {
     const { t } = useTranslation();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (rawData || {}) as any;
 
     return (
         <div className="max-w-6xl mx-auto">
@@ -506,18 +516,20 @@ const InitiateStage = ({ data, onInitiate, onBack, loading }: any) => {
     );
 };
 
-const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
+const VerifyStage = ({ data: rawData, onApprove, onReject, onNext, loading }: { data: Record<string, unknown> | null; onApprove: (c: string) => void; onReject: (c: string) => void; onNext: () => void; loading: boolean }) => {
     const { t } = useTranslation();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (rawData || {}) as any;
     const [searchTerm, setSearchTerm] = useState('');
     const [showEmployees, setShowEmployees] = useState(false);
 
-    const filteredEmployees = data?.employees?.filter((e: any) =>
-        e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.empCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.department?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredEmployees = (data.employees as Array<Record<string, unknown>>)?.filter((e: Record<string, unknown>) =>
+        (e.name as string)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.empCode as string)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.department as string)?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-    const componentData = data?.componentBreakdown ? [
+    const componentData = data.componentBreakdown ? [
         { name: 'Basic', value: data.componentBreakdown.basic },
         { name: 'HRA', value: data.componentBreakdown.hra },
         { name: 'Other Allow.', value: data.componentBreakdown.otherAllowances },
@@ -525,7 +537,7 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
         { name: 'ESI (Emp)', value: data.componentBreakdown.esiEmployee },
         { name: 'PT', value: data.componentBreakdown.professionalTax },
         { name: 'TDS', value: data.componentBreakdown.tds }
-    ].filter(c => c.value > 0) : [];
+    ].filter((c: Record<string, unknown>) => (c.value as number) > 0) : [];
 
     return (
         <div className="space-y-5">
@@ -582,15 +594,15 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                             {t('riverProcess.departmentSummary')}
                         </h4>
                         <div className="space-y-3 max-h-[220px] overflow-y-auto">
-                            {data.departmentBreakdown.map((dept: any, idx: number) => (
+                            {(data.departmentBreakdown as Array<Record<string, unknown>>)?.map((dept: Record<string, unknown>, idx: number) => (
                                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/20 rounded-lg">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{dept.department}</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">{dept.employeeCount} {t('riverProcess.employeesLabel')}</p>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{dept.department as string}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">{dept.employeeCount as number} {t('riverProcess.employeesLabel')}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(dept.net)}</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">{t('riverProcess.grossPay')}: {formatCurrency(dept.gross)}</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(dept.net as number)}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500">{t('riverProcess.grossPay')}: {formatCurrency(dept.gross as number)}</p>
                                     </div>
                                 </div>
                             ))}
@@ -616,14 +628,14 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {data.varianceAlerts.map((emp: any, idx: number) => (
+                                {(data.varianceAlerts as Array<Record<string, unknown>>)?.map((emp: Record<string, unknown>, idx: number) => (
                                     <tr key={idx} className="border-b border-gray-200 dark:border-gray-700/30">
-                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{emp.name} ({emp.empCode})</td>
-                                        <td className="py-2 px-2 text-right text-gray-500 dark:text-gray-400">{formatCurrency(emp.previousGross)}</td>
-                                        <td className="py-2 px-2 text-right text-gray-900 dark:text-white">{formatCurrency(emp.currentGross)}</td>
+                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{emp.name as string} ({emp.empCode as string})</td>
+                                        <td className="py-2 px-2 text-right text-gray-500 dark:text-gray-400">{formatCurrency(emp.previousGross as number)}</td>
+                                        <td className="py-2 px-2 text-right text-gray-900 dark:text-white">{formatCurrency(emp.currentGross as number)}</td>
                                         <td className="py-2 px-2 text-right">
-                                            <span className={`text-xs font-bold ${emp.changePercent > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                {emp.changePercent > 0 ? '+' : ''}{emp.changePercent}%
+                                            <span className={`text-xs font-bold ${(emp.changePercent as number) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {(emp.changePercent as number) > 0 ? '+' : ''}{(emp.changePercent as number)}%
                                             </span>
                                         </td>
                                     </tr>
@@ -673,19 +685,19 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredEmployees.map((emp: any, idx: number) => (
+                                        {filteredEmployees.map((emp: Record<string, unknown>, idx: number) => (
                                             <tr key={idx} className="border-b border-gray-100 dark:border-gray-700/20 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                                                 <td className="py-2.5 px-2">
-                                                    <div className="text-gray-800 dark:text-gray-200 font-medium">{emp.name}</div>
-                                                    <div className="text-xs text-gray-500">{emp.empCode}</div>
+                                                    <div className="text-gray-800 dark:text-gray-200 font-medium">{emp.name as string}</div>
+                                                    <div className="text-xs text-gray-500">{emp.empCode as string}</div>
                                                 </td>
-                                                <td className="py-2.5 px-2 text-gray-500 dark:text-gray-400 text-xs">{emp.department || '-'}</td>
-                                                <td className="py-2.5 px-2 text-right text-gray-600 dark:text-gray-300 font-mono text-xs">{formatCurrency(emp.basicPay)}</td>
-                                                <td className="py-2.5 px-2 text-right text-gray-600 dark:text-gray-300 font-mono text-xs">{formatCurrency(emp.hra)}</td>
-                                                <td className="py-2.5 px-2 text-right text-gray-900 dark:text-white font-mono text-xs">{formatCurrency(emp.grossPay)}</td>
-                                                <td className="py-2.5 px-2 text-right text-amber-400 font-mono text-xs">{formatCurrency(emp.pfEmployee)}</td>
-                                                <td className="py-2.5 px-2 text-right text-error-400 font-mono text-xs">{formatCurrency(emp.tds)}</td>
-                                                <td className="py-2.5 px-2 text-right text-emerald-400 font-mono text-xs font-bold">{formatCurrency(emp.netPay)}</td>
+                                                <td className="py-2.5 px-2 text-gray-500 dark:text-gray-400 text-xs">{emp.department as string || '-'}</td>
+                                                <td className="py-2.5 px-2 text-right text-gray-600 dark:text-gray-300 font-mono text-xs">{formatCurrency(emp.basicPay as number)}</td>
+                                                <td className="py-2.5 px-2 text-right text-gray-600 dark:text-gray-300 font-mono text-xs">{formatCurrency(emp.hra as number)}</td>
+                                                <td className="py-2.5 px-2 text-right text-gray-900 dark:text-white font-mono text-xs">{formatCurrency(emp.grossPay as number)}</td>
+                                                <td className="py-2.5 px-2 text-right text-amber-400 font-mono text-xs">{formatCurrency(emp.pfEmployee as number)}</td>
+                                                <td className="py-2.5 px-2 text-right text-error-400 font-mono text-xs">{formatCurrency(emp.tds as number)}</td>
+                                                <td className="py-2.5 px-2 text-right text-emerald-400 font-mono text-xs font-bold">{formatCurrency(emp.netPay as number)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -701,15 +713,15 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
                 {data?.approvals?.length === 0 ?
                     <p className="text-sm text-gray-500 mb-4">{t('riverProcess.noApprovals')}</p> :
                     <div className="space-y-2 mb-4">
-                        {data?.approvals?.map((a: any) => (
-                            <div key={a.id} className={`text-sm p-3 rounded-lg flex items-center gap-2 ${a.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        {(data?.approvals as Array<Record<string, unknown>>)?.map((a: Record<string, unknown>) => (
+                            <div key={a.id as string} className={`text-sm p-3 rounded-lg flex items-center gap-2 ${a.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                 'bg-red-500/10 text-red-400 border border-red-500/20'
                                 }`}>
                                 {a.status === 'APPROVED' ?
                                     <CheckCircle2 className="w-4 h-4" /> :
                                     <XCircle className="w-4 h-4" />
                                 }
-                                {a.status} by {a.first_name} {a.last_name} on {new Date(a.approved_at).toLocaleString()}
+                                {a.status as string} by {a.first_name as string} {a.last_name as string} on {new Date(a.approved_at as string).toLocaleString()}
                             </div>
                         ))}
                     </div>
@@ -749,8 +761,10 @@ const VerifyStage = ({ data, onApprove, onReject, onNext, loading }: any) => {
     );
 };
 
-const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
+const ReleaseStage = ({ data: rawData, runId, onRelease, loading }: { data: Record<string, unknown> | null; runId: string; onRelease: () => void; loading: boolean }) => {
     const { t } = useTranslation();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (rawData || {}) as any;
     const [released, setReleased] = useState(data?.run?.status === 'RELEASED');
 
     useEffect(() => {
@@ -861,10 +875,10 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                             <div className="mb-6">
                                 <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">{t('riverProcess.departmentBreakdown')}</h4>
                                 <div className="space-y-2">
-                                    {data.departmentBreakdown.map((dept: any, idx: number) => (
+                            {(data.departmentBreakdown as Array<Record<string, unknown>>)?.map((dept: Record<string, unknown>, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center p-2 bg-gray-700/20 rounded-lg">
-                                            <span className="text-sm text-gray-300">{dept.department} ({dept.count})</span>
-                                            <span className="text-sm font-mono text-emerald-400">{formatCurrency(dept.netPay)}</span>
+                                            <span className="text-sm text-gray-300">{dept.department as string} ({dept.count as number})</span>
+                                            <span className="text-sm font-mono text-emerald-400">{formatCurrency(dept.netPay as number)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -875,12 +889,12 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
                             <div className="mb-6">
                                 <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">{t('riverProcess.auditTrail')}</h4>
                                 <div className="space-y-2">
-                                    {data.auditTrail.map((entry: any, idx: number) => (
+                                    {(data.auditTrail as Array<Record<string, unknown>>)?.map((entry: Record<string, unknown>, idx: number) => (
                                         <div key={idx} className="flex items-center gap-3 text-xs text-gray-400">
                                             <div className="w-2 h-2 rounded-full bg-indigo-400" />
-                                            <span className="text-gray-300 font-medium">{entry.action}</span>
-                                            <span>{t('common.by')} {entry.performedBy}</span>
-                                            <span className="ml-auto">{new Date(entry.timestamp).toLocaleString()}</span>
+                                            <span className="text-gray-300 font-medium">{entry.action as string}</span>
+                                            <span>{t('common.by')} {entry.performedBy as string}</span>
+                                            <span className="ml-auto">{new Date(entry.timestamp as string).toLocaleString()}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -916,7 +930,7 @@ const ReleaseStage = ({ data, runId, onRelease, loading }: any) => {
     );
 };
 
-const DetailTable = ({ title, icon, columns, rows }: any) => {
+const DetailTable = ({ title, icon, columns, rows }: { title: string; icon: React.ReactNode; columns: string[]; rows: Array<Array<React.ReactNode>> }) => {
     const { t } = useTranslation();
     return (
         <div className="bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700/40 rounded-xl overflow-hidden animate-fadeIn shadow-elev-1">
@@ -935,9 +949,9 @@ const DetailTable = ({ title, icon, columns, rows }: any) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row: any[], idx: number) => (
+                        {rows.map((row: Array<React.ReactNode>, idx: number) => (
                             <tr key={idx} className="border-b border-gray-100 dark:border-gray-700/20 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                                {row.map((cell: any, cIdx: number) => (
+                                {row.map((cell: React.ReactNode, cIdx: number) => (
                                     <td key={cIdx} className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{cell}</td>
                                 ))}
                             </tr>
@@ -949,24 +963,24 @@ const DetailTable = ({ title, icon, columns, rows }: any) => {
     );
 };
 
-const convertBankFileToCSV = (entries: any[]) => {
+const convertBankFileToCSV = (entries: Record<string, unknown>[]) => {
     const headers = ['S.No', 'Employee Name', 'Emp Code', 'Bank Name', 'Account Number', 'IFSC Code', 'Amount'];
     const rows = entries.map(e => [
-        e.sno,
-        `"${(e.employeeName || '').replace(/"/g, '""')}"`,
-        e.empCode,
-        `"${(e.bankName || '').replace(/"/g, '""')}"`,
-        `="${e.accountNumber}"`,
-        e.ifscCode,
-        e.amount
+        e.sno as string,
+        `"${((e.employeeName as string) || '').replace(/"/g, '""')}"`,
+        e.empCode as string,
+        `"${((e.bankName as string) || '').replace(/"/g, '""')}"`,
+        `="${e.accountNumber as string}"`,
+        e.ifscCode as string,
+        e.amount as number
     ]);
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 };
 
-const convertRegisterToCSV = (entries: any[]) => {
+const convertRegisterToCSV = (entries: Record<string, unknown>[]) => {
     const headers = ['Employee', 'Emp Code', 'Department', 'Basic', 'HRA', 'Other', 'Gross', 'PF', 'ESI', 'PT', 'TDS', 'Net'];
 
-    const escape = (val: any) => {
+    const escape = (val: unknown) => {
         const str = String(val || '');
         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
             return `"${str.replace(/"/g, '""')}"`;
@@ -991,4 +1005,4 @@ const convertRegisterToCSV = (entries: any[]) => {
     return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
 };
 
-export default RiverProcess;
+

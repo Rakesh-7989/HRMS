@@ -210,7 +210,7 @@ export const geoFencingService = {
                     errorMessage: `You are ${validationResult.distance}m away from the nearest allowed location${validationResult.location ? ` (${validationResult.location.name})` : ''}. Please move closer to clock in/out.`
                 };
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Geo-fence validation error:', error);
             return {
                 allowed: false,

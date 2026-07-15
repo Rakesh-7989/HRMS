@@ -29,6 +29,7 @@ export interface Attendance {
   shift_start?: string;
   shift_end?: string;
   total_break_seconds?: number;
+  work_hours?: string;
   effective_work_hours?: string;
   overtime_hours?: string;
 }
@@ -130,25 +131,27 @@ export interface AttendanceAnalytics {
   };
 }
 
+export interface AttendanceReportRow {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  department?: string;
+  designation?: string;
+  date: string;
+  check_in_time: string;
+  check_out_time: string;
+  check_in_device?: string;
+  check_out_device?: string;
+  is_late: boolean;
+  late_by?: string;
+  status: string;
+  work_hours: number;
+  effective_work_hours?: number | string;
+  overtime_hours?: number | string;
+}
+
 export interface AttendanceReports {
-  reports: Array<{
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    department?: string;
-    designation?: string;
-    date: string;
-    check_in_time: string;
-    check_out_time: string;
-    check_in_device?: string;
-    check_out_device?: string;
-    is_late: boolean;
-    late_by?: string;
-    status: string;
-    work_hours: number;
-    effective_work_hours?: number | string;
-    overtime_hours?: number | string;
-  }>;
+  reports: AttendanceReportRow[];
   summary: {
     total_employees?: number;
     total_team_members?: number;
@@ -161,6 +164,29 @@ export interface AttendanceReports {
     limit: number;
     offset: number;
     report_type: string;
+  };
+}
+
+export interface IndividualAttendanceReportResponse {
+  daily_report: Array<{
+    date: string;
+    day_of_week: string;
+    shift_name?: string;
+    check_in_time?: string;
+    check_out_time?: string;
+    work_hours?: string;
+    effective_work_hours?: string;
+    overtime_hours?: string;
+    status: string;
+    late_by?: string;
+  }>;
+  summary: {
+    total_days: number;
+    present_days: number;
+    late_days: number;
+    half_days: number;
+    absent_days: number;
+    leave_days: number;
   };
 }
 
@@ -278,21 +304,21 @@ export const attendanceService = {
     return response.data.data!;
   },
 
-  startBreak: async (): Promise<any> => {
-    const response = await api.post('/attendance/break/start');
+  startBreak: async (): Promise<{ status: string; data: unknown }> => {
+    const response = await api.post<{ status: string; data: unknown }>('/attendance/break/start');
     return response.data;
   },
 
-  endBreak: async (): Promise<any> => {
-    const response = await api.post('/attendance/break/end');
+  endBreak: async (): Promise<{ status: string; data: unknown }> => {
+    const response = await api.post<{ status: string; data: unknown }>('/attendance/break/end');
     return response.data;
   },
 
   getIndividualEmployeeReport: async (
     employeeId: string,
     params: { from_date: string; to_date: string }
-  ): Promise<any> => {
-    const response = await api.get<{ status: string; data: any }>(`/attendance/report/individual/${employeeId}`, { params });
+  ): Promise<IndividualAttendanceReportResponse> => {
+    const response = await api.get<{ status: string; data: IndividualAttendanceReportResponse }>(`/attendance/report/individual/${employeeId}`, { params });
     return response.data.data;
   },
 

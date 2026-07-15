@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AreaChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   dataKeys: string[];
   xKey: string;
   colors?: string[];

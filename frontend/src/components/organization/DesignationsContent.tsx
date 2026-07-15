@@ -45,8 +45,9 @@ export const DesignationsContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
             showToast.success(t('designations.deleted'));
         },
-        onError: (err: any) => {
-            const message = err.response?.data?.message || err.message || t('designations.deleteFailed');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            const message = error.response?.data?.message || error.message || t('designations.deleteFailed');
             showToast.error(message);
         },
     });
@@ -58,8 +59,9 @@ export const DesignationsContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['designations'] });
             showToast.success(t(!variables.is_active ? 'designations.activated' : 'designations.deactivated'));
         },
-        onError: (err: any) => {
-            const message = err.response?.data?.message || err.message || t('designations.statusUpdateFailed');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            const message = error.response?.data?.message || error.message || t('designations.statusUpdateFailed');
             showToast.error(message);
         },
     });

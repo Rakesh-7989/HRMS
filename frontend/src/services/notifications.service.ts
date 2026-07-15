@@ -8,7 +8,7 @@ export interface Notification {
     read: boolean;
     created_at: string;
     link?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface NotificationsResponse {

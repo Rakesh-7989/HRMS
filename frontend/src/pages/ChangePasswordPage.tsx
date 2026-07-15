@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { authService } from '@/services/auth.service';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 const validationSchema = Yup.object({
     currentPassword: Yup.string().required('Current password is required'),
@@ -26,7 +27,7 @@ const validationSchema = Yup.object({
 });
 
 export const ChangePasswordPage: React.FC = () => {
-  const { t: _t } = useTranslation();
+  const { t } = useTranslation();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [showCurrent, setShowCurrent] = useState(false);
@@ -48,7 +49,7 @@ export const ChangePasswordPage: React.FC = () => {
                     values.newPassword,
                     values.confirmPassword
                 );
-                showToast.success('Password changed successfully! Please login with your new password.');
+                showToast.success(t('auth.passwordChanged'));
 
                 // Clear all tokens and flags - user needs to login fresh
                 localStorage.removeItem('accessToken');
@@ -61,9 +62,9 @@ export const ChangePasswordPage: React.FC = () => {
                 sessionStorage.removeItem('mustChangePassword');
 
                 // Redirect to login page
-                setTimeout(() => navigate('/login'), 1500);
-            } catch (err: any) {
-                const message = err.response?.data?.message || err.message || 'Failed to change password';
+                setTimeout(() => navigate(ROUTES.LOGIN), 1500);
+            } catch (err: unknown) {
+                const message = (err as {response?: {data?: {message?: string}}; message?: string}).response?.data?.message || (err as {message?: string}).message || 'Failed to change password';
                 showToast.error(message);
             } finally {
                 setIsLoading(false);
@@ -101,9 +102,10 @@ export const ChangePasswordPage: React.FC = () => {
                     <form onSubmit={formik.handleSubmit} className="space-y-4">
                         {/* Current Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-900 dark:text-white">Current Password</label>
+                            <label htmlFor="chgpwd-current" className="text-sm font-medium text-gray-900 dark:text-white">Current Password</label>
                             <div className="relative">
                                 <input
+                                    id="chgpwd-current"
                                     type={showCurrent ? 'text' : 'password'}
                                     {...formik.getFieldProps('currentPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
@@ -124,9 +126,10 @@ export const ChangePasswordPage: React.FC = () => {
 
                         {/* New Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-900 dark:text-white">New Password</label>
+                            <label htmlFor="chgpwd-new" className="text-sm font-medium text-gray-900 dark:text-white">New Password</label>
                             <div className="relative">
                                 <input
+                                    id="chgpwd-new"
                                     type={showNew ? 'text' : 'password'}
                                     {...formik.getFieldProps('newPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"
@@ -154,9 +157,10 @@ export const ChangePasswordPage: React.FC = () => {
 
                         {/* Confirm Password */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-900 dark:text-white">Confirm New Password</label>
+                            <label htmlFor="chgpwd-confirm" className="text-sm font-medium text-gray-900 dark:text-white">Confirm New Password</label>
                             <div className="relative">
                                 <input
+                                    id="chgpwd-confirm"
                                     type={showConfirm ? 'text' : 'password'}
                                     {...formik.getFieldProps('confirmPassword')}
                                     className="w-full h-10 px-3 pr-10 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500/50 outline-none"

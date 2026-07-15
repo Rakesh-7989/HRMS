@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Loader2 } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 

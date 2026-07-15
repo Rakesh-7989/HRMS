@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 declare global {
     interface Window {
-        Razorpay: any;
+        Razorpay: unknown;
     }
 }
 
@@ -49,21 +49,21 @@ export const SubscriptionPage: React.FC = () => {
                 name: 'WellZo HRMS',
                 description: `Upgrade to ${plan.name} Plan`,
                 order_id: order.order_id,
-                handler: async (response: any) => {
+                handler: async (response: unknown) => {
                     try {
-                        // 3. Verify payment
+                        const r = response as Record<string, unknown>;
                         await subscriptionService.verifyPayment({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
+                            razorpay_order_id: r.razorpay_order_id as string,
+                            razorpay_payment_id: r.razorpay_payment_id as string,
+                            razorpay_signature: r.razorpay_signature as string,
                             plan_id: plan.id,
                             billing_cycle: billingCycle,
                         });
 
-                        showToast.success('Subscription upgraded successfully!');
+                        showToast.success(t('subscription.upgraded'));
                         queryClient.invalidateQueries({ queryKey: ['subscription'] });
-                    } catch (error: any) {
-                        showToast.error(error.message || 'Payment verification failed');
+                    } catch (error: unknown) {
+                        showToast.error((error as {message?: string}).message || 'Payment verification failed');
                     }
                 },
                 prefill: {
@@ -76,10 +76,11 @@ export const SubscriptionPage: React.FC = () => {
                 },
             };
 
-            const rzp = new window.Razorpay(options);
+            const Razorpay = window.Razorpay as unknown as new (options: Record<string, unknown>) => { open: () => void };
+            const rzp = new Razorpay(options);
             rzp.open();
-        } catch (error: any) {
-            showToast.error(error.message || 'Error creating payment order');
+        } catch (error: unknown) {
+            showToast.error((error as {message?: string}).message || 'Error creating payment order');
         }
     };
 

@@ -154,7 +154,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                                 notifications.map((notification) => (
                                     <div
                                         key={notification.id}
+                                        role="button"
+                                        tabIndex={0}
                                         onClick={() => handleNotificationClick(notification)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationClick(notification); } }}
                                         className={cn(
                                             'px-4 py-3 border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-colors',
                                             !notification.read

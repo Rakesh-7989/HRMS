@@ -9,28 +9,72 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { FileText } from 'lucide-react';
 
+interface Merchant {
+    id: string;
+    name: string;
+    code?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    address?: string;
+    is_active?: boolean;
+}
+
+interface MerchantTransaction {
+    id: string;
+    merchant_id?: string;
+    merchant_name?: string;
+    merchant?: string;
+    type?: string;
+    amount?: number;
+    date?: string;
+    tx_date?: string;
+    status?: string;
+}
+
+interface VendorPayment {
+    id: string;
+    vendor_name?: string;
+    vendor?: string;
+    amount?: number;
+    payout_date?: string;
+    date?: string;
+    status?: string;
+    paid?: boolean;
+}
+
+interface ThirdPartyPayout {
+    id: string;
+    provider_name?: string;
+    provider?: string;
+    amount?: number;
+    payout_date?: string;
+    date?: string;
+    status?: string;
+    paid?: boolean;
+}
+
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
 export const MerchantsContent: React.FC = () => {
     const queryClient = useQueryClient();
 
-    const { data: merchantsList = [], isLoading: merchantsLoading } = useQuery<any[]>({
+    const { data: merchantsList = [], isLoading: merchantsLoading } = useQuery<Merchant[]>({
         queryKey: ['payroll', 'merchants'],
         queryFn: () => payrollService.listMerchants(),
     });
 
-    const { data: merchantTransactions = [], isLoading: merchantTxLoading } = useQuery<any[]>({
+    const { data: merchantTransactions = [], isLoading: merchantTxLoading } = useQuery<MerchantTransaction[]>({
         queryKey: ['payroll', 'merchant-transactions'],
         queryFn: () => payrollService.listMerchantTransactions(),
     });
 
-    const { data: vendorPayments = [], isLoading: vendorPaymentsLoading } = useQuery<any[]>({
+    const { data: vendorPayments = [], isLoading: vendorPaymentsLoading } = useQuery<VendorPayment[]>({
         queryKey: ['payroll', 'vendor-payments'],
         queryFn: () => payrollService.listVendorPayments(),
     });
 
-    const { data: thirdPartyPayouts = [], isLoading: thirdPartyLoading } = useQuery<any[]>({
+    const { data: thirdPartyPayouts = [], isLoading: thirdPartyLoading } = useQuery<ThirdPartyPayout[]>({
         queryKey: ['payroll', 'third-party-payouts'],
         queryFn: () => payrollService.listThirdPartyPayouts(),
     });
@@ -48,7 +92,7 @@ export const MerchantsContent: React.FC = () => {
     const [thirdPartyNotes, setThirdPartyNotes] = useState('');
 
     const createVendorPayoutMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createVendorPayout(payload),
+        mutationFn: (payload: { vendorName: string; amount: number; paymentDate: string; notes?: string }) => payrollService.createVendorPayout(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'vendor-payments'] });
             queryClient.invalidateQueries({ queryKey: ['payroll', 'merchants'] });
@@ -58,7 +102,7 @@ export const MerchantsContent: React.FC = () => {
     });
 
     const createThirdPartyPayoutMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createThirdPartyPayout(payload),
+        mutationFn: (payload: { providerName: string; amount: number; payoutDate: string; notes?: string }) => payrollService.createThirdPartyPayout(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'third-party-payouts'] });
             queryClient.invalidateQueries({ queryKey: ['payroll', 'merchants'] });
@@ -88,8 +132,8 @@ export const MerchantsContent: React.FC = () => {
                     <Button size="sm" variant="outline" onClick={() => {
                         const data = merchantTransactions && merchantTransactions.length ? merchantTransactions : [];
                         if (!data.length) return;
-                        const headers = Object.keys(data[0]);
-                        const csv = [headers.join(','), ...data.map((r: any) => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
+                        const headers = Object.keys(data[0] as MerchantTransaction);
+                        const csv = [headers.join(','), ...data.map((r: MerchantTransaction) => headers.map(h => `"${r[h as keyof MerchantTransaction] ?? ''}"`).join(','))].join('\n');
                         const blob = new Blob([csv], { type: 'text/csv' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'merchant-transactions.csv'; a.click(); window.URL.revokeObjectURL(url);
                     }}><FileText className="mr-2" size={14} />Export Transactions</Button>
                 </div>
@@ -113,7 +157,7 @@ export const MerchantsContent: React.FC = () => {
                         ) : (vendorPayments.length === 0 ? (
                             <TableRow><TableCell colSpan={5} className="text-center p-4">No vendor payments</TableCell></TableRow>
                         ) : (
-                            vendorPayments.map((p: any) => (
+                            vendorPayments.map((p: VendorPayment) => (
                                 <TableRow key={p.id}>
                                     <TableCell>{p.vendor_name || p.vendor || '—'}</TableCell>
                                     <TableCell>{formatINR(p.amount)}</TableCell>
@@ -149,7 +193,7 @@ export const MerchantsContent: React.FC = () => {
                         ) : (thirdPartyPayouts.length === 0 ? (
                             <TableRow><TableCell colSpan={5} className="text-center p-4">No third party payouts</TableCell></TableRow>
                         ) : (
-                            thirdPartyPayouts.map((t: any) => (
+                            thirdPartyPayouts.map((t: ThirdPartyPayout) => (
                                 <TableRow key={t.id}>
                                     <TableCell>{t.provider_name || t.provider || '—'}</TableCell>
                                     <TableCell>{formatINR(t.amount)}</TableCell>
@@ -185,7 +229,7 @@ export const MerchantsContent: React.FC = () => {
                         ) : (merchantTransactions.length === 0 ? (
                             <TableRow><TableCell colSpan={5} className="text-center p-4">No merchant transactions</TableCell></TableRow>
                         ) : (
-                            merchantTransactions.map((m: any) => (
+                            merchantTransactions.map((m: MerchantTransaction) => (
                                 <TableRow key={m.id}>
                                     <TableCell>{m.merchant_name || m.merchant || '—'}</TableCell>
                                     <TableCell>{m.type}</TableCell>
@@ -210,7 +254,7 @@ export const MerchantsContent: React.FC = () => {
                             </div>
                             <div>
                                 <Label>Amount</Label>
-                                <Input type="number" value={vendorAmount as any} onChange={(e) => setVendorAmount(Number(e.target.value) || '')} placeholder="Amount" />
+                                <Input type="number" value={vendorAmount} onChange={(e) => setVendorAmount(Number(e.target.value) || '')} placeholder="Amount" />
                             </div>
                             <div>
                                 <Label>Date</Label>
@@ -240,7 +284,7 @@ export const MerchantsContent: React.FC = () => {
                             </div>
                             <div>
                                 <Label>Amount</Label>
-                                <Input type="number" value={thirdPartyAmount as any} onChange={(e) => setThirdPartyAmount(Number(e.target.value) || '')} placeholder="Amount" />
+                                <Input type="number" value={thirdPartyAmount} onChange={(e) => setThirdPartyAmount(Number(e.target.value) || '')} placeholder="Amount" />
                             </div>
                             <div>
                                 <Label>Date</Label>

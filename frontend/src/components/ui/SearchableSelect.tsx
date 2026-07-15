@@ -177,10 +177,19 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                                     key={option.value}
                                     role="option"
                                     aria-selected={option.value === value}
+                                    tabIndex={-1}
                                     onClick={() => {
                                         onChange(option.value);
                                         setIsOpen(false);
                                         setSearch('');
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            onChange(option.value);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }
                                     }}
                                     onMouseEnter={() => setHighlightedIndex(idx)}
                                     className={`px-4 py-2 text-sm cursor-pointer transition-colors ${idx === highlightedIndex

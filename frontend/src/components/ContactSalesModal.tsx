@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react'
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Check, Mail, Building2, User, Users, MessageSquare, Phone } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -13,6 +14,7 @@ interface ContactSalesModalProps {
 }
 
 export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isSuccess, setIsSuccess] = React.useState(false);
 
@@ -26,7 +28,7 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
 
             // Simple client side validation
             if (!data.fullName || !data.workEmail || !data.message) {
-                showToast.error('Please fill in all required fields');
+                showToast.error(t('common.fillRequiredFields'));
                 setIsSubmitting(false);
                 return;
             }
@@ -34,14 +36,15 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
             await api.post('/common/contact-sales', data);
 
             setIsSuccess(true);
-            showToast.success('Inquiry sent successfully!');
+            showToast.success(t('common.inquirySent'));
             setTimeout(() => {
                 onClose();
                 setIsSuccess(false);
             }, 2000);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Submission error:', error);
-            showToast.error(error.message || 'Failed to send inquiry. Please try again.');
+            const message = error instanceof Error ? error.message : 'Failed to send inquiry. Please try again.';
+            showToast.error(message);
         } finally {
             setIsSubmitting(false);
         }
@@ -92,49 +95,50 @@ export const ContactSalesModal: React.FC<ContactSalesModalProps> = ({ isOpen, on
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Full Name</label>
+                            <label htmlFor="contact-fullName" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Full Name</label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input required name="fullName" className="pl-10" placeholder="Enter your full name" />
+                                <Input required name="fullName" id="contact-fullName" className="pl-10" placeholder="Enter your full name" />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Work Email</label>
+                            <label htmlFor="contact-workEmail" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Work Email</label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input required name="workEmail" type="email" className="pl-10" placeholder="example@company.com" />
+                                <Input required name="workEmail" id="contact-workEmail" type="email" className="pl-10" placeholder="example@company.com" />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone Number</label>
+                            <label htmlFor="contact-phoneNumber" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone Number</label>
                             <div className="relative">
                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <Input required name="phoneNumber" type="tel" className="pl-10" placeholder="+91 9876543210" />
+                                <Input required name="phoneNumber" id="contact-phoneNumber" type="tel" className="pl-10" placeholder="+91 9876543210" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Company</label>
+                                <label htmlFor="contact-company" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Company</label>
                                 <div className="relative">
                                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <Input required name="company" className="pl-10" placeholder="Acme Inc" />
+                                    <Input required name="company" id="contact-company" className="pl-10" placeholder="Acme Inc" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Team Size</label>
+                                <label htmlFor="contact-teamSize" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Team Size</label>
                                 <div className="relative">
                                     <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <Input required name="teamSize" type="text" className="pl-10" placeholder="500+" />
+                                    <Input required name="teamSize" id="contact-teamSize" type="text" className="pl-10" placeholder="500+" />
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Message</label>
+                            <label htmlFor="contact-message" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Message</label>
                             <div className="relative">
                                 <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                                 <textarea
                                     required
                                     name="message"
+                                    id="contact-message"
                                     className="w-full min-h-[100px] pl-10 pt-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 transition-all text-sm outline-none"
                                     placeholder="Tell us about your requirements..."
                                 />

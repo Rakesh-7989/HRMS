@@ -5,9 +5,10 @@ import { XCircle, ArrowLeft, RefreshCw, Mail, AlertTriangle } from 'lucide-react
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 export const PaymentFailurePage: React.FC = () => {
-  const { t: _t } = useTranslation();
+  useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('order_id');
@@ -68,7 +69,7 @@ export const PaymentFailurePage: React.FC = () => {
             <Button
               variant="primary"
               className="w-full h-12 text-lg font-semibold"
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate(ROUTES.PRICING)}
             >
               <RefreshCw className="mr-2" size={20} />
               Try Again
@@ -77,7 +78,7 @@ export const PaymentFailurePage: React.FC = () => {
             <Button
               variant="outline"
               className="w-full h-12 font-semibold border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate(ROUTES.REGISTER)}
             >
               <RefreshCw className="mr-2" size={20} />
               Update Organization Info
@@ -86,7 +87,7 @@ export const PaymentFailurePage: React.FC = () => {
             <Button
               variant="outline"
               className="w-full h-12 font-semibold"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate(ROUTES.LOGIN)}
             >
               <ArrowLeft className="mr-2" size={20} />
               Go to Login

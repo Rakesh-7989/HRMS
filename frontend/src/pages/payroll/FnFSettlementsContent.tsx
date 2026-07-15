@@ -36,20 +36,20 @@ export const FnFSettlementsContent: React.FC = () => {
     const availableEmployees = employees.filter(e => e.employee_uuid);
 
     const createMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createFnFSettlement(payload),
+        mutationFn: (payload: { employeeId: string; lastWorkingDay: string; resignationDate?: string }) => payrollService.createFnFSettlement(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
             setOpen(false); setForm({ employeeId: '', lastWorkingDay: '', resignationDate: '' });
-            showToast.success('F&F Initiated');
+            showToast.success(t('payroll.fnfInitiated'));
         },
-        onError: (err: any) => showToast.error('Failed to initiate: ' + (err.response?.data?.message || err.message))
+        onError: (err: unknown) => showToast.error(t('payroll.fnfInitiateFailedPrefix') + ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as { message?: string }).message))
     });
 
     const approveMut = useMutation({
         mutationFn: ({ id, status }: { id: string, status: 'APPROVED' | 'REJECTED' }) => payrollService.approveFnF(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            showToast.success('Status updated');
+            showToast.success(t('common.statusUpdated'));
         }
     });
 
@@ -57,7 +57,7 @@ export const FnFSettlementsContent: React.FC = () => {
         mutationFn: (id: string) => payrollService.payFnF(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            showToast.success('Marked as Paid');
+            showToast.success(t('payroll.markedPaid'));
         }
     });
 
@@ -65,14 +65,14 @@ export const FnFSettlementsContent: React.FC = () => {
         mutationFn: (id: string) => payrollService.submitFnF(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'fnf'] });
-            showToast.success('Submitted for Approval');
+            showToast.success(t('payroll.submittedForApproval'));
         },
-        onError: (err: any) => showToast.error('Failed to submit: ' + (err.response?.data?.message || err.message))
+        onError: (err: unknown) => showToast.error(t('payroll.fnfSubmitFailedPrefix') + ((err as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (err as { message?: string }).message))
     });
 
     const handleCreate = () => {
         if (!form.employeeId || !form.lastWorkingDay) {
-            showToast.error('Employee ID and Last Working Day are required');
+            showToast.error(t('payroll.fnfEmployeeIdRequired'));
             return;
         }
         createMut.mutate({

@@ -9,6 +9,7 @@ import { PieChart } from '@/components/charts/PieChart';
 import { Users, CreditCard, FileText, PlayCircle, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { ROUTES } from '@/utils/constants';
 
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
@@ -48,6 +49,8 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
         queryFn: () => payrollService.listTransactions(),
         enabled: user?.role === 'ADMIN' || user?.role === 'HR',
     });
+
+    const chartData = useMemo(() => salaryComponents.map((s) => ({ name: s.name, value: Number(s.amount) })), [salaryComponents]);
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -113,7 +116,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                 return (
                                      <Button variant="ghost" 
                                         key={item.label}
-                                        onClick={() => item.action === 'payslips' ? navigate('/payroll/dashboard') : onNavigate(item.action)}
+                                        onClick={() => item.action === 'payslips' ? navigate(ROUTES.PAYROLL_DASHBOARD) : onNavigate(item.action)}
                                         className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-brand-500/30 hover:bg-brand-500/5 dark:hover:bg-brand-500/5 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
@@ -143,7 +146,7 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                         ) : (
                             <div className="relative h-[240px]">
                                 <PieChart
-                                    data={useMemo(() => salaryComponents.map((s) => ({ name: s.name, value: Number(s.amount) })), [salaryComponents])}
+                                    data={chartData}
                                     height={240}
                                     animated={true}
                                 />
@@ -184,11 +187,11 @@ export const PayrollSummary: React.FC<PayrollSummaryProps> = ({ onNavigate }) =>
                                             <TableRow key={t.id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 border-gray-50 dark:border-gray-800 transition-colors">
                                                 <TableCell className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
-                                                            {(t as any).employee_name?.[0] || 'E'}
+<div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 font-bold text-xs">
+                                                              {String(((t as Record<string, unknown>).employee_name as string | undefined)?.[0] || ((t as Record<string, unknown>).employee_id as string | undefined)?.[0] || 'E')}
                                                         </div>
-                                                        <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">
-                                                            {(t as any).employee_name || t.employee_id || '—'}
+<span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                                                             {(t as Record<string, unknown>).employee_name as string || (t as Record<string, unknown>).employee_id as string || '—'}
                                                         </span>
                                                     </div>
                                                 </TableCell>

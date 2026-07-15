@@ -137,7 +137,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                                 {type === 'prompt' && (
                                     <div className="mt-4">
                                         <Input
-                                            autoFocus
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
                                             placeholder={placeholder}

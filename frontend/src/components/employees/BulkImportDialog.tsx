@@ -42,7 +42,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
     const [headers, setHeaders] = useState<string[]>([]);
     const [mapping, setMapping] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
-    const [results, setResults] = useState<any>(null);
+    const [results, setResults] = useState<{ total: number; success: number; failed: number; errors: Array<{ row: number; email?: string; name?: string; error: string }> } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,11 +116,11 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
         setIsLoading(true);
         try {
             const result = await usersService.bulkImport(file, mapping);
-            setResults(result.data);
+            setResults(result.data as { total: number; success: number; failed: number; errors: Array<{ row: number; email?: string; name?: string; error: string }> });
             setStep(3);
             if (onSuccess) onSuccess();
-        } catch (err: any) {
-            showToast.error(err.message);
+        } catch (err: unknown) {
+            showToast.error((err as { message?: string }).message || 'Import failed');
         } finally {
             setIsLoading(false);
         }
@@ -136,8 +136,8 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
 
     const errorColumns = [
         { header: t('bulkImport.row'), accessorKey: 'row' as const },
-        { header: t('bulkImport.identifier'), cell: (err: any) => <span className="font-medium">{err.email || err.name}</span> },
-        { header: t('bulkImport.errorMessage'), cell: (err: any) => <span className="text-[10px]">{err.error}</span> },
+        { header: t('bulkImport.identifier'), cell: (err: { email?: string; name?: string }) => <span className="font-medium">{err.email || err.name}</span> },
+        { header: t('bulkImport.errorMessage'), cell: (err: { error: string }) => <span className="text-[10px]">{err.error}</span> },
     ];
 
     return (
@@ -170,8 +170,11 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
                         </Button>
                         <div className="mt-8 grid grid-cols-2 gap-4 w-full max-w-md">
                             <div
+                                role="button"
+                                tabIndex={0}
                                 className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-elev-1 flex items-center gap-3 cursor-pointer hover:border-brand-500/50 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/80"
                                 onClick={downloadTemplate}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); downloadTemplate(); } }}
                             >
                                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg flex items-center justify-center">
                                     <FileText className="w-4 h-4" />

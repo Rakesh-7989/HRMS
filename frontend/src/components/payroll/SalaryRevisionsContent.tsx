@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { showToast } from '@/utils/toast';
 import { Plus, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
 // payrollService is available but we use api directly for flexibility
@@ -38,6 +39,7 @@ interface Employee {
 }
 
 export const SalaryRevisionsContent: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
@@ -78,13 +80,14 @@ export const SalaryRevisionsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Salary revision created');
+            showToast.success(t('payroll.revisionCreated'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-revisions'] });
             setAddOpen(false);
             resetForm();
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to create revision');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            showToast.error(error?.response?.data?.message || 'Failed to create revision');
         }
     });
 
@@ -95,11 +98,12 @@ export const SalaryRevisionsContent: React.FC = () => {
             return response.data.data;
         },
         onSuccess: () => {
-            showToast.success('Revision updated');
+            showToast.success(t('payroll.revisionUpdated'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-revisions'] });
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to update');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            showToast.error(error?.response?.data?.message || 'Failed to update');
         }
     });
 
@@ -113,7 +117,7 @@ export const SalaryRevisionsContent: React.FC = () => {
 
     const handleCreate = () => {
         if (!employeeId || !newCtc) {
-            showToast.error('Please fill all required fields');
+            showToast.error(t('common.fillRequiredFields'));
             return;
         }
         createMutation.mutate({

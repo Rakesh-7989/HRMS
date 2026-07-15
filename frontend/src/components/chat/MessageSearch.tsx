@@ -4,15 +4,25 @@ import { Search, X, Paperclip, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/utils/cn';
 
+interface Message {
+    id: string;
+    type?: string;
+    content?: string;
+    file_url?: string;
+    sender_first_name?: string;
+    sender_last_name?: string;
+    created_at?: string;
+}
+
 interface MessageSearchProps {
-    messages: any[];
+    messages: Message[];
     onResultSelect: (messageId: string) => void;
     onClose: () => void;
 }
 
 export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResultSelect, onClose }) => {
     const [searchText, setSearchText] = useState('');
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<Message[]>([]);
     const [currentIndex, setCurrentIndex] = useState(-1);
     const [hasAttachmentFilter, setHasAttachmentFilter] = useState(false);
 
@@ -105,7 +115,6 @@ export const MessageSearch: React.FC<MessageSearchProps> = ({ messages, onResult
                         placeholder="Enter a search keyword..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        autoFocus
                         className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-all"
                         onKeyDown={(e) => {
                             if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); goToNext(); }

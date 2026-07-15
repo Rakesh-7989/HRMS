@@ -18,7 +18,7 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({
     minPlan = 1,
     fullPage = true
 }) => {
-    const { hasActivePlan, user, atLeastPlan } = useAuth() as any;
+    const { hasActivePlan, user, atLeastPlan } = useAuth() as unknown as { hasActivePlan: boolean; user: { role: string } | null; atLeastPlan: (min: number) => boolean };
 
     const isAllowed = user?.role === 'SUPER_ADMIN' || (hasActivePlan && (atLeastPlan ? atLeastPlan(minPlan) : true));
 

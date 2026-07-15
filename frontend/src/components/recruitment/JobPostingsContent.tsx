@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { recruitmentService, JobPosting } from '@/services/recruitment.service';
+import { recruitmentService } from '@/services/recruitment.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { PageTransition } from '@/components/common/PageTransition';
+import { PageTransition } from '@/components/ui/PageTransition';
 import { Briefcase, Plus, MapPin, Clock, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { showToast } from '@/utils/toast';

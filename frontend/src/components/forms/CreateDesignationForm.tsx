@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Dialog } from '@/components/ui/Dialog';
@@ -25,6 +26,7 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
   onOpenChange,
   editDesignation = null,
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const isEditMode = !!editDesignation;
 
@@ -34,10 +36,10 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
       formik.resetForm();
       onOpenChange(false);
-      showToast.success('Designation created successfully');
+      showToast.success(t('organization.designationCreated'));
     },
-    onError: (err: any) => {
-      showToast.error(err);
+    onError: (err: unknown) => {
+      showToast.error((err as { message?: string }).message || 'Failed');
     }
   });
 
@@ -48,10 +50,10 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
       formik.resetForm();
       onOpenChange(false);
-      showToast.success('Designation updated successfully');
+      showToast.success(t('organization.designationUpdated'));
     },
-    onError: (err: any) => {
-      showToast.error(err);
+    onError: (err: unknown) => {
+      showToast.error((err as { message?: string }).message || 'Failed');
     }
   });
 
@@ -74,7 +76,7 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
   // Reset error/form state on close/open if needed
   useEffect(() => {
     if (!open) formik.resetForm();
-  }, [open]);
+  }, [open, formik]);
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
@@ -87,10 +89,11 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
     >
       <form onSubmit={formik.handleSubmit} className="space-y-4 pt-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="desig-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Designation Name *
           </label>
           <Input
+            id="desig-name"
             type="text"
             name="name"
             value={formik.values.name}
@@ -103,10 +106,11 @@ export const CreateDesignationForm: React.FC<CreateDesignationFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="desig-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description
           </label>
           <textarea
+            id="desig-description"
             name="description"
             value={formik.values.description}
             onChange={formik.handleChange}

@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    DndContext,
-    DragOverlay,
-    useSensor,
-    useSensors,
-    PointerSensor,
-    KeyboardSensor,
-    closestCorners,
-    DragStartEvent,
-    DragOverEvent,
-    DragEndEvent,
-} from '@dnd-kit/core';
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, KeyboardSensor, closestCorners, DragStartEvent, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 
@@ -21,6 +10,7 @@ import { projectsService } from '@/services/projects.service';
 import type { Task, TaskStatus } from '@/types/project.types';
 
 // Default configuration
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEFAULT_BOARD_CONFIG = [
     { id: 'TODO' as TaskStatus, title: 'To Do', isVisible: true },
     { id: 'IN_PROGRESS' as TaskStatus, title: 'In Progress', isVisible: true },
@@ -79,16 +69,17 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, projectId, config =
 
     // Dnd Handlers
     const onDragStart = (event: DragStartEvent) => {
-        if (event.active.data.current?.type === 'Task') {
-            setActiveTask(event.active.data.current.task);
+        const dragData = event.active.data.current as { type: string; task: Task } | undefined;
+        if (dragData?.type === 'Task') {
+            setActiveTask(dragData.task);
         }
     };
 
     const onDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over) return;
-        const activeId = active.id;
-        const overId = over.id;
+        const activeId = active.id as string;
+        const overId = over.id as string;
         if (activeId === overId) return;
     };
 

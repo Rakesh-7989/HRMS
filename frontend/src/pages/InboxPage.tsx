@@ -105,7 +105,7 @@ const sampleItems: Item[] = [
 
 const InboxPage: React.FC = () => {
   const { t } = useTranslation();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
 
   const [items, setItems] = useState<Item[]>(sampleItems);
   const [selected, setSelected] = useState<Item | null>(items[0] || null);
@@ -133,7 +133,7 @@ const InboxPage: React.FC = () => {
             return base(uniq);
         }
         return base(archiveItems);
-    }, [items, filter, tab, pendingItems, archiveItems, newTasks, upcomingTasks]);
+    }, [filter, tab, pendingItems, archiveItems, newTasks, upcomingTasks]);
 
     const pendingCount = pendingItems.length;
     const notificationsCount = newTasks.length + upcomingTasks.length;
@@ -250,7 +250,10 @@ const InboxPage: React.FC = () => {
                   filtered.map((it) => (
                     <div
                       key={it.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'take' }); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(it); setSelectedListItem({ id: it.id, list: 'take' }); } }}
                       className={`flex items-start gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-elev-1 rounded-md cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'take' ? 'bg-white/10 border border-gray-200' : 'border border-transparent'}`}
                     >
                       <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold text-sm">{it.title.split(' ').map((s) => s[0]).slice(0,2).join('')}</div>
@@ -286,7 +289,7 @@ const InboxPage: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           {newTasks.map((it) => (
-                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'new' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'new' ? 'bg-white/10 border border-gray-200' : ''}`}>
+                            <div key={it.id} role="button" tabIndex={0} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'new' }); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(it); setSelectedListItem({ id: it.id, list: 'new' }); } }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'new' ? 'bg-white/10 border border-gray-200' : ''}`}>
                               <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
                               <div className="flex-1">
                                 <p className="font-medium">{it.title}</p>
@@ -306,7 +309,7 @@ const InboxPage: React.FC = () => {
                       ) : (
                         <div className="space-y-2">
                           {upcomingTasks.map((it) => (
-                            <div key={it.id} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'upcoming' }); }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'upcoming' ? 'bg-white/10 border border-gray-200' : ''}`}>
+                            <div key={it.id} role="button" tabIndex={0} onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'upcoming' }); }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(it); setSelectedListItem({ id: it.id, list: 'upcoming' }); } }} className={`flex items-center gap-3 px-3 py-2 rounded hover:bg-white/10 hover:shadow-elev-1 cursor-pointer transition ${selectedListItem?.id === it.id && selectedListItem?.list === 'upcoming' ? 'bg-white/10 border border-gray-200' : ''}`}>
                               <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map(s => s[0]).slice(0,2).join('')}</div>
                               <div className="flex-1">
                                 <p className="font-medium">{it.title}</p>
@@ -328,7 +331,10 @@ const InboxPage: React.FC = () => {
                   filtered.map((it) => (
                     <div
                       key={it.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => { setSelected(it); setSelectedListItem({ id: it.id, list: 'archive' }); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(it); setSelectedListItem({ id: it.id, list: 'archive' }); } }}
                       className={`flex items-center gap-3 px-3 py-2 hover:bg-white/10 hover:shadow-elev-1 cursor-pointer ${selectedListItem?.id === it.id && selectedListItem?.list === 'archive' ? 'bg-white/10 border border-gray-200' : ''}`}
                     >
                       <div className="w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center text-white font-semibold">{it.title.split(' ').map((s) => s[0]).slice(0,2).join('')}</div>
@@ -448,4 +454,4 @@ const InboxPage: React.FC = () => {
   );
 };
 
-export default InboxPage;
+export { InboxPage };

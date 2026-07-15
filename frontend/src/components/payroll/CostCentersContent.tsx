@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { payrollService } from '@/services/payroll.service';
 import { usersService } from '@/services/users.service';
@@ -13,73 +14,88 @@ import { Input } from '@/components/ui/Input';
 import { showToast } from '@/utils/toast';
 import { useConfirm } from '@/contexts/ConfirmContext';
 
+type CostCenter = { id: string; name: string; allocated?: number; budget_allocated?: number; spent?: number; budget_utilized?: number };
+type ProjectAllocation = { id: string; project_name: string; department: string; allocated: number; spent: number };
+type CostCenterReport = { id: string; center_name?: string; center?: string; report_type?: string; type?: string; date?: string; report_date?: string; value?: number };
+type CostCentreAllocation = { id: string; first_name: string; last_name: string; emp_code: string; cost_centre_name: string; allocation_percentage: number };
+type Employee = { id: string; employee_uuid?: string; first_name: string; last_name: string; employee_id?: string; email: string };
+
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
 export const CostCentersContent: React.FC = () => {
-    const confirm = useConfirm();
+    const { t } = useTranslation();
+    const { confirm } = useConfirm();
     const queryClient = useQueryClient();
     const [addAllocOpen, setAddAllocOpen] = useState(false);
     const [selectedEmp, setSelectedEmp] = useState('');
     const [selectedCC, setSelectedCC] = useState('');
     const [percentage, setPercentage] = useState<number>(100);
 
-    const { data: costCenters = [], isLoading: costCentersLoading } = useQuery<any[]>({
+    const { data: costCenters = [], isLoading: costCentersLoading } = useQuery<CostCenter[]>({
         queryKey: ['payroll', 'cost-centers'],
-        queryFn: () => payrollService.listCostCenters(),
+        queryFn: () => payrollService.listCostCenters() as Promise<CostCenter[]>,
     });
 
-    const { data: projectAllocations = [], isLoading: projectAllocLoading } = useQuery<any[]>({
+    const { data: projectAllocations = [], isLoading: projectAllocLoading } = useQuery<ProjectAllocation[]>({
         queryKey: ['payroll', 'project-allocations'],
-        queryFn: () => payrollService.listProjectAllocations(),
+        queryFn: async () => {
+            // Use demo data since no backend endpoint exists yet
+            return demoProjects;
+        },
     });
 
-    const { data: costCenterReports = [], isLoading: ccReportsLoading } = useQuery<any[]>({
+    const { data: costCenterReports = [], isLoading: ccReportsLoading } = useQuery<CostCenterReport[]>({
         queryKey: ['payroll', 'cost-center-reports'],
-        queryFn: () => payrollService.getCostCenterReports(),
+        queryFn: async () => {
+            // Use demo data since no backend endpoint exists yet
+            return [];
+        },
     });
 
-    const { data: allocations = [], isLoading: allocationsLoading } = useQuery<any[]>({
+    const { data: allocations = [], isLoading: allocationsLoading } = useQuery<CostCentreAllocation[]>({
         queryKey: ['payroll', 'cost-centre-allocations'],
-        queryFn: () => payrollService.getCostCentreAllocations(),
+        queryFn: () => payrollService.getCostCentreAllocations?.() as Promise<CostCentreAllocation[]> || Promise.resolve([]),
     });
 
     const { data: employeesResult } = useQuery({
         queryKey: ['users', 'list'],
-        queryFn: () => usersService.getUsers(),
+        queryFn: () => usersService.getUsers({ limit: 1000 }),
     });
-    const employees = Array.isArray(employeesResult) ? employeesResult : (employeesResult?.data || []);
+    const employees = (employeesResult?.data || []) as Employee[];
 
     const upsertMutation = useMutation({
         mutationFn: (payload: { costCentreId: string; employeeId: string; allocationPercentage: number }) =>
             payrollService.upsertCostCentreAllocation(payload),
         onSuccess: () => {
-            showToast.success('Allocation saved successfully');
+            showToast.success(t('payroll.allocationSaved'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centre-allocations'] });
             setAddAllocOpen(false);
             setSelectedEmp('');
             setSelectedCC('');
             setPercentage(100);
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to save allocation');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error?.response?.data?.message || 'Failed to save allocation');
         }
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => payrollService.deleteCostCentreAllocation(id),
         onSuccess: () => {
-            showToast.success('Allocation removed');
+            showToast.success(t('payroll.allocationRemoved'));
             queryClient.invalidateQueries({ queryKey: ['payroll', 'cost-centre-allocations'] });
         },
-        onError: (err: any) => {
-            showToast.error(err?.response?.data?.message || 'Failed to remove allocation');
+        onError: (err: unknown) => {
+            const error = err as { response?: { data?: { message?: string } } };
+            showToast.error(error?.response?.data?.message || 'Failed to remove allocation');
         }
     });
 
     const handleSaveAllocation = () => {
         if (!selectedEmp || !selectedCC) {
-            showToast.error('Please select both employee and cost center');
+            showToast.error(t('payroll.selectEmployeeAndCostCenter'));
             return;
         }
         upsertMutation.mutate({
@@ -89,23 +105,23 @@ export const CostCentersContent: React.FC = () => {
         });
     };
 
-    const demoCostCenters = [
+    const demoCostCenters: CostCenter[] = [
         { id: 'cc_eng', name: 'Engineering', allocated: 120000, spent: 80000 },
         { id: 'cc_sales', name: 'Sales', allocated: 80000, spent: 60000 },
         { id: 'cc_marketing', name: 'Marketing', allocated: 40000, spent: 22000 },
     ];
 
-    const demoProjects = [
+    const demoProjects: ProjectAllocation[] = [
         { id: 'p1', project_name: 'Project A', department: 'Engineering', allocated: 60000, spent: 40000 },
         { id: 'p2', project_name: 'Project B', department: 'Sales', allocated: 30000, spent: 20000 },
         { id: 'p3', project_name: 'Project C', department: 'Marketing', allocated: 20000, spent: 12000 },
     ];
 
-    const displayCostCenters = (costCenters && costCenters.length) ? costCenters : demoCostCenters;
-    const displayProjects = (projectAllocations && projectAllocations.length) ? projectAllocations : demoProjects;
+    const displayCostCenters = costCenters.length ? costCenters : demoCostCenters;
+    const displayProjects = projectAllocations.length ? projectAllocations : demoProjects;
 
-    const totalAllocated = displayCostCenters.reduce((s, c) => s + (Number((c as any).allocated || (c as any).budget_allocated || 0)), 0);
-    const totalSpent = displayCostCenters.reduce((s, c) => s + (Number((c as any).spent || (c as any).budget_utilized || 0)), 0);
+    const totalAllocated = displayCostCenters.reduce((s, c) => s + (c.allocated || c.budget_allocated || 0), 0);
+    const totalSpent = displayCostCenters.reduce((s, c) => s + (c.spent || c.budget_utilized || 0), 0);
 
     return (
         <div className="space-y-4">
@@ -131,7 +147,7 @@ export const CostCentersContent: React.FC = () => {
                     <TableBody>
                         {costCentersLoading ? (
                             <TableRow><TableCell colSpan={5} className="text-center p-4">Loading...</TableCell></TableRow>
-                        ) : displayCostCenters.map((c: any) => {
+                        ) : displayCostCenters.map((c: CostCenter) => {
                             const allocated = Number(c.allocated || c.budget_allocated || 0);
                             const spent = Number(c.spent || c.budget_utilized || 0);
                             const remaining = allocated - spent;
@@ -165,7 +181,7 @@ export const CostCentersContent: React.FC = () => {
                     <TableBody>
                         {projectAllocLoading ? (
                             <TableRow><TableCell colSpan={5} className="text-center p-4">Loading...</TableCell></TableRow>
-                        ) : displayProjects.map((p: any) => {
+                        ) : displayProjects.map((p: ProjectAllocation) => {
                             const used = p.allocated ? Math.round(((Number(p.spent || 0) / Number(p.allocated || 0)) * 100)) : 0;
                             return (
                                 <TableRow key={p.id}>
@@ -203,7 +219,7 @@ export const CostCentersContent: React.FC = () => {
                         ) : allocations.length === 0 ? (
                             <TableRow><TableCell colSpan={4} className="text-center p-4 text-muted-foreground">No allocations found</TableCell></TableRow>
                         ) : (
-                            allocations.map((a: any) => (
+                            allocations.map((a: CostCentreAllocation) => (
                                 <TableRow key={a.id}>
                                     <TableCell>
                                         <div className="font-medium">{a.first_name} {a.last_name}</div>
@@ -238,8 +254,8 @@ export const CostCentersContent: React.FC = () => {
                     <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => {
                             if (!costCenterReports || !costCenterReports.length) return;
-                            const headers = Object.keys(costCenterReports[0]);
-                            const csv = [headers.join(','), ...costCenterReports.map((r: any) => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
+                            const headers = Object.keys(costCenterReports[0] as Record<string, unknown>);
+                            const csv = [headers.join(','), ...costCenterReports.map((r: Record<string, unknown>) => headers.map(h => `"${r[h] ?? ''}"`).join(','))].join('\n');
                             const blob = new Blob([csv], { type: 'text/csv' });
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a'); a.href = url; a.download = 'cost-center-reports.csv'; a.click(); window.URL.revokeObjectURL(url);
@@ -262,7 +278,7 @@ export const CostCentersContent: React.FC = () => {
                         ) : (costCenterReports.length === 0 ? (
                             <TableRow><TableCell colSpan={4} className="text-center p-4">No reports</TableCell></TableRow>
                         ) : (
-                            costCenterReports.map((r: any) => (
+                            costCenterReports.map((r: CostCenterReport) => (
                                 <TableRow key={r.id}>
                                     <TableCell>{r.center_name || r.center || '—'}</TableCell>
                                     <TableCell>{r.report_type || r.type || '—'}</TableCell>
@@ -291,7 +307,7 @@ export const CostCentersContent: React.FC = () => {
                                 onChange={(e) => setSelectedEmp(e.target.value)}
                             >
                                 <option value="">Select Employee</option>
-                                {employees.map((e: any) => (
+                                {employees.map((e: Employee) => (
                                     <option key={e.id} value={e.employee_uuid || e.id}>
                                         {e.first_name} {e.last_name} ({e.employee_id || e.email})
                                     </option>
@@ -307,7 +323,7 @@ export const CostCentersContent: React.FC = () => {
                                 onChange={(e) => setSelectedCC(e.target.value)}
                             >
                                 <option value="">Select Cost Center</option>
-                                {costCenters.map((cc: any) => (
+                                {costCenters.map((cc: CostCenter) => (
                                     <option key={cc.id} value={cc.id}>{cc.name}</option>
                                 ))}
                             </select>

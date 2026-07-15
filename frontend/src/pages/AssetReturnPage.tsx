@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -9,6 +9,7 @@ import { ArrowLeft, Save, AlertTriangle, Plus, Trash2, X } from 'lucide-react';
 import { showToast } from '@/utils/toast';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '@/utils/constants';
 
 interface ChecklistItem {
     item_name: string;
@@ -42,7 +43,7 @@ export const AssetReturnPage: React.FC = () => {
         enabled: !!id,
     });
 
-    // Fetch accessories from DB — what was actually given during assignment
+    // Fetch accessories from DB â€” what was actually given during assignment
     const { data: dbAccessories, isLoading: accessoriesLoading } = useQuery({
         queryKey: ['asset-accessories', id],
         queryFn: () => assetsService.getAssetAccessories(id!),
@@ -63,23 +64,23 @@ export const AssetReturnPage: React.FC = () => {
     }, [dbAccessories]);
 
     const returnMutation = useMutation({
-        mutationFn: (data: any) => assetsService.unassignAsset(id!, data),
+        mutationFn: (data: unknown) => assetsService.unassignAsset(id!, data as { return_date?: string; condition?: string; notes?: string; checklist?: { item_name: string; is_returned: boolean; notes?: string }[] }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assets'] });
             queryClient.invalidateQueries({ queryKey: ['asset', id] });
             queryClient.invalidateQueries({ queryKey: ['asset-accessories', id] });
-            showToast.success('Asset returned successfully');
+            showToast.success(t('assets.returnedSuccess'));
             navigate(`/assets/${id}`);
         },
         onError: (error: Error) => {
-            showToast.error(error.message || 'Failed to return asset');
+            showToast.error((error as {message?: string}).message || t('assets.returnFailed'));
             setIsSubmitting(false);
         },
     });
 
     const handleChecklistChange = (index: number, field: keyof ChecklistItem, value: boolean | string) => {
         const updated = [...checklist];
-        (updated[index] as any)[field] = value;
+        (updated[index] as unknown as Record<string, unknown>)[field] = value;
         setChecklist(updated);
     };
 
@@ -87,7 +88,7 @@ export const AssetReturnPage: React.FC = () => {
         const trimmed = newItemName.trim();
         if (!trimmed) return;
         if (checklist.some(item => item.item_name.toLowerCase() === trimmed.toLowerCase())) {
-            showToast.error('This item is already in the checklist');
+            showToast.error(t('assets.alreadyInChecklist'));
             return;
         }
         setChecklist(prev => [...prev, { item_name: trimmed, is_returned: false, notes: '' }]);
@@ -155,7 +156,7 @@ export const AssetReturnPage: React.FC = () => {
                         </p>
                         <Button
                             variant="outline"
-                            onClick={() => navigate('/assets')}
+                            onClick={() => navigate(ROUTES.ASSETS)}
                             className="mt-6"
                         >
                             Back to Assets
@@ -202,10 +203,11 @@ export const AssetReturnPage: React.FC = () => {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Return Date */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label htmlFor="return-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Return Date
                             </label>
                             <input
+                                id="return-date"
                                 type="date"
                                 required
                                 value={form.return_date}
@@ -216,10 +218,11 @@ export const AssetReturnPage: React.FC = () => {
 
                         {/* Asset Condition */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label htmlFor="return-condition" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Asset Condition
                             </label>
                             <select
+                                id="return-condition"
                                 value={form.condition}
                                 onChange={(e) => setForm({ ...form, condition: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-brand-500/50 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -232,10 +235,10 @@ export const AssetReturnPage: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Return Checklist — DB Driven */}
+                        {/* Return Checklist â€” DB Driven */}
                         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                                Return Checklist — Accessories
+                                Return Checklist â€” Accessories
                             </h4>
                             <div className="space-y-3">
                                 {checklist.length === 0 && (

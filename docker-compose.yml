@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hrms_saas_db
+      POSTGRES_USER: hrms_user
+      POSTGRES_PASSWORD: hrms_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://hrms_user:hrms_pass@db:5432/hrms_saas_db
+      JWT_ACCESS_SECRET: dev-access-secret-min-32-chars!!
+      JWT_REFRESH_SECRET: dev-refresh-secret-min-32-chars!!
+      ENCRYPTION_KEY: dev-encryption-key-min-32-chars-long!
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

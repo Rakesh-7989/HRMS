@@ -13,19 +13,24 @@ import { useAuth } from '@/contexts/AuthContext';
 const formatINR = (amount: number | null | undefined) =>
     amount == null ? '—' : amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
+type SalaryComponent = { id: string; name: string; amount: number };
+
 export const SalaryDetailsContent: React.FC = () => {
     const { user } = useAuth();
     const isAuthorized = user?.role === 'ADMIN' || user?.role === 'HR';
     const queryClient = useQueryClient();
 
-    const { data: salaryComponents = [], isLoading: salaryLoading } = useQuery<Array<{ id: string; name: string; amount: number }>>({
+    const { data: salaryComponents = [], isLoading: salaryLoading } = useQuery<SalaryComponent[]>({
         queryKey: ['payroll', 'salary-components'],
         queryFn: () => payrollService.listSalaryComponents(),
     });
 
-    const { data: salaryStructure } = useQuery<any>({
+    const { data: salaryStructure } = useQuery<Record<string, unknown> | null>({
         queryKey: ['payroll', 'salary-structure'],
-        queryFn: () => payrollService.getSalaryStructure(),
+        queryFn: async () => {
+            const result = await payrollService.getSalaryStructure();
+            return result as Record<string, unknown> | null;
+        },
     });
 
     const [basicSalary, setBasicSalary] = useState<number | ''>('');
@@ -36,11 +41,11 @@ export const SalaryDetailsContent: React.FC = () => {
 
     useEffect(() => {
         if (salaryStructure) {
-            setBasicSalary(salaryStructure.basic ?? '');
-            setHraPercent(salaryStructure.hra_percent ?? 20);
-            setOtherAllowances(salaryStructure.other_allowances ?? '');
-            setMonthlyDeductions(salaryStructure.monthly_deductions ?? '');
-            setEmployerContrib(salaryStructure.employer_contrib ?? '');
+            setBasicSalary((salaryStructure.basic as number) ?? '');
+            setHraPercent((salaryStructure.hra_percent as number) ?? 20);
+            setOtherAllowances((salaryStructure.other_allowances as number) ?? '');
+            setMonthlyDeductions((salaryStructure.monthly_deductions as number) ?? '');
+            setEmployerContrib((salaryStructure.employer_contrib as number) ?? '');
         }
     }, [salaryStructure]);
 
@@ -53,7 +58,7 @@ export const SalaryDetailsContent: React.FC = () => {
     const ctc = useMemo(() => (grossSalary + Number(employerContrib || 0)) * 12, [grossSalary, employerContrib]);
 
     const updateSalaryMut = useMutation({
-        mutationFn: (payload: any) => payrollService.updateSalaryStructure(payload),
+        mutationFn: (payload: { basic: number; hra_percent: number; other_allowances: number; monthly_deductions: number; employer_contrib?: number }) => payrollService.updateSalaryStructure(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'salary-structure'] });
             queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] });
@@ -95,27 +100,27 @@ export const SalaryDetailsContent: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
                     <div className="md:col-span-2">
                         <Label>Basic Salary (monthly)</Label>
-                        <Input type="number" value={basicSalary as any} onChange={(e) => setBasicSalary(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
+                        <Input type="number" value={basicSalary} onChange={(e) => setBasicSalary(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
                     </div>
 
                     <div className="md:col-span-1">
                         <Label>HRA (%)</Label>
-                        <Input type="number" value={hraPercent as any} onChange={(e) => setHraPercent(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
+                        <Input type="number" value={hraPercent} onChange={(e) => setHraPercent(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
                     </div>
 
                     <div className="md:col-span-1">
                         <Label>Other Allowances (monthly)</Label>
-                        <Input type="number" value={otherAllowances as any} onChange={(e) => setOtherAllowances(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
+                        <Input type="number" value={otherAllowances} onChange={(e) => setOtherAllowances(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
                     </div>
 
                     <div className="md:col-span-1">
                         <Label>Monthly Deductions</Label>
-                        <Input type="number" value={monthlyDeductions as any} onChange={(e) => setMonthlyDeductions(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
+                        <Input type="number" value={monthlyDeductions} onChange={(e) => setMonthlyDeductions(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
                     </div>
 
                     <div className="md:col-span-1">
                         <Label>Employer Contribution (monthly)</Label>
-                        <Input type="number" value={employerContrib as any} onChange={(e) => setEmployerContrib(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
+                        <Input type="number" value={employerContrib} onChange={(e) => setEmployerContrib(Number(e.target.value) || '')} className="mt-2" readOnly={!isAuthorized} />
                     </div>
 
                     {isAuthorized && (

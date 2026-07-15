@@ -328,4 +328,4 @@ export const HolidaysPage: React.FC = () => {
     );
 };
 
-export default HolidaysPage;
+

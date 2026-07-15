@@ -70,8 +70,19 @@ export interface User {
   manager?: { id: string; first_name: string; last_name: string };
   tenant_settings?: {
     logo_url?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
+}
+
+export interface OrgTreeNode {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  employee_id?: string;
+  designation?: string;
+  department?: string;
+  children?: OrgTreeNode[];
 }
 
 export interface CreateUserData {
@@ -178,25 +189,40 @@ const handleApiError = (error: unknown): never => {
 };
 
 // Extract data from different response formats (handles nested and non-nested)
-const extractData = <T>(response: any, key?: string): T => {
+const extractData = <T>(response: { data: Record<string, unknown> }, key?: string): T => {
   const data = response.data;
 
   // Try specific key first
   if (key && data[key] !== undefined) {
-    return data[key];
+    return data[key] as T;
   }
 
   // Try common keys
-  if (data.user !== undefined) return data.user;
-  if (data.users !== undefined) return data.users;
-  if (data.updated !== undefined) return data.updated;
-  if (data.data !== undefined) return data.data;
-  if (data.result !== undefined) return data.result;
-  if (data.profile !== undefined) return data.profile;
+  if (data.user !== undefined) return data.user as T;
+  if (data.users !== undefined) return data.users as T;
+  if (data.updated !== undefined) return data.updated as T;
+  if (data.data !== undefined) return data.data as T;
+  if (data.result !== undefined) return data.result as T;
+  if (data.profile !== undefined) return data.profile as T;
 
   // Return the whole data object
-  return data;
+  return data as T;
 };
+
+// ============================================================================
+// ORG TREE TYPES
+// ============================================================================
+
+export interface OrgNodeData {
+    id: string;
+    name: string;
+    role?: string;
+    initials?: string;
+    employeeId?: string;
+    designation_name?: string;
+    department_name?: string;
+    children?: OrgNodeData[];
+}
 
 // ============================================================================
 // SERVICE
@@ -209,7 +235,7 @@ export const usersService = {
   // LIST & GET USERS
   // ==========================================================================
 
-  getUsers: async (params?: EmployeeFilters): Promise<{ data: User[], pagination?: any }> => {
+  getUsers: async (params?: EmployeeFilters): Promise<{ data: User[], pagination?: Record<string, unknown> }> => {
     try {
       const response = await api.get('/users', { params });
       const resData = response.data;
@@ -414,7 +440,7 @@ export const usersService = {
     }
   },
 
-  bulkImport: async (file: File, mapping: Record<string, string>): Promise<any> => {
+  bulkImport: async (file: File, mapping: Record<string, string>): Promise<Record<string, unknown>> => {
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -460,10 +486,10 @@ export const usersService = {
     }
   },
 
-  getOrgTree: async (): Promise<any> => {
+  getOrgTree: async (): Promise<OrgTreeNode | null> => {
     try {
       const response = await api.get('/users/tree');
-      return extractData<any>(response, 'tree');
+      return extractData<OrgTreeNode>(response, 'tree');
     } catch (error) {
       console.error('Error fetching org tree:', error);
       return null;
@@ -476,7 +502,7 @@ export const usersService = {
 
   checkFieldUniqueness: async (field: string, value: string, excludeUserId?: string): Promise<{ exists: boolean; label?: string }> => {
     try {
-      const params: any = { field, value };
+      const params: { field: string; value: string; excludeUserId?: string } = { field, value };
       if (excludeUserId) params.excludeUserId = excludeUserId;
       const response = await api.get('/users/check-unique', { params });
       return response.data?.data || { exists: false };

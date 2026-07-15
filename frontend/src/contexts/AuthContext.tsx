@@ -2,13 +2,13 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth.service';
 import { usersService } from '@/services/users.service';
-import { ROLE_DASHBOARDS } from '@/utils/constants';
-import type { User, LoginCredentials } from '@/types';
+import { ROUTES, ROLE_DASHBOARDS } from '@/utils/constants';
+import type { User, LoginCredentials, AuthResponse } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<any>;
+  login: (credentials: LoginCredentials) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthenticated: boolean;
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               localStorage.removeItem('accessToken');
               localStorage.removeItem('refreshToken');
               setUser(null);
-              navigate('/login');
+              navigate(ROUTES.LOGIN);
             } else {
               // For other errors, fall back to stored minimal user
               setUser(storedUser);
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const response = await authService.login(credentials);
 
     // Check if 2FA is required
-    if ((response as any).status === '2FA_REQUIRED') {
+    if ((response as unknown as { status: string }).status === '2FA_REQUIRED') {
       return response; // Return the response so LoginPage can handle the next step
     }
 
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Check if user must change password first - DON'T set user yet
     if (response.mustChangePassword) {
-      navigate('/change-password');
+      navigate(ROUTES.CHANGE_PASSWORD);
       return response;
     }
 
@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     await authService.logout();
     setUser(null);
-    navigate('/login');
+    navigate(ROUTES.LOGIN);
   };
 
   return (
@@ -169,6 +169,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatTime12Hour, getCurrentDate } from '@/utils/timeFormat';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { attendanceService, AttendanceAnalytics, AttendanceReports } from '@/services/attendance.service';
+import { attendanceService, AttendanceAnalytics, AttendanceReports, AttendanceReportRow } from '@/services/attendance.service';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, subDays, parseISO } from 'date-fns';
 import { AreaChart } from '@/components/charts/AreaChart';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
-import { DataTable } from '@/components/ui/DataTable';
+import { DataTable, Column } from '@/components/ui/DataTable';
 
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -264,24 +264,24 @@ export const AttendanceReportsContent: React.FC = () => {
 
 
 
-    const reportColumns = useMemo(() => [
+    const reportColumns = useMemo((): Column<AttendanceReportRow>[] => [
         {
             header: t('common.date'),
             accessorKey: 'date' as const,
-            cell: (row: any) => format(new Date(row.date), 'MMM dd'),
+            cell: (row: AttendanceReportRow) => format(new Date(row.date), 'MMM dd'),
         },
         {
             header: t('common.employee'),
-            cell: (row: any) => (
+            cell: (row: AttendanceReportRow) => (
                 <div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">{row.first_name} {row.last_name}</div>
-                    <div className="text-xs text-muted-foreground">{row.department}</div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{row.first_name || ''} {row.last_name || ''}</div>
+                    <div className="text-xs text-muted-foreground">{row.department || ''}</div>
                 </div>
             ),
         },
         {
             header: t('attendance.checkIn'),
-            cell: (row: any) => (
+            cell: (row: AttendanceReportRow) => (
                 row.check_in_time ? (
                     <div className={row.is_late ? 'text-red-500 font-medium' : ''}>
                         {formatTime12Hour(row.check_in_time, user?.timezone)}
@@ -292,11 +292,11 @@ export const AttendanceReportsContent: React.FC = () => {
         },
         {
             header: t('attendance.checkOut'),
-            cell: (row: any) => formatTime12Hour(row.check_out_time, user?.timezone) || '-',
+            cell: (row: AttendanceReportRow) => formatTime12Hour(row.check_out_time, user?.timezone) || '-',
         },
         {
             header: t('common.status'),
-            cell: (row: any) => (
+            cell: (row: AttendanceReportRow) => (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${row.status === 'PRESENT' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                     row.status === 'ABSENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                         'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
@@ -308,17 +308,17 @@ export const AttendanceReportsContent: React.FC = () => {
         {
             header: t('attendance.workingHours'),
             accessorKey: 'work_hours' as const,
-            cell: (row: any) => row.work_hours || '-',
+            cell: (row: AttendanceReportRow) => row.work_hours || '-',
         },
         {
             header: t('attendance.effectiveHours'),
             accessorKey: 'effective_work_hours' as const,
-            cell: (row: any) => <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{row.effective_work_hours || '-'}</span>,
+            cell: (row: AttendanceReportRow) => <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{row.effective_work_hours || '-'}</span>,
         },
         {
             header: t('attendance.overtime'),
-            cell: (row: any) => (
-                Number(row.overtime_hours) > 0 ? (
+            cell: (row: AttendanceReportRow) => (
+                Number(row.overtime_hours || 0) > 0 ? (
                     <span className="text-green-600 font-medium">+{row.overtime_hours}</span>
                 ) : '-'
             ),
@@ -384,7 +384,7 @@ export const AttendanceReportsContent: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                         <div className="md:col-span-2">
                             <Label className="text-sm font-medium mb-2 block">{t('attendance.reports.timePeriod')}</Label>
-                            <RadioGroup value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)} className="flex gap-4">
+                            <RadioGroup value={selectedPeriod} onValueChange={(value: string) => setSelectedPeriod(value as '7d' | '30d' | '90d' | 'custom')} className="flex gap-4">
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="7d" id="7d" />
                                     <Label htmlFor="7d">{t('attendance.reports.period7d')}</Label>

@@ -263,7 +263,8 @@ describe('PDF Text Sanitization', () => {
             .replace(/[\u2013\u2014]/g, '-')
             .replace(/\u2026/g, '...')
             .replace(/[\u00A0]/g, ' ')
-            .replace(/[^\x20-\x7E\u00A0-\u00FF\u0900-\u097F]/g, '');
+            // eslint-disable-next-line no-misleading-character-class
+            .replace(/[^\x20-\x7E\u00A0-\u00FF\u0900-\u097F]/ug, '');
     };
 
     test('should replace smart quotes', () => {

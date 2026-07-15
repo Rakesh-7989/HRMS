@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import payrollService from '@/services/payroll.service';
+import payrollService, { LoanType } from '@/services/payroll.service';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
@@ -9,6 +9,30 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { useAuth } from '@/contexts/AuthContext';
 import LoanTypesPanel from '@/components/LoanTypesPanel';
+
+interface Loan {
+    id: string;
+    employee_id?: string;
+    employee_name?: string;
+    loan_type_id?: string;
+    loanTypeId?: string;
+    principal_amount?: number;
+    amount?: number;
+    interest_rate?: number;
+    interest_type?: string;
+    tenure_months?: number;
+    emi_amount?: number;
+    total_payable_amount?: number;
+    outstanding_amount?: number;
+    outstanding?: number;
+    start_date?: string;
+    end_date?: string;
+    status?: string;
+    remarks?: string;
+    created_at?: string;
+    loan_type_name?: string;
+    loanTypeName?: string;
+}
 
 export const LoansContent: React.FC = () => {
     const { user } = useAuth();
@@ -23,8 +47,8 @@ export const LoansContent: React.FC = () => {
     const queryClient = useQueryClient();
     // Fetch loan types for selection and display (HR/Admin only per backend)
     const canManage = ['HR', 'ADMIN'].includes(userRole);
-    const { data: loanTypes = [] } = useQuery<any[]>({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });
-    const { data: loans = [], isLoading } = useQuery<any[]>({
+    const { data: loanTypes = [] } = useQuery<LoanType[]>({ queryKey: ['payroll', 'loan-types'], queryFn: () => payrollService.listLoanTypes(), enabled: canManage });
+    const { data: loans = [], isLoading } = useQuery<Loan[]>({
         queryKey: ['payroll', 'loans', userRole], queryFn: () => {
             if (userRole === 'EMPLOYEE') return payrollService.listLoans('employee');
             if (userRole === 'MANAGER') return payrollService.listLoans('team');
@@ -54,7 +78,7 @@ export const LoansContent: React.FC = () => {
     const [loansError, setLoansError] = useState<string | null>(null);
 
     const createLoanMut = useMutation({
-        mutationFn: (payload: any) => payrollService.createLoan(payload),
+        mutationFn: (payload: Record<string, unknown>) => payrollService.createLoan(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'loans'] });
             queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] });
@@ -64,18 +88,22 @@ export const LoansContent: React.FC = () => {
             setLoanTypeIdInput(''); setLoanPrincipal(''); setLoanInterestRate(''); setLoanInterestType('FLAT'); setLoanTenureMonths(''); setLoanEmiAmount(''); setLoanTotalPayable(''); setLoanStartDate('');
             setAddOpen(false);
         },
-        onError: (err: any) => {
-            setLoansError(err?.response?.data?.message || err?.message || 'Failed to create loan');
+        onError: (err: unknown) => {
+            const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+            setLoansError(axiosErr?.response?.data?.message || axiosErr?.message || 'Failed to create loan');
         },
     });
 
     const approveLoanMut = useMutation({
-        mutationFn: ({ loanId, payload }: { loanId: string; payload: any }) => payrollService.approveLoan(loanId, payload),
+        mutationFn: ({ loanId, payload }: { loanId: string; payload: { status: 'APPROVED' | 'REJECTED'; remarks?: string } }) => payrollService.approveLoan(loanId, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'loans'] });
             setLoansError(null);
         },
-        onError: (err: any) => setLoansError(err?.response?.data?.message || err?.message || 'Failed to approve loan')
+        onError: (err: unknown) => {
+            const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+            setLoansError(axiosErr?.response?.data?.message || axiosErr?.message || 'Failed to approve loan')
+        }
     });
 
     const closeLoanMut = useMutation({
@@ -85,7 +113,10 @@ export const LoansContent: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['payroll', 'summary'] });
             setLoansError(null);
         },
-        onError: (err: any) => setLoansError(err?.response?.data?.message || err?.message || 'Failed to close loan')
+        onError: (err: unknown) => {
+            const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+            setLoansError(axiosErr?.response?.data?.message || axiosErr?.message || 'Failed to close loan')
+        }
     });
 
     const handleSaveLoan = () => {
@@ -134,7 +165,7 @@ export const LoansContent: React.FC = () => {
             return;
         }
 
-        const payloadAdmin: any = { amount: Number(loanAmount) };
+        const payloadAdmin: Record<string, unknown> = { amount: Number(loanAmount) };
         if (isUuid(loanEmployee)) payloadAdmin.employee_id = loanEmployee; else payloadAdmin.employee_name = loanEmployee;
         if (loanOutstanding) payloadAdmin.outstanding = Number(loanOutstanding);
         if (loanTypeIdInput) payloadAdmin.loan_type_id = loanTypeIdInput;
@@ -151,10 +182,10 @@ export const LoansContent: React.FC = () => {
 
     // Reject workflow: open dialog to capture optional remarks before sending REJECTED status
     const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
-    const [selectedLoanForApproval, setSelectedLoanForApproval] = useState<any | null>(null);
+    const [selectedLoanForApproval, setSelectedLoanForApproval] = useState<Loan | null>(null);
     const [approvalRemarks, setApprovalRemarks] = useState('');
 
-    const handleOpenReject = (loan: any) => {
+    const handleOpenReject = (loan: Loan) => {
         setSelectedLoanForApproval(loan);
         setApprovalRemarks('');
         setApprovalDialogOpen(true);
@@ -214,12 +245,12 @@ export const LoansContent: React.FC = () => {
                                 <TableCell>-</TableCell>
                             </TableRow>
                         ) : (
-                            loans.map((l: any) => {
+                            loans.map((l: Loan) => {
                                 const outstanding = l.outstanding_amount ?? l.outstanding ?? 0;
                                 return (
                                     <TableRow key={l.id}>
                                         <TableCell>{l.employee_name || l.employee_id || '—'}</TableCell>
-                                        <TableCell>{(() => { const found = loanTypes.find((t: any) => t.id === (l.loan_type_id || l.loanTypeId)); return found ? found.name : (l.loan_type_name || l.loanTypeName || '—'); })()}</TableCell>
+                                        <TableCell>{(() => { const found = loanTypes.find((t: LoanType) => t.id === (l.loan_type_id || l.loanTypeId)); return found ? (found.name as string) : (l.loan_type_name || l.loanTypeName || '—'); })()}</TableCell>
                                         <TableCell>{l.principal_amount ?? l.amount ?? '—'}</TableCell>
                                         <TableCell>{outstanding ?? '—'}</TableCell>
                                         <TableCell>{l.status ?? '—'}</TableCell>
@@ -281,7 +312,7 @@ export const LoansContent: React.FC = () => {
                                 <Label>Loan Type (optional)</Label>
                                 <select value={loanTypeIdInput} onChange={(e) => setLoanTypeIdInput(e.target.value)} className="w-full px-3 py-2 border rounded-md mt-1">
                                     <option value="">(none)</option>
-                                    {loanTypes.map((lt: any) => (
+                                    {loanTypes.map((lt: LoanType) => (
                                         <option key={lt.id} value={lt.id}>{lt.name}</option>
                                     ))}
                                 </select>
@@ -301,7 +332,7 @@ export const LoansContent: React.FC = () => {
                                 <Input type="number" value={String(loanInterestRate)} onChange={(e) => setLoanInterestRate(Number(e.target.value) || '')} placeholder="Interest %" />
 
                                 <Label>Interest Type</Label>
-                                <select value={loanInterestType} onChange={(e) => setLoanInterestType(e.target.value as any)} className="w-full px-3 py-2 border rounded-md mt-1">
+                                <select value={loanInterestType} onChange={(e) => setLoanInterestType(e.target.value as 'FLAT' | 'REDUCING')} className="w-full px-3 py-2 border rounded-md mt-1">
                                     <option value="FLAT">FLAT</option>
                                     <option value="REDUCING">REDUCING</option>
                                 </select>
@@ -319,7 +350,7 @@ export const LoansContent: React.FC = () => {
                                 <Input type="number" value={String(loanOutstanding)} onChange={(e) => setLoanOutstanding(Number(e.target.value) || '')} placeholder="Outstanding" />
 
                                 <Label>Start Date</Label>
-                                <Input type="date" value={loanStartDate as any} onChange={(e) => setLoanStartDate(e.target.value)} />
+                                <Input type="date" value={loanStartDate} onChange={(e) => setLoanStartDate(e.target.value)} />
                             </>
                         )}
                     </div>
