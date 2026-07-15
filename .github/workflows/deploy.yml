@@ -64,14 +64,14 @@ jobs:
         run: npm install -g vercel
 
       - name: Deploy to Vercel
+        env:
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_FRONTEND_PROJECT_ID }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: >
           vercel deploy --prod
           --cwd=frontend
           --token=${{ secrets.VERCEL_TOKEN }}
           --scope=${{ env.VERCEL_ORG_ID }}
-          --project=${{ vars.VERCEL_FRONTEND_PROJECT_ID }}
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
   deploy-backend:
     name: Deploy Backend
@@ -88,9 +88,10 @@ jobs:
         run: npm install -g vercel
 
       - name: Deploy to Vercel
+        env:
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_BACKEND_PROJECT_ID }}
         run: >
           vercel deploy --prod
           --cwd=backend
           --token=${{ secrets.VERCEL_TOKEN }}
           --scope=${{ env.VERCEL_ORG_ID }}
-          --project=${{ vars.VERCEL_BACKEND_PROJECT_ID }}
