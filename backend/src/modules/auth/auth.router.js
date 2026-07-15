@@ -19,8 +19,15 @@ const {
 
 const router = express.Router();
 
+const sanitizeLoginError = (err, req, res, next) => {
+  if (err.statusCode === 400) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+  next(err);
+};
+
 // Public routes
-router.post("/login", authLimiter, validate(loginSchema), ctrl.login);
+router.post("/login", authLimiter, validate(loginSchema), sanitizeLoginError, ctrl.login);
 router.post("/refresh", refreshLimiter, validate(refreshSchema), ctrl.refreshToken);
 router.post("/forgot-password", passwordResetLimiter, validate(forgotPasswordSchema), ctrl.forgotPassword);
 router.post("/reset-password", resetConfirmLimiter, validate(resetPasswordSchema), ctrl.resetPassword);

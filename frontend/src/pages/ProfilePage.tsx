@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useTranslation } from 'react-i18next';
-import { useFormik } from 'formik';
+import { useFormik, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { User } from '@/types';
 import {
@@ -678,12 +678,32 @@ export const ProfilePage: React.FC = () => {
 
 // Helper Components
 
+interface ProfileFormValues {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  date_of_birth: string;
+  gender: string;
+  marital_status: string;
+  nationality: string;
+  address: string;
+  emergency_name: string;
+  emergency_phone: string;
+  emergency_relation: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  ifsc_code: string;
+  tax_id: string;
+  timezone: string;
+}
+
 const FormField = ({ label, id, type = 'text', formik, isEditing, required, options }: {
   label: string;
-  id: string;
+  id: keyof ProfileFormValues;
   type?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formik: any;
+  formik: FormikProps<ProfileFormValues>;
   isEditing: boolean;
   required?: boolean;
   options?: (string | { label: string; value: string })[];
@@ -775,12 +795,10 @@ const DisplayField = ({ label, value }: { label: string, value: string | undefin
   </div>
 );
 
-// Sensitive form field with eye-icon reveal in display mode, regular input in edit mode
 const SensitiveFormField = ({ label, id, formik, isEditing, fieldName, revealedFields, revealingField, onReveal }: {
   label: string;
-  id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formik: any;
+  id: keyof ProfileFormValues;
+  formik: FormikProps<ProfileFormValues>;
   isEditing: boolean;
   fieldName: string;
   revealedFields: Record<string, string>;

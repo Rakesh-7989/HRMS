@@ -3,7 +3,6 @@ const express = require('express');
 const dbSessionContext = require('../middleware/dbSessionContext');
 const verifyJwt = require('../middleware/verifyJwt');
 const requireRole = require('../middleware/requireRole');
-const requirePermission = require('../middleware/requirePermission');
 const { requireFeature, checkAccess } = require('../middleware/subscription.middleware');
 const planGuard = require('../middleware/planGuard');
 
@@ -42,7 +41,7 @@ const chatRouter = require('../modules/chat/chat.router');
 const commonRouter = require('../modules/common/common.router');
 const router = express.Router();
 
-const { pool } = require('../config/database');
+const { pool } = require('../config/db');
 
 // Health check (no auth, for monitoring)
 router.get('/health', async (req, res) => {

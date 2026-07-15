@@ -15,67 +15,80 @@ jobs:
   verify:
     name: Verify
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
+      - name: Frontend typecheck
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run typecheck
 
-      - run: npm run typecheck
-
-      - run: npm run build
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://backend-site-tracker-pro-s-projects.vercel.app/api' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+      - name: Backend lint
+        working-directory: backend
+        run: |
+          npm ci
+          npm run lint
+
+      - name: Backend tests
+        working-directory: backend
+        run: npm run test
+        env:
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          JWT_ACCESS_SECRET: test-access-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
+          ENCRYPTION_KEY: test-encryption-key-1234567890123456
 
   deploy-frontend:
     name: Deploy Frontend
     needs: verify
     runs-on: ubuntu-latest
-    env:
-      VERCEL_PROJECT_ID: prj_naeWObOLJjW3xZ71OAH0Tc1iYydU
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - run: npm ci
-        working-directory: frontend
 
       - name: Install Vercel CLI
         run: npm install -g vercel
 
       - name: Deploy to Vercel
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: >
+          vercel deploy --prod
+          --cwd=frontend
+          --token=${{ secrets.VERCEL_TOKEN }}
+          --scope=${{ env.VERCEL_ORG_ID }}
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
 
   deploy-backend:
     name: Deploy Backend
     needs: verify
     runs-on: ubuntu-latest
-    env:
-      VERCEL_PROJECT_ID: prj_2A9b3vpSqFFOmBE0opFU5vmjI3l3
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: backend/package-lock.json
 
       - name: Install Vercel CLI
         run: npm install -g vercel
 
       - name: Deploy to Vercel
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: >
+          vercel deploy --prod
+          --cwd=backend
+          --token=${{ secrets.VERCEL_TOKEN }}
+          --scope=${{ env.VERCEL_ORG_ID }}

@@ -39,4 +39,7 @@ module.exports = {
 
     // Encryption key for sensitive employee data (32-byte hex = 64 chars)
     ENCRYPTION_KEY: required('ENCRYPTION_KEY'),
+
+    // Sentry error tracking
+    SENTRY_DSN: process.env.SENTRY_DSN,
 };

@@ -1,24 +1,35 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const morgan = require('morgan');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 
 const routes = require('./src/routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const dbSessionContext = require('./src/middleware/dbSessionContext');
-const logger = require('./src/config/logger');
 const env = require('./src/config/env');
 const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 const requestLogger = require('./src/middleware/requestLogger');
 const { generalLimiter } = require('./src/middleware/rateLimiter');
 const httpsRedirect = require('./src/middleware/httpsRedirect');
 const originCheck = require('./src/middleware/originCheck');
+const Sentry = require('@sentry/node');
 
 
 const app = express();
-app.set('trust proxy', 1); 
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+if (env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    environment: env.NODE_ENV,
+    tracesSampleRate: env.NODE_ENV === 'production' ? 0.2 : 0.0,
+  });
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+}
+
 // Security + parsers
 app.use(httpsRedirect);
 app.use(originCheck);
@@ -29,16 +40,25 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", ...(env.NODE_ENV === 'development' ? ['ws://localhost:*'] : [])],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
     },
   },
   strictTransportSecurity: {
     maxAge: 31536000,
     includeSubDomains: true,
+    preload: true,
   },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  crossOriginEmbedderPolicy: { policy: 'require-corp' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  originAgentCluster: true,
+  dnsPrefetchControl: { allow: false },
 }));
 
 const corsWhitelist = [env.FRONTEND_URL].filter(Boolean);
@@ -51,8 +71,8 @@ app.use(cors({
 }));
 
 app.use(generalLimiter);
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Protected static file serving for uploads
 app.use('/uploads', (req, res, next) => {
@@ -104,6 +124,9 @@ app.use('/api', routes);
 app.use((req, res) => {
   res.status(404).json({ status: 'error', message: 'Route not found' });
 });
+
+// Sentry error handler (must be first error handler)
+if (env.SENTRY_DSN) app.use(Sentry.Handlers.errorHandler());
 
 // Global error handler
 app.use(errorHandler);
