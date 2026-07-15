@@ -33,15 +33,12 @@ jobs:
 
       - run: npm run build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://api.hrms.example.com/api' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://backend-site-tracker-pro-s-projects.vercel.app/api' }}
 
   deploy-frontend:
     name: Deploy Frontend
     needs: verify
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     env:
       VERCEL_PROJECT_ID: prj_naeWObOLJjW3xZ71OAH0Tc1iYydU
     steps:
@@ -54,6 +51,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
+        working-directory: frontend
 
       - name: Install Vercel CLI
         run: npm install -g vercel
@@ -65,9 +63,6 @@ jobs:
     name: Deploy Backend
     needs: verify
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     env:
       VERCEL_PROJECT_ID: prj_2A9b3vpSqFFOmBE0opFU5vmjI3l3
     steps:
