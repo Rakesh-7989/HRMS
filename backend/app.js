@@ -82,7 +82,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Security middleware (skip for auth routes to avoid test timeouts)
 const skipAuthRoutes = (req, res, next) => {
   if (req.path.startsWith('/api/auth/')) return next();
-  sanitizeInput(req, res, next);
+  sanitizeInput()(req, res, next);
 };
 app.use(skipAuthRoutes);
 app.use(apiSecurityHeaders);
