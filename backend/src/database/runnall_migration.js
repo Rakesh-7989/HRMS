@@ -31,6 +31,7 @@ async function runMigrations() {
     const skippedFiles = [];
 
     try {
+        // eslint-disable-next-line no-console
         console.log("📦 Connected to PostgreSQL");
 
         // Ensure migration table
@@ -54,15 +55,18 @@ async function runMigrations() {
             .filter(f => f.endsWith(".sql"))
             .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
+        // eslint-disable-next-line no-console
         console.log(`🔍 Found ${files.length} migration files`);
 
         for (const file of files) {
             if (executed.has(file)) {
+                // eslint-disable-next-line no-console
                 console.log(`⏭️  Skipping (already recorded): ${file}`);
                 skippedFiles.push(file);
                 continue;
             }
 
+            // eslint-disable-next-line no-console
             console.log(`🚀 Running: ${file}`);
             const sql = fs.readFileSync(
                 path.join(MIGRATIONS_DIR, file),
@@ -81,12 +85,14 @@ async function runMigrations() {
                 );
 
                 executedFiles.push(file);
+                // eslint-disable-next-line no-console
                 console.log(`✅ Done: ${file}`);
             } catch (err) {
                 // ALWAYS rollback first
                 await client.query("ROLLBACK");
 
                 if (ALREADY_EXISTS_ERRORS.has(err.code)) {
+                    // eslint-disable-next-line no-console
                     console.warn(`⚠️  Skipped (already exists): ${file}`);
 
                     // record skip OUTSIDE transaction
@@ -99,26 +105,39 @@ async function runMigrations() {
                     continue;
                 }
 
+                // eslint-disable-next-line no-console
                 console.error(`❌ Failed: ${file}`);
                 throw err;
             }
         }
 
         // ===== SUMMARY =====
+        // eslint-disable-next-line no-console
         console.log("\n📊 Migration Summary");
+        // eslint-disable-next-line no-console
         console.log("────────────────────────");
+        // eslint-disable-next-line no-console
         console.log(`Total files   : ${files.length}`);
+        // eslint-disable-next-line no-console
         console.log(`Executed      : ${executedFiles.length}`);
+        // eslint-disable-next-line no-console
         console.log(`Skipped       : ${skippedFiles.length}`);
 
         if (skippedFiles.length) {
+            // eslint-disable-next-line no-console
             console.log("\n⏭️  Skipped files:");
-            skippedFiles.forEach(f => console.log(`  - ${f}`));
+            skippedFiles.forEach(f => {
+                // eslint-disable-next-line no-console
+                console.log(`  - ${f}`);
+            });
         }
 
+        // eslint-disable-next-line no-console
         console.log("\n🎉 Migration process completed safely");
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("\n💥 Migration process stopped due to error");
+        // eslint-disable-next-line no-console
         console.error(err);
         process.exit(1);
     } finally {

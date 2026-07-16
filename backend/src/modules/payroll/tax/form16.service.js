@@ -1,6 +1,5 @@
 const PDFDocument = require('pdfkit');
 const db = require("../../../config/db");
-const { format } = require('date-fns');
 
 const generateForm16PartB = async (tenantId, employeeId, fy) => {
     return new Promise((resolve, reject) => {
@@ -206,6 +205,7 @@ const generateForm16PartB = async (tenantId, employeeId, fy) => {
             doc.end();
 
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('[generateForm16PartB] Error:', {
                 message: error.message,
                 stack: error.stack,

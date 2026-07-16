@@ -74,7 +74,7 @@ exports.checkEmailAvailability = async (email) => {
 /**
  * Send OTP to email for verification
  */
-exports.sendVerificationOtp = async (email, domain, phone) => {
+exports.sendVerificationOtp = async (email, _domain, _phone) => {
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if email already exists in tenants AND is fully active

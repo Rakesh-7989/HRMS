@@ -1,6 +1,4 @@
 const service = require("./project_management.service");
-const { success } = require("../../utils/successResponse");
-const logger = require("../../config/logger");
 const logAudit = require("../../utils/auditLogger");
 
 /**
@@ -175,7 +173,7 @@ exports.createProject = async (req, res, next) => {
  */
 exports.listProjects = async (req, res, next) => {
   try {
-    const { tenantId, role, employeeId } = req.user;
+    const { tenantId, employeeId } = req.user;
     const { client_id, status, search, skip, limit } = req.query;
 
     const result = await service.listProjects(tenantId, {
@@ -184,7 +182,6 @@ exports.listProjects = async (req, res, next) => {
       search,
       skip: skip ? parseInt(skip) : undefined,
       limit: limit ? parseInt(limit) : undefined,
-      // Pass user info for permission-based filtering
       userPermissions: req.user.permissions,
       userEmployeeId: employeeId,
       userId: req.user.id,
@@ -344,9 +341,8 @@ exports.removeProjectMember = async (req, res, next) => {
  */
 exports.checkKanbanExists = async (req, res, next) => {
   try {
-    const { tenantId, role, employeeId, id: userId } = req.user;
+    const { tenantId, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
-
     const result = await service.checkKanbanExists(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
 
     return res.status(200).json({
@@ -370,12 +366,14 @@ exports.createKanbanBoard = async (req, res, next) => {
     const { project_id } = req.params;
 
     // Explicitly log the entire body to debug
+    // eslint-disable-next-line no-console
     console.log('[Controller] Full request body:', JSON.stringify(req.body));
 
     const useDefault = req.body.useDefault !== undefined ? req.body.useDefault : true;
     const columns = req.body.columns || [];
     const forceReset = req.body.forceReset === true; // Explicit check
 
+    // eslint-disable-next-line no-console
     console.log('[Controller] Extracted values:', { useDefault, columnsCount: columns.length, forceReset, project_id });
 
     const result = await service.createKanbanBoard(tenantId, userId, project_id, {
@@ -401,7 +399,7 @@ exports.createKanbanBoard = async (req, res, next) => {
  */
 exports.getKanbanBoard = async (req, res, next) => {
   try {
-    const { tenantId, role, employeeId, id: userId } = req.user;
+    const { tenantId, employeeId, id: userId } = req.user;
     const { project_id } = req.params;
 
     const board = await service.getKanbanBoard(tenantId, project_id, { permissions: req.user.permissions, employeeId, userId });
@@ -483,7 +481,7 @@ exports.createTask = async (req, res, next) => {
  */
 exports.listTasks = async (req, res, next) => {
   try {
-    const { tenantId, role, employeeId } = req.user;
+    const { tenantId, employeeId } = req.user;
     const { project_id, assigned_to, column_key, priority, search, skip, limit } = req.query;
 
     const result = await service.listTasks(tenantId, {
@@ -516,7 +514,7 @@ exports.listTasks = async (req, res, next) => {
  */
 exports.updateTask = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role, employeeId } = req.user;
+    const { tenantId, id: userId, employeeId } = req.user;
     const { id } = req.params;
     const { title, description, assigned_to, priority, due_date, estimated_hours } = req.body;
 
@@ -546,7 +544,7 @@ exports.updateTask = async (req, res, next) => {
  */
 exports.updateTaskColumn = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role, employeeId } = req.user;
+    const { tenantId, id: userId, employeeId } = req.user;
     const { id } = req.params;
     const { column_key, order_index } = req.body;
 
@@ -569,7 +567,7 @@ exports.updateTaskColumn = async (req, res, next) => {
  */
 exports.deleteTask = async (req, res, next) => {
   try {
-    const { tenantId, id: userId, role } = req.user;
+    const { tenantId, id: userId } = req.user;
     const { id } = req.params;
 
     const result = await service.deleteTask(tenantId, id, { permissions: req.user.permissions, userId });

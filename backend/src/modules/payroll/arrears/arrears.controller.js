@@ -10,6 +10,7 @@ exports.listArrears = async (req, res) => {
         const arrears = await arrearsService.listArrears(tenantId, filters);
         res.json({ status: 'success', data: arrears });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[listArrears]', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -22,6 +23,7 @@ exports.getPendingArrears = async (req, res) => {
         const arrears = await arrearsService.getPendingArrears(tenantId, employeeId);
         res.json({ status: 'success', data: arrears });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[getPendingArrears]', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -41,6 +43,7 @@ exports.getSummary = async (req, res) => {
         );
         res.json({ status: 'success', data: result.rows[0] });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[getArrearSummary]', err);
         res.status(500).json({ status: 'error', message: err.message });
     }

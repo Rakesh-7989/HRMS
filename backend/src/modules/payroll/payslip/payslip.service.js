@@ -159,15 +159,6 @@ const listAllPayslips = async (tenantId, filters = {}) => {
     return result.rows;
 };
 
-const generatePayslipPDF = async (tenantId, payrollRunId, employeeId) => {
-    const data = await getPayslipData(tenantId, payrollRunId, employeeId);
-
-    if (!data) {
-        throw new Error('Payslip data not found');
-    }
-    return generatePDFFromData(data);
-};
-
 const generatePayslipPDFById = async (tenantId, payslipId) => {
     const data = await getPayslipById(tenantId, payslipId);
 
@@ -227,13 +218,6 @@ const generatePDFFromData = async (data) => {
         const primaryColor = data.company_settings?.primary_color || '#1a365d'; // Fallback to Navy blue
         const secondaryColor = '#4a5568';
         const borderColor = '#cbd5e0';
-        const lightBg = '#f7fafc';
-
-        // Helper to draw a horizontal line
-        const drawLine = (y) => {
-            doc.moveTo(40, y).lineTo(555, y).stroke(borderColor);
-        };
-
         // --- Header Section (Logo Right, Text Left) ---
         const logoUrl = data.company_settings?.logo_url;
         let headerY = 25;
@@ -256,6 +240,7 @@ const generatePDFFromData = async (data) => {
                     doc.image(logoPath, 395, headerY, { height: 60, width: 160, fit: [160, 60], align: 'right' });
                 }
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.error('Failed to embed logo in PDF:', e);
             }
         }
@@ -478,14 +463,6 @@ const getMonthName = (month) => {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
 };
 
-const getFinancialYear = (month, year) => {
-    if (month >= 4) {
-        return `${year}-${year + 1}`;
-    } else {
-        return `${year - 1}-${year}`;
-    }
-};
-
 const formatRawCurrency = (amount) => {
     const num = parseFloat(amount) || 0;
     return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -510,11 +487,6 @@ const numberToWords = (num) => {
 const formatCurrency = (amount) => {
     const num = parseFloat(amount) || 0;
     return 'Rs. ' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-const maskAccountNumber = (accNum) => {
-    if (!accNum || accNum.length < 4) return accNum;
-    return '****' + accNum.slice(-4);
 };
 
 // ===================================================================
@@ -706,6 +678,7 @@ const generateBulk = async (tenantId, runId) => {
             // await emailPayslip(tenantId, item.id); // Optional: Auto-email on release
             successCount++;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error(`Failed to process payslip for item ${item.id}`, error);
         }
     }
@@ -732,6 +705,7 @@ const generateBulk = async (tenantId, runId) => {
             } catch (e) { /* skip individual notification errors */ }
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('Payslip bulk notification error:', notifErr.message);
     }
 

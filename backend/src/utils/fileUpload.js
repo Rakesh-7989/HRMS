@@ -15,6 +15,7 @@ try {
         }
     });
 } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('Could not create upload directories (read-only fs?):', err.message);
 }
 
@@ -127,6 +128,7 @@ exports.deleteFile = (filePath) => {
         }
         return false;
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error deleting file:', error);
         return false;
     }

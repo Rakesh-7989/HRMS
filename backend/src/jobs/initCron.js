@@ -42,7 +42,7 @@ const initCronJobs = () => {
     try {
         logger.info('Initializing cron jobs...');
 
-        Object.entries(jobs).forEach(([key, jobConfig]) => {
+        Object.entries(jobs).forEach(([_key, jobConfig]) => {
             try {
                 jobConfig.job.start();
                 logger.info(`✓ Started: ${jobConfig.name} (${jobConfig.schedule})`);
@@ -72,7 +72,7 @@ const stopCronJobs = () => {
     try {
         logger.info('Stopping all cron jobs...');
 
-        Object.entries(jobs).forEach(([key, jobConfig]) => {
+        Object.entries(jobs).forEach(([_key, jobConfig]) => {
             try {
                 jobConfig.job.stop();
                 logger.info(`✓ Stopped: ${jobConfig.name}`);

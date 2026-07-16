@@ -15,6 +15,7 @@ exports.listComponents = async (req, res) => {
         const data = await salaryStructureService.listSalaryComponents(req.user.tenantId, filters);
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('List components error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -25,6 +26,7 @@ exports.createComponent = async (req, res) => {
         const data = await salaryStructureService.createSalaryComponent(req.user.tenantId, req.body);
         res.status(201).json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Create component error:', err);
         if (err.code === '23505') { // Unique constraint violation
             return res.status(400).json({ status: 'error', message: 'Component with this code already exists' });
@@ -45,6 +47,7 @@ exports.updateComponent = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Update component error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -58,6 +61,7 @@ exports.deleteComponent = async (req, res) => {
         }
         res.json({ status: 'success', message: 'Component deactivated successfully' });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Delete component error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -72,6 +76,7 @@ exports.listStructures = async (req, res) => {
         const data = await salaryStructureService.listSalaryStructures(req.user.tenantId);
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('List structures error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -85,6 +90,7 @@ exports.getStructure = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Get structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -99,6 +105,7 @@ exports.createStructure = async (req, res) => {
         );
         res.status(201).json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Create structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -116,6 +123,7 @@ exports.updateStructure = async (req, res) => {
         }
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Update structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -129,6 +137,7 @@ exports.deleteStructure = async (req, res) => {
         }
         res.json({ status: 'success', message: 'Structure deleted successfully' });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Delete structure error:', err);
         if (err.message.includes('Cannot delete')) {
             return res.status(400).json({ status: 'error', message: err.message });
@@ -160,6 +169,7 @@ exports.calculateCTC = async (req, res) => {
 
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Calculate CTC error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -181,6 +191,7 @@ exports.getEmployeeSalary = async (req, res) => {
         const data = await salaryStructureService.getEmployeeSalary(req.user.tenantId, employeeId);
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Get employee salary error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -212,6 +223,7 @@ exports.assignEmployeeSalary = async (req, res) => {
 
         res.status(201).json({ status: 'success', data, message: 'Salary assigned successfully' });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Assign salary error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -229,6 +241,7 @@ exports.getEmployeeSalaryHistory = async (req, res) => {
         const data = await salaryStructureService.getEmployeeSalaryHistory(req.user.tenantId, employeeId);
         res.json({ status: 'success', data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Get salary history error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -250,6 +263,7 @@ exports.seedDefaults = async (req, res) => {
             data: { structure_id: structureId }
         });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Seed defaults error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -264,6 +278,7 @@ exports.listTemplates = async (req, res) => {
         const templates = salaryStructureService.listTemplates();
         res.json({ status: 'success', data: templates });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('List templates error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -292,6 +307,7 @@ exports.createFromTemplate = async (req, res) => {
             data
         });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Create from template error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -311,6 +327,7 @@ exports.migrateStructure = async (req, res) => {
             data: result
         });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Migrate structure error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }

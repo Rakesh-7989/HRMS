@@ -2,10 +2,8 @@ const { z } = require("zod");
 
 const cycleStatusEnum = z.enum(['DRAFT', 'ACTIVE', 'CLOSED']);
 const reviewTypeEnum = z.enum(['ANNUAL', 'HALF_YEARLY', 'QUARTERLY', 'MONTHLY']);
-const reviewStatusEnum = z.enum(['PENDING', 'SUBMITTED', 'ACKNOWLEDGED']);
 const goalCategoryEnum = z.enum(['KPI', 'OKR', 'DEVELOPMENT', 'PROJECT']);
 const goalStatusEnum = z.enum(['NOT_STARTED', 'IN_PROGRESS', 'ACHIEVED', 'CANCELLED']);
-const feedbackStatusEnum = z.enum(['PENDING', 'SUBMITTED']);
 
 exports.getCyclesSchema = z.object({
     query: z.object({}).optional()

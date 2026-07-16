@@ -25,11 +25,13 @@ const evaluateFormulaSafe = (formula, context = {}) => {
         const result = fn(...values);
 
         if (!Number.isFinite(result)) {
+            // eslint-disable-next-line no-console
             console.warn(`[CTC] Formula "${formula}" produced non-finite result (${result}), defaulting to 0`);
             return 0;
         }
         return result;
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.warn(`[CTC] Formula evaluation failed for "${formula}": ${err.message}`);
         return 0;
     }
@@ -334,10 +336,12 @@ exports.updateSalaryStructure = async (tenantId, structureId, data) => {
                         throw txError;
                     }
                 } catch (assignError) {
+                    // eslint-disable-next-line no-console
                     console.error(`Failed to refresh assignment ${assign.id}:`, assignError);
                 }
             }
         } catch (refreshError) {
+            // eslint-disable-next-line no-console
             console.error('Error refreshing structure assignments:', refreshError);
             // We don't throw here so the structure update remains successful
         }
@@ -640,6 +644,7 @@ exports.assignEmployeeSalary = async (tenantId, employeeId, data, userId, existi
             };
             await arrearsService.calculateRetroactiveArrears(tenantId, employeeId, updatedAssignment, userId);
         } catch (arrearError) {
+            // eslint-disable-next-line no-console
             console.error('[assignEmployeeSalary] Arrears calculation failed:', arrearError);
         }
 
@@ -736,6 +741,7 @@ exports.ensureEmployeeAssignments = async (tenantId, userId) => {
             }, userId);
             count++;
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(`[ensureEmployeeAssignments] Failed for employee ${emp.id}:`, err);
         }
     }
@@ -787,6 +793,7 @@ exports.migrateEmployeesToStructure = async (tenantId, structureId, userId) => {
             );
             successCount++;
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(`[MigrateStructure] Failed for employee ${emp.id}:`, err);
             failCount++;
             errors.push({ employeeId: emp.id, error: err.message });
@@ -891,6 +898,7 @@ exports.createStructureFromTemplate = async (tenantId, userId, templateId) => {
         const tc = template.components[i];
         const componentId = codeToId[tc.code];
         if (!componentId) {
+            // eslint-disable-next-line no-console
             console.warn(`Template component code '${tc.code}' not found in tenant's components, skipping`);
             continue;
         }

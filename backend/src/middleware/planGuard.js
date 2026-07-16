@@ -40,6 +40,7 @@ const planGuard = (featureKey) => {
 
             next();
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error("PlanGuard Error:", error);
             res.status(500).json({ status: 'error', message: 'Internal Server Error during plan check' });
         }

@@ -113,6 +113,7 @@ const setRegime = async (tenantId, employeeId, fy, regime) => {
 
         return result.rows[0];
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('[taxService.setRegime] DB Error details:', {
             message: error.message,
             code: error.code,

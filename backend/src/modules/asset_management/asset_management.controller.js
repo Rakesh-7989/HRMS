@@ -1,6 +1,5 @@
 const assetService = require("./asset_management.service");
 const { success } = require("../../utils/successResponse");
-const logger = require("../../config/logger");
 
 /**
  * CREATE ASSET

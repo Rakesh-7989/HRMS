@@ -549,7 +549,6 @@ exports.generateBarcode = async (tenantId, assetId, format = "base64") => {
   try {
     // Create canvas for barcode
     const canvas = Canvas.createCanvas(200, 100);
-    const ctx = canvas.getContext("2d");
 
     // Generate barcode using jsbarcode with canvas
     JsBarcode(canvas, asset_code, {
@@ -766,6 +765,7 @@ exports.assignAsset = async (
         });
       }
     } catch (notifErr) {
+      // eslint-disable-next-line no-console
       console.error('Asset assign notification error:', notifErr.message);
     }
 
@@ -947,6 +947,7 @@ exports.returnAsset = async (
         });
       }
     } catch (notifErr) {
+      // eslint-disable-next-line no-console
       console.error('Asset return notification error:', notifErr.message);
     }
 
@@ -1080,6 +1081,7 @@ exports.createAssetRequest = async (tenantId, userId, data) => {
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Asset request notification error:', notifErr.message);
   }
 
@@ -1164,6 +1166,7 @@ exports.handleAssetRequest = async (tenantId, requestId, userId, role, data) => 
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Asset request handle notification error:', notifErr.message);
   }
 

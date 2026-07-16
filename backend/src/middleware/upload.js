@@ -7,14 +7,18 @@ const storage = multer.diskStorage({
         // Use process.cwd() to be absolutely certain of the root directory
         const uploadDir = path.join(process.cwd(), 'uploads', 'profiles');
 
+        // eslint-disable-next-line no-console
         console.log(`[Multer] Processing upload. CWD: ${process.cwd()}`);
+        // eslint-disable-next-line no-console
         console.log(`[Multer] Dest: ${uploadDir}`);
 
         if (!fs.existsSync(uploadDir)) {
             try {
                 fs.mkdirSync(uploadDir, { recursive: true });
+                // eslint-disable-next-line no-console
                 console.log(`[Multer] Created directory: ${uploadDir}`);
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error(`[Multer] Failed to create directory ${uploadDir}:`, err);
                 return cb(err);
             }

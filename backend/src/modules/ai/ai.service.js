@@ -19,8 +19,7 @@ exports.getInsights = async (db, tenantId) => {
     }));
 };
 
-exports.parseResume = async (db, tenantId, userId, fileInfo) => {
-    const resumeText = "Parsed resume content";
+exports.parseResume = async (_db, _tenantId, _userId, _fileInfo) => {
     return {
         name: "Candidate Name",
         email: "candidate@example.com",
@@ -37,7 +36,7 @@ exports.parseResume = async (db, tenantId, userId, fileInfo) => {
     };
 };
 
-exports.analyzeSentiment = async (db, tenantId, surveyId) => {
+exports.analyzeSentiment = async (_db, _tenantId, _surveyId) => {
     return {
         overall_score: 7.5,
         trend: 'improving',
@@ -51,7 +50,7 @@ exports.analyzeSentiment = async (db, tenantId, surveyId) => {
     };
 };
 
-exports.getSkillGaps = async (db, tenantId, employeeId, roleId) => {
+exports.getSkillGaps = async (_db, _tenantId, _employeeId, _roleId) => {
     return [
         { skill: "TypeScript", current_level: 3, required_level: 4, gap: 1, priority: "medium", suggestions: ["Advanced TypeScript course", "Practice with generics"] },
         { skill: "Docker", current_level: 2, required_level: 4, gap: 2, priority: "high", suggestions: ["Docker certification", "Containerize existing apps"] },
@@ -66,14 +65,14 @@ exports.generateContent = async (db, tenantId, userId, prompt, context) => {
     };
 };
 
-exports.chat = async (db, tenantId, userId, message, history) => {
+exports.chat = async (db, tenantId, userId, message, _history) => {
     return {
         response: `Response to: "${message}". I'm an AI assistant for HRMS. How can I help you further?`,
         suggestions: ["Show me performance reviews", "Analyze employee sentiment", "Generate a report"]
     };
 };
 
-exports.matchCandidates = async (db, tenantId, jobId) => {
+exports.matchCandidates = async (_db, _tenantId, _jobId) => {
     return [
         { candidate_id: "00000000-0000-0000-0000-000000000001", score: 92, strengths: ["React", "Node.js", "System Design"], gaps: ["Docker", "Kubernetes"] },
         { candidate_id: "00000000-0000-0000-0000-000000000002", score: 78, strengths: ["Python", "Machine Learning"], gaps: ["Frontend", "DevOps"] },

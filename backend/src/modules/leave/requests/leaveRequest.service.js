@@ -3,7 +3,6 @@ const leaveBalanceService = require("../balances/leaveBalance.service");
 const delegationService = require("../delegations/delegation.service"); // Issue 12
 const holidayService = require("../holidays/holiday.service");
 const timeService = require("../../../utils/timeService");
-const logger = require("../../../config/logger"); // Issue 26
 const { BadRequestError, NotFoundError } = require("../../../utils/customErrors");
 const inboxService = require("../../inbox/inbox.service");
 
@@ -208,6 +207,7 @@ exports.applyLeave = async (db, tenantId, employeeId, data) => {
                 });
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Leave apply notification error:', notifErr.message);
         }
 
@@ -487,6 +487,7 @@ exports.approveLeave = async (db, actor, leaveId, comment) => {
                 });
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Leave approve notification error:', notifErr.message);
         }
 
@@ -590,6 +591,7 @@ exports.rejectLeave = async (db, actor, leaveId, reason) => {
                 });
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Leave reject notification error:', notifErr.message);
         }
 
@@ -701,6 +703,7 @@ exports.cancelApprovedLeave = async (db, tenantId, employeeId, leaveId, reason) 
                 }
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Leave cancel notification error:', notifErr.message);
         }
 

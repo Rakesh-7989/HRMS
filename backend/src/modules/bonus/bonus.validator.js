@@ -3,7 +3,6 @@ const { z } = require("zod");
 const bonusTypeEnum = z.enum(['PERFORMANCE', 'DIWALI', 'ANNUAL', 'SALES_COMMISSION', 'SPOT', 'OTHER']);
 const frequencyEnum = z.enum(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUAL']);
 const calcMethodEnum = z.enum(['FIXED', 'PERCENTAGE_OF_CTC', 'PERCENTAGE_OF_SALES', 'PERCENTAGE_OF_SALARY']);
-const bonusStatusEnum = z.enum(['PENDING', 'APPROVED', 'PAID', 'CANCELLED']);
 const commissionTypeEnum = z.enum(['PERCENTAGE', 'FIXED']);
 const applicableToEnum = z.enum(['SALES', 'COLLECTION', 'REFERRAL', 'OTHER']);
 const commissionFrequencyEnum = z.enum(['PER_TRANSACTION', 'MONTHLY', 'QUARTERLY']);

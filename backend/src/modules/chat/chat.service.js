@@ -260,6 +260,7 @@ exports.sendMessage = async (db, senderId, tenantId, conversationId, content, ty
       }
     });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed", e);
   }
 
@@ -287,6 +288,7 @@ exports.markAsRead = async (db, conversationId, userId) => {
     // Emitting both for compatibility or updating frontend
     io.to(conversationId).emit("messages_read", { conversationId, readerId: userId });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed in markAsRead", e);
   }
 
@@ -311,6 +313,7 @@ exports.updateMessage = async (db, userId, conversationId, messageId, content) =
     const io = getIo();
     io.to(conversationId).emit("message_updated", res.rows[0]);
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed", e);
   }
 
@@ -341,6 +344,7 @@ exports.deleteMessage = async (db, userId, conversationId, messageId, mode = 'ev
     const io = getIo();
     io.to(conversationId).emit("message_deleted", { messageId, conversationId });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed", e);
   }
 
@@ -365,6 +369,7 @@ exports.togglePinMessage = async (db, conversationId, messageId) => {
     const io = getIo();
     io.to(conversationId).emit("message_pinned", updateRes.rows[0]);
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed", e);
   }
 
@@ -421,6 +426,7 @@ exports.createDirectConversation = async (db, user1, user2, tenantId) => {
 
 exports.getContacts = async (db, userId, tenantId) => {
   const query = queryDb(db);
+  // eslint-disable-next-line no-console
   console.log(`[ChatService] Querying contacts for tenant ${tenantId}, excluding user ${userId}`);
   // Get all other users in the same tenant
   const res = await query(`
@@ -512,6 +518,7 @@ exports.addParticipants = async (db, conversationId, userIds, requesterId) => {
       io.to(`user_${uid}`).emit("added_to_group", { conversationId });
     });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed in addParticipants", e);
   }
 
@@ -559,6 +566,7 @@ exports.removeParticipant = async (db, conversationId, targetUserId, requesterId
     io.to(conversationId).emit("participant_removed", { conversationId, removedUserId: targetUserId });
     io.to(`user_${targetUserId}`).emit("removed_from_group", { conversationId });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed in removeParticipant", e);
   }
 
@@ -647,6 +655,7 @@ exports.clearChatHistory = async (db, conversationId, userId) => {
     const io = getIo();
     io.to(`user_${userId}`).emit("chat_cleared", { conversationId });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed in clearChatHistory", e);
   }
 
@@ -676,6 +685,7 @@ exports.deleteConversation = async (db, conversationId, userId) => {
       io.to(`user_${p.user_id}`).emit("conversation_deleted", { conversationId });
     });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Socket emit failed in deleteConversation", e);
   }
 

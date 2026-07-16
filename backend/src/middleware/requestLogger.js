@@ -3,6 +3,7 @@ const logger = require('../config/logger');
 module.exports = function requestLogger(req, res, next) {
     const start = Date.now();
 
+    // eslint-disable-next-line no-console
     console.log(`\n  ${req.method} ${req.path}`);
 
     // Protect against undefined body
@@ -19,6 +20,7 @@ module.exports = function requestLogger(req, res, next) {
                 redacted[field] = '***REDACTED***';
             }
         }
+        // eslint-disable-next-line no-console
         console.log(
             '   Body:',
             JSON.stringify(redacted, null, 2).substring(0, 200)
@@ -30,6 +32,7 @@ module.exports = function requestLogger(req, res, next) {
         const statusColor = res.statusCode >= 400 ? '\x1b[31m' : '\x1b[32m';
         const reset = '\x1b[0m';
 
+        // eslint-disable-next-line no-console
         console.log(
             `  ${statusColor}${res.statusCode}${reset} ${req.method} ${req.path} - ${duration}ms\n`
         );

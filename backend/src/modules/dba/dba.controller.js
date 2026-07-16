@@ -31,6 +31,7 @@ exports.getTables = async (req, res) => {
 
         res.status(200).json({ status: 'success', tables });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching tables:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -75,6 +76,7 @@ exports.getTableData = async (req, res) => {
             total: dataRes.rowCount
         });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error(`Error fetching data for table ${tableName}:`, err);
         res.status(500).json({ status: 'error', message: err.message });
     }
@@ -124,6 +126,7 @@ exports.executeQuery = async (req, res) => {
             rows: result.rows
         });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error executing custom query:', err);
         res.status(400).json({
             status: 'error',

@@ -137,6 +137,7 @@ class BillingController {
             const result = await billingService.processWebhook(eventPayload);
             res.status(200).json({ success: true, status: result?.status });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Webhook Error:', error);
             res.status(500).json({ success: false, message: 'Webhook failed' });
         }

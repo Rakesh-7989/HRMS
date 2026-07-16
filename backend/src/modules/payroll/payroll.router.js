@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const verifyJwt = require('../../middleware/verifyJwt');
-const requireRole = require('../../middleware/requireRole');
 
 const riverController = require('./river/river.controller'); // Import RiVeR Controller
 
@@ -103,7 +102,9 @@ router.get('/summary', verifyJwt, requirePermission('payroll', 'view_dashboard')
       }
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Payroll summary error:', err);
+    // eslint-disable-next-line no-console
     console.error('User:', req.user); // Debug user context
     res.status(500).json({ status: 'error', message: 'Failed to fetch payroll summary', error: err.message });
   }
@@ -138,6 +139,7 @@ router.post('/cost-centers', verifyJwt, requirePermission('payroll', 'manage_sta
     const data = await statutoryService.createCostCentre(req.user.tenantId, req.user.id, req.body);
     res.status(201).json({ status: 'success', data });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
     res.status(500).json({ status: 'error', message: err.message });
   }

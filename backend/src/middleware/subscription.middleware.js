@@ -16,10 +16,12 @@ const requireFeature = (featurePath) => {
             const subscription = await subscriptionService.getSubscriptionByTenantId(tenantId);
             
             if (!subscription) {
+                // eslint-disable-next-line no-console
                 console.warn(`[DEBUG_MIDDLEWARE] No active subscription found for Tenant: ${tenantId}`);
                 return next();
             }
 
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG_MIDDLEWARE] tenantId: ${tenantId}, Feature: ${featurePath}, Plan: ${subscription.plan_name}, Status: ${subscription.status}`);
 
             // --- SUBSCRIPTION STATUS ENFORCEMENT ---
@@ -74,6 +76,7 @@ const requireFeature = (featurePath) => {
                 code: 'FEATURE_DISABLED'
             });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Subscription Middleware Error:', error);
             res.status(500).json({ message: 'Error checking subscription features.' });
         }
@@ -107,6 +110,7 @@ const checkAccess = () => {
 
             next();
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Access Check Error:', error);
             res.status(500).json({ message: 'Error checking subscription access.' });
         }
@@ -131,6 +135,7 @@ const checkLimit = () => {
                 code: 'LIMIT_REACHED'
             });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Limit Check Error:', error);
             res.status(500).json({ message: 'Error checking subscription limits.' });
         }

@@ -1,5 +1,4 @@
 const pool = require("../../config/db");
-const logger = require("../../config/logger");
 const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
 const inboxService = require("../inbox/inbox.service");
 
@@ -107,7 +106,7 @@ exports.getShiftById = async (db, tenantId, shiftId) => {
 // UPDATE SHIFT
 exports.updateShift = async (db, tenantId, shiftId, data, updaterId) => {
     const query = getQuery(db);
-    const { name, code, description, start_time, end_time, break_start_time, break_end_time, grace_period_minutes, is_active } = data;
+    const { name, code, start_time, end_time, grace_period_minutes } = data;
 
     // 1. Validate Uniqueness (Name, Code, Time Slot)
     if (grace_period_minutes !== undefined && grace_period_minutes < 0) {
@@ -244,6 +243,7 @@ exports.assignShiftToEmployees = async (db, tenantId, shiftId, employeeIds, assi
                 }
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Shift assign notification error:', notifErr.message);
         }
 

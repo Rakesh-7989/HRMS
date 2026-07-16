@@ -170,6 +170,7 @@ exports.getSuperAdminDashboard = async (db) => {
       storageUsage = parseInt(diskInfo.split("\n")[1].trim().replace("%", "")) || 45;
     }
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("Error getting storage info:", e.message);
   }
 
@@ -325,6 +326,7 @@ exports.getSuperAdminReports = async (db) => {
  */
 exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   const query = getQuery(db);
+  // eslint-disable-next-line no-console
   console.log("DEBUG: Starting getAdminDashboard for tenant:", tenantId, "Date Range:", startDate, endDate);
 
   // Resolve effective timezone (defaults to organization timezone)
@@ -335,6 +337,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
   const endStr = endDate || today;
   const startStr = startDate || timeService.todayDate(tz, -30);
 
+  // eslint-disable-next-line no-console
   console.log("DEBUG: Resolved Timezone:", tz, "Today:", today, "Range:", startStr, endStr);
 
   // Get organization metrics

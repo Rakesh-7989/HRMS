@@ -1,5 +1,4 @@
 const departmentService = require("./department.service");
-const validate = require("../../middleware/validate");
 
 exports.createDepartment = async (req, res, next) => {
   try {

@@ -1,4 +1,3 @@
-const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
 const { BadRequestError, NotFoundError } = require("../../utils/customErrors");
 
@@ -82,16 +81,6 @@ exports.updateDesignation = async (db, id, tenantId, data, actor) => {
   // We need to construct the query dynamically or handle parameters carefully.
   // Using COALESCE($x, column) works if we pass NULL when we don't want to update.
   // data.is_active can be true, false, or undefined/null.
-
-  const params = [
-    data.name || null,        // $1
-    data.description || null, // $2
-    data.is_active,           // $3 - pass strictly whatever is in data (undefined -> null in pg driver usually?)
-    // Actually, explicit checks are safer for booleans in JS -> SQL
-    actor.id,                 // $4
-    id,                       // $5
-    tenantId                  // $6
-  ];
 
   // We use COALESCE for name/desc. 
   // For is_active, COALESCE($3, is_active) works if $3 is NULL. 

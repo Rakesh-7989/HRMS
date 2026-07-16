@@ -13,6 +13,7 @@ const logAuditEntry = async (runId, userId, action, details = {}) => {
             [runId, userId, action, JSON.stringify(details)]
         );
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("Audit log error:", err.message);
     }
 };
@@ -180,7 +181,7 @@ const getDashboardStats = async (tenantId, month, year) => {
             `SELECT COUNT(*) FROM leave_applications WHERE tenant_id = $1 AND status = 'PENDING'`,
             [tenantId]
         );
-    } catch (e) { }
+    } catch (e) { /* intentionally empty */ }
     try {
         missingStructRes2 = await db.query(
             `SELECT COUNT(*) FROM employees e
@@ -188,7 +189,7 @@ const getDashboardStats = async (tenantId, month, year) => {
              WHERE e.tenant_id = $1 AND e.status = 'ACTIVE' AND esa.id IS NULL`,
             [tenantId]
         );
-    } catch (e) { }
+    } catch (e) { /* intentionally empty */ }
 
     // 8. Recent Payroll History
     const historyRes = await db.query(
@@ -408,7 +409,7 @@ const getReviewData = async (tenantId, runId) => {
     try {
         const statRes = await db.query(`SELECT pf_enabled FROM statutory_config WHERE tenant_id = $1`, [tenantId]);
         statutoryConfigured = statRes.rows.length > 0;
-    } catch (e) { }
+    } catch (e) { /* intentionally empty */ }
 
     const systemChecks = [
         { name: 'Approve Pending Leaves', status: pendingLeaves > 0 ? 'WARNING' : 'COMPLETED', comment: `${pendingLeaves} pending requests`, category: 'ATTENDANCE' },
@@ -668,8 +669,6 @@ const getVerificationData = async (tenantId, runId) => {
     // Variance Alerts (employees with >10% change from previous)
     const varianceAlerts = [];
     try {
-        const run = await db.query(`SELECT period_month, period_year FROM payroll_runs WHERE id = $1`, [runId]);
-        const curRun = run.rows[0];
         // Find previous released run
         const prevRunRes = await db.query(
             `SELECT id FROM payroll_runs WHERE tenant_id = $1 AND id != $2 AND status IN('RELEASED', 'CALCULATED')
@@ -1215,6 +1214,7 @@ const releasePayroll = async (tenantId, runId, userId) => {
     try {
         await payslipService.generateBulk(tenantId, runId);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("Failed to generate bulk payslips:", err);
     }
 

@@ -71,6 +71,7 @@ const approveFnFSettlement = async (req, res) => {
         );
         res.json({ status: "success", data });
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Approve GnF Settlement Error:", error);
         res.status(500).json({ status: "error", message: error.message });
     }
@@ -81,6 +82,7 @@ const markFnFPaid = async (req, res) => {
         const data = await settlementService.markFnFPaid(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Settlement marked as paid" });
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Mark FnF Paid Error:", error);
         res.status(500).json({ status: "error", message: error.message });
     }

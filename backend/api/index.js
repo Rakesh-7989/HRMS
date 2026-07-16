@@ -1,16 +1,21 @@
 try {
   require('../src/config/env');
 } catch (err) {
+  // eslint-disable-next-line no-console
   console.error('ENV ERROR:', err.message);
 }
 
 let app;
 try {
+  // eslint-disable-next-line no-console
   console.log('Loading app...');
   app = require('../app');
+  // eslint-disable-next-line no-console
   console.log('App loaded.');
 } catch (err) {
+  // eslint-disable-next-line no-console
   console.error('APP ERROR:', err.message);
+  // eslint-disable-next-line no-console
   console.error(err.stack);
   app = (req, res) => {
     res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -23,6 +28,7 @@ if (process.env.RUN_MIGRATIONS_ON_START === 'true') {
     try {
       await require('../src/database/runnall_migration')();
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Migration error:', err.message);
     }
   })();

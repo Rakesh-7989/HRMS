@@ -1,5 +1,5 @@
 const pool = require("../../config/db");
-const { query: dbQuery, queryRLS } = require("../../middleware/db");
+const { query: dbQuery } = require("../../middleware/db");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const XLSX = require("xlsx");
@@ -7,7 +7,7 @@ const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
 const tenantService = require("../tenant/tenant.service");
-const { encrypt, decrypt, encryptFields, decryptFields, decryptAndMaskFields, canRevealField, SENSITIVE_FIELDS, FIELD_CONFIG } = require("../../utils/encryption");
+const { encrypt, decrypt, decryptFields, decryptAndMaskFields, canRevealField, SENSITIVE_FIELDS, FIELD_CONFIG } = require("../../utils/encryption");
 const inboxService = require("../inbox/inbox.service");
 
 const getQuery = (db) =>
@@ -427,6 +427,7 @@ exports.createUser = async (db, data, actor, isSharedClient = false) => {
         link: '/profile'
       });
     } catch (notifErr) {
+      // eslint-disable-next-line no-console
       console.error('Welcome notification error:', notifErr.message);
     }
 
@@ -1500,6 +1501,7 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
           fs.unlinkSync(currentRes.rows[0].profile_photo_url);
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error("Failed to delete old profile photo:", e);
       }
     }
@@ -1509,6 +1511,7 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
     );
 
     if (updateRes.rowCount === 0) {
+      // eslint-disable-next-line no-console
       console.warn("[updateProfilePhoto] UPDATE affected 0 rows via raw client. Attempting to create employee record.");
       // Fetch user details for insert
       const userDetails = await client.query(`SELECT first_name, last_name, email, role FROM users WHERE id = $1`, [userId]);
@@ -1534,6 +1537,7 @@ exports.updateProfilePhoto = async (db, userId, photoPath, actor) => {
     return updateRes.rows[0];
 
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("[updateProfilePhoto] Error with raw client:", err);
     throw err;
   } finally {
@@ -1552,6 +1556,7 @@ exports.removeProfilePhoto = async (db, userId, actor) => {
         fs.unlinkSync(current.rows[0].profile_photo_url);
       }
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error("Failed to delete old profile photo:", e);
     }
   }

@@ -69,6 +69,7 @@ exports.createTask = async (db, data, actor) => {
             });
         }
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error creating task notification:', err);
     }
 

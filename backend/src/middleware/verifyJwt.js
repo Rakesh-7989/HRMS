@@ -115,6 +115,7 @@ module.exports = async function verifyJwt(req, res, next) {
       // Gracefully handle case where permissions tables don't exist yet
       // (migration hasn't been run), fall back to empty permissions
       if (permErr.code !== '42P01') { // 42P01 = undefined_table
+        // eslint-disable-next-line no-console
         console.warn("Failed to load user permissions:", permErr.message);
       }
       req.user.permissions = [];
@@ -132,6 +133,7 @@ module.exports = async function verifyJwt(req, res, next) {
 
     next();
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("VerifyJWT DB Error:", err); // Log the real error!
     return next(new Error("Internal Server Error during authentication check"));
   }

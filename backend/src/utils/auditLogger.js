@@ -15,6 +15,7 @@ const logAudit = async (req, targetTable, targetId, action, oldData = null, newD
     const actorId = req.user?.id || req.user?.userId; // The user performing the action
 
     if (!actorId) {
+      // eslint-disable-next-line no-console
       console.warn('Audit Log skipped: Missing actorId');
       return;
     }
@@ -42,6 +43,7 @@ const logAudit = async (req, targetTable, targetId, action, oldData = null, newD
   } catch (err) {
     // We log the error but do not crash the request 
     // because auditing is a side-effect.
+    // eslint-disable-next-line no-console
     console.error('FAILED TO WRITE AUDIT LOG:', err.message);
   }
 };

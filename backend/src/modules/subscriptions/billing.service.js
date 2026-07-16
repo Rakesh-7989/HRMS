@@ -1,7 +1,5 @@
 const db = require('../../middleware/db');
 const cashfreeService = require('./cashfree.service');
-const invoiceService = require('./invoice.service');
-const crypto = require('crypto');
 
 class BillingService {
 
@@ -41,7 +39,7 @@ class BillingService {
     /**
      * Initialize a new subscription for a tenant
      */
-    async createSubscription(tenantId, { planId, priceId, quantity = 1, successUrl, cancelUrl, couponCode }) {
+    async createSubscription(tenantId, { planId, priceId, quantity = 1, successUrl, _cancelUrl, couponCode }) {
         // 1. Get Plan & Price Details
         const priceRes = await db.query('SELECT * FROM plan_prices WHERE id = $1', [priceId]);
         if (priceRes.rowCount === 0) throw new Error('Invalid Price ID');
@@ -62,6 +60,7 @@ class BillingService {
                 discountAmount = couponService.calculateDiscount(coupon, finalAmount);
                 finalAmount = Math.max(0, finalAmount - discountAmount);
             } catch (error) {
+                // eslint-disable-next-line no-console
                 console.warn('Invalid Coupon:', error.message);
                 // We can either throw or ignore. Let's ignore for robustness but ideally notify user.
                 // For now, if invalid, just proceed without discount.
@@ -84,6 +83,7 @@ class BillingService {
                 description: `${quantity} seats ${coupon ? `w/ ${coupon.code}` : ''}`
             });
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.log('Plan creation warning (might exist):', e.message);
         }
 
@@ -187,11 +187,13 @@ class BillingService {
                     await this.handleSubscriptionCancelled(event.data);
                     break;
                 default:
+                    // eslint-disable-next-line no-console
                     console.log('Unhandled Webhook Type:', event.type);
             }
             // Update Status
             await db.query('UPDATE webhook_events SET status = \'PROCESSED\', processed_at = NOW() WHERE event_id = $1', [event.id]);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Webhook Processing Failed:', error);
             await db.query('UPDATE webhook_events SET status = \'FAILED\', processing_error = $2 WHERE event_id = $1', [event.id, error.message]);
             throw error;
@@ -200,7 +202,6 @@ class BillingService {
 
     async handleSubscriptionActivated(data) {
         const subId = data.subscription?.subscription_id || data.subscription_id;
-        const cfSubId = data.cf_subscription_id;
 
         // Activate in DB
         // Assuming subscription_id matches our DB UUID (or we mapped it via metadata/reference)
@@ -218,8 +219,6 @@ class BillingService {
     }
 
     async handlePaymentSuccess(data) {
-        // Find subscription or order
-        const subId = data.order?.order_id; // If purely sub payment, it might be sub reference
         // Cashfree payload structure varies between PG and Subscriptions. 
         // For Subscriptions: event often has subscription_id
 

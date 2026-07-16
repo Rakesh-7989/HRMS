@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const verifyJwt = require("../../../middleware/verifyJwt");
 const validate = require("../../../middleware/validate");
 
 const controller = require("./leaveReport.controller");

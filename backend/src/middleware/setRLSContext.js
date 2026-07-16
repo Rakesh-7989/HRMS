@@ -29,6 +29,7 @@ module.exports = async function rls(req, res, next) {
       ]
     );
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("RLS context set error:", err);
     // Don't block the request, but log the error
   }

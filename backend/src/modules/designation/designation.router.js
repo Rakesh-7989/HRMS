@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
 const validate = require("../../middleware/validate");
 
 const controller = require("./designation.controller");

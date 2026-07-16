@@ -1,5 +1,4 @@
 const asyncContext = require('../utils/asyncContext');
-const pool = require('../config/db');
 
 // Middleware to establish async context and set DB session variables for RLS
 const dbSessionContext = async (req, res, next) => {

@@ -1,5 +1,5 @@
 const loanService = require("./loans.service.js");
-const { createLoanSchema, approveLoanSchema, createLoanTypeSchema } = require("./loans.validator.js");
+const { createLoanSchema, approveLoanSchema } = require("./loans.validator.js");
 const logAudit = require("../../../utils/auditLogger");
 
 const createLoan = async (req, res) => {
@@ -77,7 +77,8 @@ const approveLoan = async (req, res) => {
       { status: 'PENDING' },
       { status: loan.status, approved_by: req.user.id, principal_amount: loan.principal_amount, remarks: payload.remarks }
     );
-  } catch (e) { console.error('Audit failed', e); }
+  } catch (e) { // eslint-disable-next-line no-console
+    console.error('Audit failed', e); }
 
   res.json({
     status: "success",

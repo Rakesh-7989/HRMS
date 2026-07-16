@@ -1,5 +1,4 @@
 const leaveTypeService = require("./leaveType.service");
-const logger = require("../../../config/logger");
 
 exports.createLeaveType = async (req, res, next) => {
     try {

@@ -3,7 +3,6 @@ const pool = require('../config/db');
 const logger = require('../config/logger');
 const moment = require('moment');
 const subscriptionService = require('../modules/subscriptions/subscriptions.service');
-const invoiceService = require('../modules/subscriptions/invoice.service');
 const asyncContext = require('../utils/asyncContext');
 
 /**

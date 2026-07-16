@@ -2,8 +2,6 @@ const subscriptionService = require('./subscriptions.service');
 const invoiceService = require('./invoice.service');
 const mailer = require('../../config/mailer');
 const db = require('../../middleware/db');
-const logger = require('../../config/logger');
-const { Cashfree } = require('cashfree-pg');
 
 class SubscriptionController {
     async getPlans(req, res) {
@@ -332,6 +330,7 @@ class SubscriptionController {
                 try {
                     await mailer.sendSubscriptionPricingEmail(tenant.email, tenant.name, tenantId);
                 } catch (emailError) {
+                    // eslint-disable-next-line no-console
                     console.error('Failed to send pricing email:', emailError.message);
                 }
             }
@@ -452,6 +451,7 @@ class SubscriptionController {
                 data: result
             });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Initiate payment for tenant error:', error);
             res.status(500).json({
                 success: false,
@@ -489,6 +489,7 @@ class SubscriptionController {
                 }
             });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Get UPI QR error:', error);
             res.status(500).json({
                 success: false,
@@ -509,6 +510,7 @@ class SubscriptionController {
             try {
                 cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error('Cashfree Webhook Signature Verification Failed:', err.message);
                 return res.status(400).json({ success: false, message: 'Invalid signature' });
             }
@@ -525,6 +527,7 @@ class SubscriptionController {
 
             res.status(200).json({ success: true });
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Webhook processing error:', error);
             res.status(500).json({ success: false, message: 'Webhook processing failed' });
         }

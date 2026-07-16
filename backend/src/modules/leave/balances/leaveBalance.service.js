@@ -385,6 +385,7 @@ exports.bulkAllocate = async (db, leaveTypeId, days, employeeIds, reason, actor,
                 failed++;
             }
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(`Failed to allocate for employee ${emp.employee_id}:`, err);
             failed++;
         }
@@ -493,6 +494,7 @@ exports.resetBalances = async (db, options, actor) => {
 
             processed++;
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error(`Failed to reset balance ${balance.id}:`, err);
             failed++;
         }

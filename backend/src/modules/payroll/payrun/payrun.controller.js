@@ -112,6 +112,7 @@ const createSchedule = async (req, res) => {
         const data = await payrunService.createSchedule(req.user.tenantId, req.user.id, req.body);
         res.status(201).json({ status: "success", data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[createSchedule]', err.message);
         res.status(500).json({ status: "error", message: err.message || "Failed to create schedule" });
     }
@@ -122,6 +123,7 @@ const getSchedules = async (req, res) => {
         const data = await payrunService.getSchedules(req.user.tenantId);
         res.json({ status: "success", data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[getSchedules]', err.message);
         res.status(500).json({ status: "error", message: err.message || "Failed to fetch schedules" });
     }
@@ -133,6 +135,7 @@ const createPayrun = async (req, res) => {
         const data = await payrunService.createPayrun(req.user.tenantId, req.user.id, req.body);
         res.status(201).json({ status: "success", data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[createPayrun]', err.message);
         res.status(err.message?.includes('already exists') ? 409 : 500).json({ status: "error", message: err.message || "Failed to create payrun" });
     }
@@ -143,6 +146,7 @@ const getPayruns = async (req, res) => {
         const data = await payrunService.getPayruns(req.user.tenantId, req.query);
         res.json({ status: "success", data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[getPayruns]', err.message);
         res.status(500).json({ status: "error", message: err.message || "Failed to fetch payruns" });
     }
@@ -157,6 +161,7 @@ const getPayrunById = async (req, res) => {
         const items = await payrunService.getPayrunItems(req.user.tenantId, req.params.id);
         res.json({ status: "success", data: { ...payrun, items } });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[getPayrunById]', err.message);
         res.status(500).json({ status: "error", message: err.message || "Failed to fetch payrun" });
     }
@@ -167,6 +172,7 @@ const calculatePayrun = async (req, res) => {
         const data = await payrunService.calculatePayrun(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Payroll calculated successfully" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[calculatePayrun]', err.message);
         res.status(500).json({ status: "error", message: err.message || "Failed to calculate payrun" });
     }
@@ -177,6 +183,7 @@ const approvePayrun = async (req, res) => {
         const data = await payrunService.approvePayrun(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Payroll approved" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[approvePayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to approve payrun" });
     }
@@ -192,6 +199,7 @@ const rejectPayrun = async (req, res) => {
         );
         res.json({ status: "success", data, message: "Payroll rejected" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[rejectPayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to reject payrun" });
     }
@@ -202,6 +210,7 @@ const revokePayrun = async (req, res) => {
         const data = await payrunService.revokePayrun(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Payroll revoked" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[revokePayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to revoke payrun" });
     }
@@ -212,6 +221,7 @@ const deletePayrun = async (req, res) => {
         const data = await payrunService.deletePayrun(req.user.tenantId, req.params.id);
         res.json({ status: "success", data });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[deletePayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to delete payrun" });
     }
@@ -222,6 +232,7 @@ const voidPayrun = async (req, res) => {
         const data = await payrunService.voidPayrun(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Payrun voided successfully" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[voidPayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to void payrun" });
     }
@@ -232,6 +243,7 @@ const deletePayslipItem = async (req, res) => {
         const data = await payrunService.deletePayslipItem(req.user.tenantId, req.params.id, req.params.itemId);
         res.json({ status: "success", data, message: "Payslip deleted successfully" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[deletePayslipItem]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to delete payslip item" });
     }
@@ -242,6 +254,7 @@ const lockPayrun = async (req, res) => {
         const data = await payrunService.lockPayrun(req.user.tenantId, req.params.id, req.user.id);
         res.json({ status: "success", data, message: "Payroll locked" });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[lockPayrun]', err.message);
         res.status(400).json({ status: "error", message: err.message || "Failed to lock payrun" });
     }

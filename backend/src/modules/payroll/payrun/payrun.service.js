@@ -1,5 +1,4 @@
 const db = require("../../../config/db");
-const attendanceService = require("../../attendance/attendance.service");
 const statutoryCalculator = require("../utils/statutoryCalculator");
 const salaryStructureService = require("../salary/salaryStructure.service");
 const arrearsService = require("../arrears/arrears.service");
@@ -182,6 +181,7 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                     revision_reason: 'Auto-assignment during payroll calculation'
                 }, userId);
             } catch (err) {
+                // eslint-disable-next-line no-console
                 console.error(`[calculatePayrun] Failed to auto-assign structure for employee ${emp.id}:`, err);
             }
         }
@@ -252,6 +252,7 @@ const calculatePayrun = async (tenantId, payrunId, userId) => {
                 throw new Error(diagMessage);
             }
 
+            // eslint-disable-next-line no-console
             console.warn(`[calculatePayrun] No active employees found for tenant ${tenantId}`);
             await client.query(
                 `UPDATE payroll_runs SET status = 'DRAFT', updated_at = now() WHERE id = $1`,
@@ -853,7 +854,7 @@ const rejectPayrun = async (tenantId, payrunId, userId, reason) => {
     return result.rows[0];
 };
 
-const revokePayrun = async (tenantId, payrunId, userId) => {
+const revokePayrun = async (tenantId, payrunId, _userId) => {
     const payrun = await getPayrunById(tenantId, payrunId);
 
     if (!payrun) {

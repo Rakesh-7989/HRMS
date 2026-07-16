@@ -132,7 +132,6 @@ exports.getEffectiveApprover = async (db, originalApproverId, tenantId) => {
 };
 
 exports.canApprove = async (db, userId, originalApproverId, tenantId) => {
-    const query = getQuery(db);
 
     if (userId === originalApproverId) {
         return true;

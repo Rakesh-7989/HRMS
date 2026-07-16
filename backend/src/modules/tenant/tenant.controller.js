@@ -3,6 +3,7 @@ const tenantService = require("./tenant.service");
 exports.checkAvailability = async (req, res) => {
   try {
     const { subdomain, email } = req.query;
+    // eslint-disable-next-line no-console
     console.log(`[AVAILABILITY_CHECK_REQUEST] Subdomain: ${subdomain}, Email: ${email}`);
     
     if (subdomain) {
@@ -28,6 +29,7 @@ exports.registerTenant = async (req, res) => {
       return res.status(400).json({ status: "error", message: "Email not verified. Please verify OTP first." });
     }
     
+    // eslint-disable-next-line no-console
     console.log(`[DEBUG_REG] Payload Received for ${req.body.email}:`, req.body);
 
     const result = await tenantService.registerTenant(req.body, req);

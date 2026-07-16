@@ -5,6 +5,7 @@ exports.getConversations = async (req, res) => {
     const data = await chatService.getConversations(req.db, req.user.id, req.user.tenantId);
     res.json({ status: "success", data });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("[ChatController] getConversations error:", err.message, err.detail || '');
     res.status(400).json({ status: "error", message: err.message });
   }
@@ -57,6 +58,7 @@ exports.startDirectChat = async (req, res) => {
     const data = await chatService.createDirectConversation(req.db, req.user.id, userId, req.user.tenantId);
     res.json({ status: "success", data });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("[ChatController] startDirectChat Error:", err);
     res.status(400).json({ status: "error", message: err.message });
   }
@@ -86,11 +88,14 @@ exports.deleteMessage = async (req, res) => {
 
 exports.getContacts = async (req, res) => {
   try {
+    // eslint-disable-next-line no-console
     console.log(`[ChatController] Fetching contacts for user ${req.user.id}, tenant ${req.user.tenantId}`);
     const data = await chatService.getContacts(req.db, req.user.id, req.user.tenantId);
+    // eslint-disable-next-line no-console
     console.log(`[ChatController] Found ${data.length} contacts`);
     res.json({ status: "success", data });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`[ChatController] Error fetching contacts:`, err);
     res.status(400).json({ status: "error", message: err.message });
   }

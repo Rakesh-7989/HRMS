@@ -1,7 +1,5 @@
 const db = require("../../config/db");
 const invoiceService = require("./invoice.service");
-const logger = require("../../config/logger");
-const cashfree = require("../../config/cashfree");
 const mailer = require("../../config/mailer");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
@@ -73,6 +71,7 @@ class SubscriptionService {
     async calculatePrice(tenantId, planId, billingCycle, quantity = 1, isNewSubscription = false, couponCode = null, client = null) {
         const executor = client || db;
         
+        // eslint-disable-next-line no-console
         console.log(`[DEBUG_PRICE] Calculating for Tenant: ${tenantId}, Plan: ${planId}, Cycle: ${billingCycle}, Input Quantity: ${quantity}`);
 
         const planRes = await executor.query('SELECT * FROM plans WHERE id = $1', [planId]);
@@ -120,6 +119,7 @@ class SubscriptionService {
 
         if (isNewSubscription || hasNeverPaid) {
             setupFee = parseFloat(plan.setup_fee || 0);
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG_PRICE] Applying Setup Fee: ${setupFee}`);
         }
 
@@ -149,11 +149,14 @@ class SubscriptionService {
                             discountAmount = parseFloat(val);
                         }
                     }
+                    // eslint-disable-next-line no-console
                     console.log(`[DEBUG_PRICE] Coupon applied: ${couponCode}, Discount: ${discountAmount}`);
                 } else {
+                    // eslint-disable-next-line no-console
                     console.warn(`[DEBUG_PRICE] Coupon ${couponCode} not found or inactive/expired`);
                 }
             } catch (e) {
+                // eslint-disable-next-line no-console
                 console.warn('Coupon application failed:', e.message);
             }
         }
@@ -163,6 +166,7 @@ class SubscriptionService {
         const gstAmount = Math.ceil(totalTaxable * (gstPercent / 100));
         const totalAmount = Math.ceil(totalTaxable + gstAmount);
 
+        // eslint-disable-next-line no-console
         console.log(`[DEBUG_PRICE] FINAL CALC: (${unitPrice} * ${currentCount}) + ${setupFee} - ${discountAmount} + TAX = ${totalAmount}`);
 
         return {
@@ -218,6 +222,7 @@ class SubscriptionService {
 
         // If amount is 0 (due to 100% coupon or trial upgrade), don't call Cashfree
         if (pricing.total_amount <= 0) {
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG_PRICE] Amount is 0 for Invoice ${invoice.id}. Bypassing Cashfree.`);
             await invoiceService.updateInvoiceStatus(invoice.id, 'PAID', `FREE-${invoice.id}`, 'N/A', executor);
             
@@ -256,12 +261,14 @@ class SubscriptionService {
 
     async verifyPayment(tenantId, orderId) {
         try {
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG_VERIFY] Starting verification for Order: ${orderId}, Tenant: ${tenantId}`);
             
             let result;
             let successfulPayment = null;
 
             if (orderId && orderId.startsWith('FREE-')) {
+                // eslint-disable-next-line no-console
                 console.log(`[DEBUG_VERIFY] Virtual verification for FREE order: ${orderId}`);
                 result = { success: true, status: 'PAID', data: { is_free: true } };
                 // Mock a successful payment object
@@ -270,6 +277,7 @@ class SubscriptionService {
                 result = await invoiceService.verifyCashfreePayment(orderId);
             }
             
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG_VERIFY] Verification Response:`, JSON.stringify(result, null, 2));
 
             const isSuccessStatus = ['PAID', 'SUCCESS', 'ACTIVE', 'COMPLETED'].includes(String(result.status || '').toUpperCase());
@@ -310,12 +318,14 @@ class SubscriptionService {
                     await client.query('BEGIN');
 
                     // 1. Update Invoice
+                    // eslint-disable-next-line no-console
                     console.log(`[DEBUG_VERIFY] Updating Invoice ${invoice.id} to PAID`);
                     await invoiceService.updateInvoiceStatus(invoice.id, 'PAID', orderId, null, client);
 
                     // 2. Update Subscription
                     const subscription = await this.getSubscriptionByTenantId(resolvedTenantId, client);
                     if (subscription) {
+                        // eslint-disable-next-line no-console
                         console.log(`[DEBUG_VERIFY] Updating Subscription ${subscription.id} to ACTIVE`);
                         await client.query(`
                             UPDATE subscriptions
@@ -335,6 +345,7 @@ class SubscriptionService {
                     const plan = planRes.rows[0];
                     const tier = plan?.tier || 1;
 
+                    // eslint-disable-next-line no-console
                     console.log(`[DEBUG_VERIFY] Activating Tenant ${resolvedTenantId} with Plan Tier ${tier}`);
                     await client.query(`
                         UPDATE tenants
@@ -364,6 +375,7 @@ class SubscriptionService {
                             const tempPassword = crypto.randomBytes(6).toString("hex");
                             const passwordHash = await bcrypt.hash(tempPassword, 10);
 
+                            // eslint-disable-next-line no-console
                             console.log(`[DEBUG_VERIFY] Initial activation for User ${adminUser.id} (${adminUser.email}). Setting temp password.`);
                             await client.query(`
                                 UPDATE users
@@ -378,15 +390,18 @@ class SubscriptionService {
                             const tRes = await client.query('SELECT name FROM tenants WHERE id = $1', [resolvedTenantId]);
                             const tenantName = tRes.rows[0]?.name || 'Your Organization';
 
+                            // eslint-disable-next-line no-console
                             console.log(`[DEBUG_VERIFY] Triggering Welcome Email to ${adminUser.email}`);
                             try {
                                 await mailer.sendWelcomeEmail(adminUser.email, tenantName, tempPassword);
                             } catch (emailErr) {
+                                // eslint-disable-next-line no-console
                                 console.error('[DEBUG_VERIFY] Email dispatch failed:', emailErr.message);
                             }
                             // Implement a "Resend Welcome Email" admin endpoint so that if the welcome email fails,
                             // an admin can manually trigger a resend from the tenant management UI.
                         } else {
+                            // eslint-disable-next-line no-console
                             console.log(`[DEBUG_VERIFY] User ${adminUser.id} already active. Skipping password reset.`);
                         }
                     }
@@ -409,6 +424,7 @@ class SubscriptionService {
                 return { success: false, status: result.status };
             }
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Payment Verification Error:', error.message);
             throw error;
         }
@@ -536,7 +552,7 @@ class SubscriptionService {
 
         let subId;
         if (sub) {
-            const res = await db.query(
+            await db.query(
                 `UPDATE subscriptions 
                  SET plan_id = $2, billing_cycle = $3, status = 'ACTIVE', updated_at = NOW() 
                  WHERE id = $1 RETURNING *`,

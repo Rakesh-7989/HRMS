@@ -11,7 +11,6 @@ const env = require('../config/env');
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;    // 128-bit IV
-const AUTH_TAG_LENGTH = 16; // 128-bit auth tag
 
 // Parse the 64-char hex key into a 32-byte Buffer
 const getKey = () => {
@@ -72,6 +71,7 @@ function decrypt(encryptedStr) {
     } catch (err) {
         // If decryption fails, the data might be plaintext that happens to contain colons
         // Return as-is rather than crashing
+        // eslint-disable-next-line no-console
         console.error('Decryption failed (possibly plaintext data):', err.message);
         return text;
     }

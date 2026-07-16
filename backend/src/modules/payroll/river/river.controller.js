@@ -11,6 +11,7 @@ router.get('/dashboard', verifyJwt, requirePermission('payroll', 'manage_payruns
         const result = await riverService.getDashboardStats(req.user.tenantId, month, year);
         res.json(result);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Dashboard error:', err);
         res.status(500).json({ error: err.message });
     }
@@ -43,6 +44,7 @@ router.get('/review/:runId', verifyJwt, requirePermission('payroll', 'manage_pay
         const result = await riverService.getReviewData(req.user.tenantId, req.params.runId);
         res.json(result);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Review data error:', err);
         res.status(500).json({ error: err.message });
     }
@@ -63,6 +65,7 @@ router.post('/initiate/:runId', verifyJwt, requirePermission('payroll', 'manage_
         const result = await riverService.initiatePayroll(req.user.tenantId, req.params.runId, req.user.id);
         res.json(result);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Initiate error:', err);
         res.status(500).json({ error: err.message });
     }
@@ -74,6 +77,7 @@ router.get('/verify/:runId', verifyJwt, requirePermission('payroll', 'manage_pay
         const result = await riverService.getVerificationData(req.user.tenantId, req.params.runId);
         res.json(result);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Verify data error:', err);
         res.status(500).json({ error: err.message });
     }

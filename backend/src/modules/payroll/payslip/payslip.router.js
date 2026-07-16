@@ -65,13 +65,14 @@ router.post(
             });
 
             // Calculate the payrun
-            const calculatedPayrun = await payrunService.calculatePayrun(tenantId, payrun.id, userId);
+            await payrunService.calculatePayrun(tenantId, payrun.id, userId);
 
             // Auto-approve the payrun so payslips are immediately available
             const approvedPayrun = await payrunService.approvePayrun(tenantId, payrun.id, userId);
 
             res.json({ status: 'success', data: approvedPayrun });
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.error('Payslip generation error:', err);
             res.status(500).json({ status: 'error', message: err.message || 'Failed to generate payslips' });
         }

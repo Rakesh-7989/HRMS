@@ -8,6 +8,7 @@ exports.getPeopleEvents = async (req, res) => {
         const events = await service.getPeopleEvents(pool, req.user.tenantId, scope);
         res.json({ status: 'success', data: events });
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Events error:', err);
         res.status(500).json({ status: 'error', message: err.message });
     }

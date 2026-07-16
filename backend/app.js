@@ -14,6 +14,11 @@ const { generalLimiter } = require('./src/middleware/rateLimiter');
 const httpsRedirect = require('./src/middleware/httpsRedirect');
 const originCheck = require('./src/middleware/originCheck');
 const Sentry = require('@sentry/node');
+const {
+    sanitizeInput,
+    apiSecurityHeaders,
+    validateRequestSize,
+} = require('./src/middleware/security');
 
 
 const app = express();
@@ -73,6 +78,11 @@ app.use(cors({
 app.use(generalLimiter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Security middleware
+app.use(sanitizeInput);
+app.use(apiSecurityHeaders);
+app.use(validateRequestSize);
 
 // Protected static file serving for uploads
 app.use('/uploads', (req, res, next) => {

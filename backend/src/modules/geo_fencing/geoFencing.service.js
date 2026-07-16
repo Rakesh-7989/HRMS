@@ -204,8 +204,6 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  * Returns: { allowed: boolean, location?: object, distance?: number, reason?: string }
  */
 exports.validateLocation = async (db, tenantId, employeeLat, employeeLon) => {
-    const query = getQuery(db);
-
     // Get settings
     const settings = await exports.getSettings(db, tenantId);
 

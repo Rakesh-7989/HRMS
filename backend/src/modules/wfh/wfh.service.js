@@ -67,6 +67,7 @@ exports.requestWFH = async (db, data, actor) => {
             }
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('WFH request notification error:', notifErr.message);
     }
 
@@ -227,6 +228,7 @@ exports.approveWFH = async (db, requestId, actor, comment = null) => {
             });
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('WFH approve notification error:', notifErr.message);
     }
 
@@ -313,6 +315,7 @@ exports.rejectWFH = async (db, requestId, actor, reason) => {
             });
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('WFH reject notification error:', notifErr.message);
     }
 

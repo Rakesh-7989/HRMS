@@ -5,7 +5,10 @@ const pool = new Pool({
 
 async function check() {
     const cols = await pool.query("SELECT table_name, column_name FROM information_schema.columns WHERE column_name LIKE '%days%' OR column_name LIKE '%limit%' OR column_name LIKE '%total%'");
-    cols.rows.forEach(r => console.log(`${r.table_name}.${r.column_name}`));
+    cols.rows.forEach(r => {
+        // eslint-disable-next-line no-console
+        console.log(`${r.table_name}.${r.column_name}`);
+    });
 
     await pool.end();
 }

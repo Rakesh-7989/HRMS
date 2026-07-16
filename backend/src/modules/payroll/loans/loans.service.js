@@ -89,6 +89,7 @@ const createLoan = async (tenantId, userId, payload) => {
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Loan create notification error:', notifErr.message);
   }
 
@@ -321,6 +322,7 @@ const approveOrRejectLoan = async (
         });
       }
     } catch (notifErr) {
+      // eslint-disable-next-line no-console
       console.error('Loan approve/reject notification error:', notifErr.message);
     }
 

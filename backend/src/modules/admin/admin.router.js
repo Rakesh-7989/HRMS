@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const controller = require("./admin.controller");
 const verifyJwt = require("../../middleware/verifyJwt");
-const requireRole = require("../../middleware/requireRole");
 const validate = require("../../middleware/validate");
 const { updateTenantProfileSchema } = require("./admin.validator");
 

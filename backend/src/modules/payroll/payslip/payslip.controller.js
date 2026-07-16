@@ -63,6 +63,7 @@ const downloadPayslip = async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=payslip_${data.period_month}_${data.period_year}.pdf`);
         res.send(pdf);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Payslip generation error:', err);
         res.status(500).json({ status: "error", message: err.message });
     }
@@ -111,6 +112,7 @@ const emailPayslip = async (req, res) => {
         const result = await payslipService.emailPayslip(tenantId, id, to);
         res.json(result);
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Email payslip error:', err);
         res.status(500).json({ status: "error", message: err.message });
     }

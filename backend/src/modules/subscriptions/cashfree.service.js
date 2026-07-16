@@ -1,6 +1,4 @@
-const cashfree = require('../../config/cashfree'); // Import configured SDK if exists, or use raw axios if needed for some endpoints
 const axios = require('axios');
-const db = require('../../middleware/db');
 
 class CashfreeService {
     constructor() {
@@ -38,6 +36,7 @@ class CashfreeService {
             }, { headers: this.headers });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cashfree Create Plan Error:', error.response?.data || error.message);
             throw error;
         }
@@ -77,6 +76,7 @@ class CashfreeService {
             const response = await axios.post(`${this.baseUrl}/subscriptions`, payload, { headers: this.headers });
             return response.data; // Contains auth_link
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cashfree Create Subscription Error:', error.response?.data || error.message);
             throw error;
         }
@@ -97,6 +97,7 @@ class CashfreeService {
 
             return generatedSignature === signature;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Signature Verification Error:', error);
             return false;
         }
@@ -110,6 +111,7 @@ class CashfreeService {
             const response = await axios.get(`${this.baseUrl}/subscriptions/${subscriptionId}`, { headers: this.headers });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Get Subscription Error:', error.response?.data || error.message);
             throw error;
         }
@@ -123,6 +125,7 @@ class CashfreeService {
             const response = await axios.patch(`${this.baseUrl}/subscriptions/${subscriptionId}/cancel`, {}, { headers: this.headers });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cancel Subscription Error:', error.response?.data || error.message);
             throw error;
         }
@@ -142,6 +145,7 @@ class CashfreeService {
             const response = await axios.post(`${this.baseUrl}/subscriptions/${subscriptionId}/charge`, payload, { headers: this.headers });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Charge Subscription Error:', error.response?.data || error.message);
             throw error;
         }

@@ -6,7 +6,7 @@ const inboxService = require("../../inbox/inbox.service");
 // ===================================================================
 
 const createReimbursement = async (tenantId, employeeId, userId, payload) => {
-    const { category, amount, claimDate, description, isTaxable, receiptUrl } = payload;
+    const { amount, claimDate, description, receiptUrl } = payload;
 
     // Validate positive amount
     if (amount <= 0) {
@@ -50,6 +50,7 @@ const createReimbursement = async (tenantId, employeeId, userId, payload) => {
             });
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('Reimbursement create notification error:', notifErr.message);
     }
 
@@ -100,7 +101,7 @@ const getMyReimbursements = async (tenantId, employeeId) => {
     return result.rows;
 };
 
-const approveReimbursement = async (tenantId, reimbursementId, userId, status, includeInPayroll = false) => {
+const approveReimbursement = async (tenantId, reimbursementId, userId, status) => {
     if (!['APPROVED', 'REJECTED'].includes(status)) {
         throw new Error('Invalid status');
     }
@@ -136,6 +137,7 @@ const approveReimbursement = async (tenantId, reimbursementId, userId, status, i
             });
         }
     } catch (notifErr) {
+        // eslint-disable-next-line no-console
         console.error('Reimbursement approve notification error:', notifErr.message);
     }
 
@@ -349,11 +351,13 @@ const createFnFSettlement = async (tenantId, userId, payload) => {
                 });
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('FnF create notification error:', notifErr.message);
         }
 
         return fnfCreated;
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[FnF Create Error]', err);
         throw err; // Re-throw to controller
     }
@@ -479,10 +483,12 @@ const approveFnFSettlement = async (tenantId, settlementId, userId, status) => {
         );
 
         if (check.rowCount === 0) {
+            // eslint-disable-next-line no-console
             console.error(`[FnF Approve] Settlement ${settlementId} not found`);
             throw new Error('Settlement not found');
         }
         if (check.rows[0].status !== 'PENDING_APPROVAL') {
+            // eslint-disable-next-line no-console
             console.error(`[FnF Approve] Invalid state transition from ${check.rows[0].status}`);
         }
 
@@ -517,11 +523,13 @@ const approveFnFSettlement = async (tenantId, settlementId, userId, status) => {
                 });
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('FnF approve notification error:', notifErr.message);
         }
 
         return approved;
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[FnF Approve Error]', err);
         throw err;
     }
@@ -559,7 +567,7 @@ const submitFnFForApproval = async (tenantId, settlementId) => {
     return result.rows[0];
 };
 
-const markFnFPaid = async (tenantId, settlementId, userId) => {
+const markFnFPaid = async (tenantId, settlementId, _userId) => {
     try {
         const result = await db.query(
             `UPDATE fnf_settlements 
@@ -595,6 +603,7 @@ const markFnFPaid = async (tenantId, settlementId, userId) => {
 
         return result.rows[0];
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[FnF Pay Error]', err);
         throw err;
     }

@@ -6,7 +6,6 @@ const {
   ForbiddenError,
 } = require("../../utils/customErrors");
 const crypto = require("crypto");
-const logger = require("../../config/logger");
 const moment = require("moment");
 const inboxService = require("../inbox/inbox.service");
 
@@ -194,7 +193,7 @@ exports.createProject = async (tenantId, userId, data) => {
   await this.getClientById(tenantId, client_id);
 
   const projectId = crypto.randomUUID();
-  const result = await pool.query(
+  await pool.query(
     `INSERT INTO projects (
       id, tenant_id, client_id, name, description, status, start_date, end_date, budget, billing_type, created_by, updated_by, created_at, updated_at
     ) VALUES (
@@ -203,8 +202,6 @@ exports.createProject = async (tenantId, userId, data) => {
     RETURNING *`,
     [projectId, tenantId, client_id, name, description || null, status || "PLANNING", start_date || null, end_date || null, budget || null, data.billing_type || 'HOURLY', userId, userId]
   );
-
-  const project = result.rows[0];
 
   // Note: Kanban columns are NOT auto-created here.
   // Users must explicitly set up the Kanban board via the /board/setup endpoint.
@@ -448,7 +445,7 @@ exports.addProjectMember = async (tenantId, userId, projectId, employeeId, role 
   }
 
   const memberId = crypto.randomUUID();
-  const result = await pool.query(
+  await pool.query(
     `INSERT INTO project_members (id, tenant_id, project_id, employee_id, role, created_by, updated_by, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
      RETURNING *`,
@@ -480,6 +477,7 @@ exports.addProjectMember = async (tenantId, userId, projectId, employeeId, role 
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Project member add notification error:', notifErr.message);
   }
 
@@ -612,7 +610,9 @@ exports.checkKanbanExists = async (tenantId, projectId, userContext = null) => {
 exports.createKanbanBoard = async (tenantId, userId, projectId, options = {}) => {
   const { useDefault = true, customColumns = [], forceReset = false } = options;
 
+  // eslint-disable-next-line no-console
   console.log('[createKanbanBoard] Service called with:', { useDefault, customColumnsCount: customColumns.length, forceReset, projectId });
+  // eslint-disable-next-line no-console
   console.log('[createKanbanBoard] Custom columns data:', JSON.stringify(customColumns));
 
   // Verify project exists
@@ -898,6 +898,7 @@ exports.createTask = async (tenantId, userId, data) => {
       }
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Task assign notification error:', notifErr.message);
   }
 
@@ -2464,7 +2465,7 @@ exports.getMentionableUsers = async (tenantId, projectId) => {
  * Aggregates data server-side for performance and consistency.
  * Productivity Score Logic: Billable Utilization Rate (Billable Hours / Total Hours * 100)
  */
-exports.getDashboardStats = async (tenantId, userId, employeeId, role) => {
+exports.getDashboardStats = async (tenantId, userId, employeeId, _role) => {
   // Determine date range (Last 30 days)
   const endDate = moment();
   const startDate = moment().subtract(30, 'days');

@@ -27,6 +27,7 @@ exports.createUser = async (req, res) => {
     try {
       await logAudit(req, 'users', result.user.id, 'CREATE', null, { email: result.user.email, role: result.user.role });
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Audit failed', e);
     }
 
@@ -121,7 +122,8 @@ exports.changeRole = async (req, res) => {
       await logAudit(req, 'users', req.params.id, 'UPDATE_ROLE',
         { role: oldRole }, { role: result.role }
       );
-    } catch (e) { console.error('Audit failed', e); }
+    } catch (e) { // eslint-disable-next-line no-console
+      console.error('Audit failed', e); }
 
     res.json({ status: "success", result });
   } catch (err) {
@@ -190,7 +192,8 @@ exports.deactivateUser = async (req, res) => {
       await logAudit(req, 'users', req.params.id, 'DEACTIVATE_USER',
         { is_active: wasActive }, { is_active: false }
       );
-    } catch (e) { console.error('Audit failed', e); }
+    } catch (e) { // eslint-disable-next-line no-console
+      console.error('Audit failed', e); }
 
     res.json({ status: "success", result });
   } catch (err) {
@@ -245,7 +248,8 @@ exports.softDeleteUser = async (req, res) => {
       await logAudit(req, 'users', req.params.id, 'DELETE_USER',
         oldData, { is_active: false, is_deleted: true }
       );
-    } catch (e) { console.error('Audit failed', e); }
+    } catch (e) { // eslint-disable-next-line no-console
+      console.error('Audit failed', e); }
 
     res.json({ status: "success", message: result.message });
   } catch (err) {
@@ -268,7 +272,8 @@ exports.terminateEmployee = async (req, res) => {
         oldData,
         { is_active: false, is_deleted: true, termination_reason: req.body.termination_reason }
       );
-    } catch (e) { console.error('Audit failed', e); }
+    } catch (e) { // eslint-disable-next-line no-console
+      console.error('Audit failed', e); }
 
     res.json({ status: "success", message: result.message });
   } catch (err) {
@@ -306,7 +311,8 @@ exports.updateMyProfile = async (req, res) => {
     // Audit Log
     try {
       await logAudit(req, 'employees', req.user.id, 'UPDATE_PROFILE', null, req.body);
-    } catch (e) { console.error(e); }
+    } catch (e) { // eslint-disable-next-line no-console
+      console.error(e); }
 
     res.json({ status: "success", updated });
   } catch (err) {
@@ -332,6 +338,7 @@ exports.uploadProfilePhoto = async (req, res) => {
   try {
 
     if (!req.file) {
+      // eslint-disable-next-line no-console
       console.error("[uploadProfilePhoto] No file received");
       throw new Error("Please upload a file");
     }
@@ -376,14 +383,16 @@ exports.uploadProfilePhoto = async (req, res) => {
     const result = await userService.updateProfilePhoto(req.db, req.user.id, dbPath, req.user);
 
     if (!result) {
+      // eslint-disable-next-line no-console
       console.error("[uploadProfilePhoto] DB Update returned no result! Checking user match...");
     }
 
     // Audit
-    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: dbPath }); } catch (e) { }
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'UPDATE_PHOTO', null, { file: dbPath }); } catch (e) { /* no-op */ }
 
     res.json({ status: "success", data: result });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("[uploadProfilePhoto] Error:", err.message);
     res.status(400).json({ status: "error", message: err.message });
   }
@@ -394,7 +403,7 @@ exports.removeProfilePhoto = async (req, res) => {
     const result = await userService.removeProfilePhoto(req.db, req.user.id, req.user);
 
     // Audit
-    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'REMOVE_PHOTO', null, {}); } catch (e) { }
+    try { require('../../utils/auditLogger')(req, 'employees', req.user.id, 'REMOVE_PHOTO', null, {}); } catch (e) { /* no-op */ }
 
     res.json({ status: "success", message: "Profile photo removed", data: result });
   } catch (err) {
@@ -425,6 +434,7 @@ exports.bulkImportEmployees = async (req, res) => {
         failed: result.failed
       });
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Audit failed', e);
     }
 
@@ -459,6 +469,7 @@ exports.revealSensitiveField = async (req, res) => {
         viewer_id: req.user.id
       });
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Audit failed for sensitive reveal', e);
     }
 
@@ -487,6 +498,7 @@ exports.revealOwnSensitiveField = async (req, res) => {
         self_view: true
       });
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Audit failed for sensitive reveal', e);
     }
 

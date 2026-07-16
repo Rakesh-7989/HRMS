@@ -1,7 +1,6 @@
 const { z } = require("zod");
 
 const jobTypeEnum = z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP']);
-const jobStatusEnum = z.enum(['DRAFT', 'PUBLISHED', 'CLOSED']);
 const candidateSourceEnum = z.enum(['WEBSITE', 'REFERRAL', 'PORTAL', 'AGENCY', 'DIRECT']);
 const candidateStatusEnum = z.enum(['NEW', 'SCREENING', 'INTERVIEW', 'OFFERED', 'HIRED', 'REJECTED', 'WITHDRAWN']);
 const interviewModeEnum = z.enum(['IN_PERSON', 'VIDEO', 'PHONE']);

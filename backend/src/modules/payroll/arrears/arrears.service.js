@@ -106,9 +106,8 @@ exports.unlinkArrearsFromPayrun = async (tenantId, payrollRunId, client = db) =>
  * 2. Calculate the difference: New Monthly Net - Paid Monthly Net.
  * 3. Save as PENDING records in salary_arrears table.
  */
-exports.calculateRetroactiveArrears = async (tenantId, employeeId, newAssignment, userId) => {
+exports.calculateRetroactiveArrears = async (tenantId, employeeId, newAssignment, _userId) => {
     const effectiveFrom = new Date(newAssignment.effective_from);
-    const today = new Date();
 
     // Find already processed payrolls for this employee starting from effectiveFrom
     const processedPayruns = await db.query(

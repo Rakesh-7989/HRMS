@@ -1880,6 +1880,7 @@ RETURNING *
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Regularization request notification error:', notifErr.message);
   }
 
@@ -1958,7 +1959,6 @@ ar.*,
  */
 exports.approveRegularization = async (db, requestId, approverUserId, tenantId, checkInTime, checkOutTime) => {
   const query = getQuery(db);
-  const { calculateHoursDifference } = require('../../utils/dateHelper');
 
   // 1. Get the request
   const reqRes = await query(
@@ -2035,6 +2035,7 @@ VALUES($1, $2, $3, $4, $5, 'APPROVED', $6, $7)
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Regularization approve notification error:', notifErr.message);
   }
 
@@ -2076,6 +2077,7 @@ RETURNING *
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Regularization reject notification error:', notifErr.message);
   }
 

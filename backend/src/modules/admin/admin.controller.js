@@ -60,6 +60,7 @@ exports.uploadLogo = async (req, res) => {
           deleteFile(oldPath);
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('Failed to delete old logo file:', e);
       }
     }
@@ -70,6 +71,7 @@ exports.uploadLogo = async (req, res) => {
       data: { logo_url: filePath }
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Logo upload error:', err);
     res.status(500).json({ status: 'error', message: err.message });
   }
@@ -96,6 +98,7 @@ exports.deleteLogo = async (req, res) => {
           deleteFile(oldPath);
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('Failed to delete old logo file:', e);
       }
     }
@@ -106,6 +109,7 @@ exports.deleteLogo = async (req, res) => {
       data: { logo_url: null }
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Logo delete error:', err);
     res.status(500).json({ status: 'error', message: err.message });
   }

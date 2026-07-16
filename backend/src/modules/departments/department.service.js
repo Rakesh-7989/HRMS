@@ -1,6 +1,4 @@
-const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
-const asyncContext = require("../../utils/asyncContext");
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../../utils/customErrors");
 
 const getQuery = (db) => {

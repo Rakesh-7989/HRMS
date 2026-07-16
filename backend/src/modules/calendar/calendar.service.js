@@ -147,6 +147,7 @@ exports.createCompanyHoliday = async (db, tenantId, date, holidayName, state = n
             );
         }
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error broadcasting holiday notifications:', err);
     }
 
@@ -227,6 +228,7 @@ exports.createAnnouncement = async (db, tenantId, userId, data) => {
             );
         }
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error broadcasting announcement notifications:', err);
     }
 
@@ -283,6 +285,7 @@ exports.bulkImportHolidays = async (db, tenantId, holidays) => {
                 );
             }
         } catch (notifErr) {
+            // eslint-disable-next-line no-console
             console.error('Error broadcasting holiday import notifications:', notifErr);
         }
 

@@ -1,6 +1,5 @@
 
 const db = require('../../middleware/db');
-const cashfree = require('../../config/cashfree');
 const crypto = require('crypto');
 
 class InvoiceService {
@@ -94,6 +93,7 @@ class InvoiceService {
                 order_id: order.order_id
             };
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cashfree Invoice Link Error:', error.response?.data || error.message);
             throw new Error('Error creating Cashfree payment link: ' + (error.response?.data?.message || error.message));
         }
@@ -128,6 +128,7 @@ class InvoiceService {
                 status: payData.order_status || 'PENDING'
             };
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cashfree UPI QR Error:', error.response?.data || error.message);
             return {
                 success: false,
@@ -157,6 +158,7 @@ class InvoiceService {
                 data: order
             };
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Cashfree Verification Error:', error.response?.data || error.message);
             return {
                 success: false,

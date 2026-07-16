@@ -140,6 +140,7 @@ const createExpense = async (tenantId, employeeId, userId, payload) => {
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Expense submit notification error:', notifErr.message);
   }
 
@@ -232,6 +233,7 @@ const approveExpense = async (tenantId, expenseId, status, approverId) => {
       });
     }
   } catch (notifErr) {
+    // eslint-disable-next-line no-console
     console.error('Expense approve notification error:', notifErr.message);
   }
 

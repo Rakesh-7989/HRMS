@@ -1,5 +1,3 @@
-const moment = require('moment');
-
 /**
  * Resolves the effective timezone for a tenant or employee.
  * Logic:
@@ -23,6 +21,7 @@ const getEffectiveTz = async (query, tenantId, employeeId = null) => {
         );
         return tenantRes.rows[0]?.tz || 'Asia/Kolkata';
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error resolving timezone:', err);
         return 'Asia/Kolkata';
     }

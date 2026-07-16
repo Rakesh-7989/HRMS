@@ -20,18 +20,6 @@ const createExpenseSchema = z.object({
     payrollIncluded: z.boolean()
   })
 });
-const updateExpenseSchema = z.object({
-  body: z.object({
-    categoryId: z.string().uuid().optional(),
-    amount: z.number().positive().optional(),
-    expenseDate: z.string().optional(),
-    description: z.string().optional(),
-    payrollIncluded: z.boolean().optional()
-  }).refine(data => Object.keys(data).length > 0, {
-    message: "At least one field must be provided"
-  })
-});
-
 const approveExpenseSchema = z.object({
   body: z.object({
     status: z.enum(["APPROVED", "REJECTED"])

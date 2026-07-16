@@ -99,7 +99,7 @@ const initSocket = (httpServer) => {
             logger.info(`User ${socket.user.id} left room: ${roomId}`);
         });
 
-        socket.on("send_message", (data) => {
+        socket.on("send_message", (_data) => {
             // Basic echo for testing Phase 1
             // In Phase 2, we will save to DB and broadcast to specific room
             // io.to(data.room).emit("receive_message", data);

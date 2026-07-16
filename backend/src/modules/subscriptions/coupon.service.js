@@ -1,5 +1,4 @@
 const db = require('../../middleware/db');
-const crypto = require('crypto');
 
 class CouponService {
 

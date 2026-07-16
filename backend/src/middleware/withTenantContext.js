@@ -13,7 +13,7 @@ module.exports = async function withTenantContext(req, res, next) {
             return next(new UnauthorizedError('Authentication required'));
         }
 
-        const { tenantId, userId, role } = req.user;
+        const { tenantId, role } = req.user;
 
         // Super admin doesn't need tenant validation
         if (role === 'SUPER_ADMIN') {

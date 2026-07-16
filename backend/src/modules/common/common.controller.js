@@ -46,6 +46,7 @@ exports.getTimezones = async (req, res) => {
                     return res.json(data);
                 }
             } catch (extError) {
+                // eslint-disable-next-line no-console
                 console.warn('External TimezoneDB API failed, using local fallback:', extError.message);
             }
         }
@@ -59,6 +60,7 @@ exports.getTimezones = async (req, res) => {
         });
 
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error in getTimezones:', error.message);
         return res.status(500).json({
             status: 'ERROR',
@@ -109,6 +111,7 @@ exports.handleContactSales = async (req, res) => {
         });
 
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error handling contact sales inquiry:', error.message);
         return res.status(500).json({
             status: 'ERROR',

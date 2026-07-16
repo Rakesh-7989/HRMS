@@ -10,7 +10,7 @@ const getQuery = (db) =>
  * @param {string} tenantId - Tenant ID
  * @param {string} scope - Scope (organization, team, etc.)
  */
-exports.getPeopleEvents = async (db, tenantId, scope = 'organization') => {
+exports.getPeopleEvents = async (db, tenantId, _scope = 'organization') => {
   const query = getQuery(db);
 
   // Get upcoming birthdays (next 30 days, using date_of_birth field)

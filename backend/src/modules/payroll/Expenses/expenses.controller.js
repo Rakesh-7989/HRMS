@@ -42,7 +42,8 @@ const approveExpense = async (req, res) => {
       { status: 'PENDING' },
       { status: data.status, approved_by: req.user.id, amount: data.amount }
     );
-  } catch (e) { console.error('Audit failed', e); }
+  } catch (e) { // eslint-disable-next-line no-console
+    console.error('Audit failed', e); }
 
   res.json({ status: "success", data });
 };
