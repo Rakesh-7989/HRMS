@@ -882,7 +882,7 @@ export const ChatPage: React.FC = () => {
                 queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>
                     old.map(m => m.id === messageId ? { ...m, reactions: m.reactions?.filter(r => !(String(r.user_id) === String(user.id) && r.emoji === emoji)) } : m)
                 );
-                await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}/reactions`, { data: { emoji } });
+                await api.delete(`/chat/conversations/${selectedConversationId}/messages/${messageId}/reactions`, { body: { emoji } });
             } else {
                 // Optimistic: Add
                 queryClient.setQueryData(['messages', selectedConversationId], (old: Message[] = []) =>

@@ -1,21 +1,25 @@
 import { API_BASE_URL } from '@/utils/constants';
 
+type ResponseType = 'json' | 'blob' | 'arraybuffer' | 'text';
+
 interface RequestConfig {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: Record<string, any>;
   headers?: Record<string, string>;
   timeout?: number;
+  responseType?: ResponseType;
+  body?: any;
 }
 
-interface ApiResponseData<T = unknown> {
+interface ApiResponseData<T = any> {
   data: T;
   status: number;
 }
 
 class ApiError extends Error {
   status: number;
-  response?: { data: unknown; status: number };
+  response?: { data: any; status: number };
 
-  constructor(message: string, status: number, responseData?: unknown) {
+  constructor(message: string, status: number, responseData?: any) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -27,7 +31,7 @@ class ApiError extends Error {
 
 export { ApiError };
 
-const buildUrl = (url: string, params?: Record<string, string | number | boolean | undefined>): string => {
+const buildUrl = (url: string, params?: Record<string, any>): string => {
   const base = `${API_BASE_URL}${url}`;
   if (!params) return base;
   const searchParams = new URLSearchParams();
@@ -50,12 +54,11 @@ const clearAuth = (): void => {
   });
 };
 
-const getErrorMessage = (status: number, data: unknown): string => {
-  const d = data as Record<string, unknown>;
-  const msg = (d?.message as string) || (d?.error as string) || '';
+const getErrorMessage = (status: number, data: any): string => {
+  const msg = data?.message || data?.error || '';
 
-  if (d?.details && Array.isArray(d.details) && d.details.length > 0) {
-    const first = d.details[0] as { message?: string; path?: string[] };
+  if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
+    const first = data.details[0];
     if (first?.message) {
       return first.message === 'Required' && first.path
         ? `${first.path.join('.')} is required`
@@ -79,10 +82,9 @@ const getErrorMessage = (status: number, data: unknown): string => {
   return messages[status] || msg || `An unexpected error occurred (Code: ${status})`;
 };
 
-const shouldForceLogout = (data: unknown): boolean => {
-  const msg = ((data as Record<string, unknown>)?.message as string) || '';
-  const lower = msg.toLowerCase();
-  return lower.includes('inactive') || lower.includes('revoked') || lower.includes('portal access');
+const shouldForceLogout = (data: any): boolean => {
+  const msg = (data?.message as string) || '';
+  return msg.toLowerCase().includes('inactive') || msg.toLowerCase().includes('revoked') || msg.toLowerCase().includes('portal access');
 };
 
 const buildHeaders = (config?: RequestConfig): Record<string, string> => {
@@ -97,7 +99,10 @@ const buildHeaders = (config?: RequestConfig): Record<string, string> => {
   return headers;
 };
 
-const parseJsonSafe = async (res: Response): Promise<unknown> => {
+const parseBody = async (res: Response, responseType?: ResponseType): Promise<any> => {
+  if (responseType === 'blob') return res.blob();
+  if (responseType === 'arraybuffer') return res.arrayBuffer();
+  if (responseType === 'text') return res.text();
   try {
     return await res.json();
   } catch {
@@ -105,10 +110,10 @@ const parseJsonSafe = async (res: Response): Promise<unknown> => {
   }
 };
 
-const request = async <T>(
+const request = async <T = any>(
   method: string,
   url: string,
-  body?: unknown,
+  body?: any,
   config?: RequestConfig,
   isRetry?: boolean,
 ): Promise<ApiResponseData<T>> => {
@@ -134,11 +139,11 @@ const request = async <T>(
   const response = await fetch(fullUrl, init);
 
   if (response.ok) {
-    const data = await response.json();
+    const data = await parseBody(response, config?.responseType);
     return { data, status: response.status };
   }
 
-  const data = await parseJsonSafe(response);
+  const data = await parseBody(response);
   const isLoginRefresh = url.includes('/auth/login') || url.includes('/auth/refresh');
 
   if (response.status === 403 && shouldForceLogout(data)) {
@@ -184,17 +189,20 @@ const request = async <T>(
 };
 
 const api = {
-  get: <T = unknown>(url: string, config?: RequestConfig) =>
+  get: <T = any>(url: string, config?: RequestConfig) =>
     request<T>('GET', url, undefined, config),
 
-  post: <T = unknown>(url: string, data?: unknown, config?: RequestConfig) =>
+  post: <T = any>(url: string, data?: any, config?: RequestConfig) =>
     request<T>('POST', url, data, config),
 
-  put: <T = unknown>(url: string, data?: unknown, config?: RequestConfig) =>
+  put: <T = any>(url: string, data?: any, config?: RequestConfig) =>
     request<T>('PUT', url, data, config),
 
-  delete: <T = unknown>(url: string, config?: RequestConfig) =>
-    request<T>('DELETE', url, undefined, config),
+  patch: <T = any>(url: string, data?: any, config?: RequestConfig) =>
+    request<T>('PATCH', url, data, config),
+
+  delete: <T = any>(url: string, config?: RequestConfig) =>
+    request<T>('DELETE', url, config?.body, config),
 };
 
 export default api;

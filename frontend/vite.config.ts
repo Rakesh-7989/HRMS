@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           query: ['@tanstack/react-query'],
           ui: ['framer-motion', 'lucide-react', 'recharts'],
-          utils: ['axios', 'date-fns', 'i18next', 'react-i18next'],
+          utils: ['date-fns', 'i18next', 'react-i18next'],
         },
       },
     },
