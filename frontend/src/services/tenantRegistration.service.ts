@@ -1,5 +1,4 @@
 import api from './api';
-import axios from 'axios';
 import { API_BASE_URL } from '@/utils/constants';
 
 export interface TenantRegistrationPayload {
@@ -46,31 +45,32 @@ export const tenantRegistrationService = {
    * Verify payment - uses raw axios (no auth header) since user isn't logged in during registration
    */
   verifyPaymentPublic: async (orderId: string): Promise<Record<string, unknown>> => {
-    const response = await axios.post(`${API_BASE_URL}/subscriptions/verify-payment`, {
-      order_id: orderId
+    const response = await fetch(`${API_BASE_URL}/subscriptions/verify-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId }),
     });
-    return response.data;
+    if (!response.ok) throw new Error('Payment verification failed');
+    return response.json();
   },
 
-  /**
-   * Initiate payment for a pending-payment tenant (public, no auth needed)
-   * Used when a tenant with incomplete payment tries to login or retry
-   */
   initiatePaymentForTenant: async (tenantId: string, email: string): Promise<Record<string, unknown>> => {
-    const response = await axios.post(`${API_BASE_URL}/subscriptions/initiate-tenant-payment`, {
-      tenant_id: tenantId,
-      email
+    const response = await fetch(`${API_BASE_URL}/subscriptions/initiate-tenant-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenant_id: tenantId, email }),
     });
-    return response.data;
+    if (!response.ok) throw new Error('Payment initiation failed');
+    return response.json();
   },
 
-  /**
-   * Generate UPI QR code for an existing Cashfree order (public)
-   */
   getUpiQr: async (orderId: string): Promise<{ success: boolean; data?: { upi_qr_code: string; order_id: string }; message?: string }> => {
-    const response = await axios.post(`${API_BASE_URL}/subscriptions/upi-qr`, {
-      order_id: orderId
+    const response = await fetch(`${API_BASE_URL}/subscriptions/upi-qr`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId }),
     });
-    return response.data;
+    if (!response.ok) throw new Error('Failed to generate UPI QR');
+    return response.json();
   },
 };

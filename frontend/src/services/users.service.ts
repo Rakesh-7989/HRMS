@@ -1,5 +1,4 @@
-import api from './api';
-import { AxiosError } from 'axios';
+import api, { ApiError } from './api';
 
 // ============================================================================
 // INTERFACES
@@ -179,7 +178,7 @@ export interface EmployeeFilters {
 
 // Handle API errors and extract user-friendly message
 const handleApiError = (error: unknown): never => {
-  if (error instanceof AxiosError) {
+  if (error instanceof ApiError) {
     const message = error.response?.data?.error ||
       error.response?.data?.message ||
       error.message;
