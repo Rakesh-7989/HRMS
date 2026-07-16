@@ -1,5 +1,4 @@
 import { test, expect } from './fixtures';
-import { TEST_USER } from './fixtures';
 
 test.describe('Dashboard navigation', () => {
   test('should load employee dashboard', async ({ authenticatedPage }) => {

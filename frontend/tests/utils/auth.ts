@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 export const TEST_USER = {
   email: process.env.E2E_TEST_EMAIL || 'test@example.com',
