@@ -159,6 +159,7 @@ jobs:
       - run: npm ci
 
       - run: npm run test
+        timeout-minutes: 3
         env:
           DATABASE_URL: postgres://test:test@localhost:5432/test
           JWT_ACCESS_SECRET: test-access-secret-for-ci-environment

@@ -44,6 +44,7 @@ jobs:
 
       - name: Backend tests
         working-directory: backend
+        timeout-minutes: 3
         run: npm run test
         env:
           DATABASE_URL: postgres://test:test@localhost:5432/test
