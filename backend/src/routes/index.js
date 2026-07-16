@@ -41,7 +41,7 @@ const chatRouter = require('../modules/chat/chat.router');
 const commonRouter = require('../modules/common/common.router');
 const router = express.Router();
 
-const { pool } = require('../config/db');
+const pool = require('../config/db');
 
 // Health check (no auth, for monitoring)
 router.get('/health', async (req, res) => {

@@ -88,9 +88,18 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Set PLAYWRIGHT_BASE_URL
+        id: set-base-url
+        run: |
+          if [ -n "${{ vars.VITE_API_URL }}" ]; then
+            echo "base_url=$(echo '${{ vars.VITE_API_URL }}' | sed 's|/api$||')" >> $GITHUB_OUTPUT
+          else
+            echo "base_url=https://hrms-saas-rakesh-site-tracker-pro-s-projects.vercel.app" >> $GITHUB_OUTPUT
+          fi
+
       - run: npm run test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: ${{ vars.VITE_API_URL && vars.VITE_API_URL.replace('/api','') || 'https://hrms-saas-rakesh-site-tracker-pro-s-projects.vercel.app' }}
+          PLAYWRIGHT_BASE_URL: ${{ steps.set-base-url.outputs.base_url }}
 
   frontend-build:
     name: Frontend Build

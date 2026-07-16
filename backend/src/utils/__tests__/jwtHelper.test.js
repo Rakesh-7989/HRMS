@@ -1,6 +1,6 @@
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
-process.env.JWT_ACCESS_SECRET = 'test-secret-key';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+process.env.JWT_ACCESS_SECRET = 'test-access-secret-min-32-chars!!';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-min-32-chars!!';
 process.env.ENCRYPTION_KEY = 'test-encryption-key-32-chars-long!!';
 process.env.SMTP_HOST = 'smtp.test.com';
 process.env.SMTP_PORT = '587';
@@ -38,7 +38,7 @@ describe('extractTokenFromHeader', () => {
 
   test('should handle Bearer with extra spaces', () => {
     const result = extractTokenFromHeader('Bearer   token123');
-    expect(result).toBe('  token123');
+    expect(result).toBe('token123');
   });
 });
 

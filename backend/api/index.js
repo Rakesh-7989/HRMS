@@ -1,3 +1,12 @@
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+  setTimeout(() => process.exit(1), 1000);
+});
+
 try {
   require('../src/config/env');
 } catch (err) {

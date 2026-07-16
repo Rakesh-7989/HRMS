@@ -3,6 +3,8 @@ const pool = require("../config/db");
 const env = require("../config/env");
 const { UnauthorizedError } = require("../utils/customErrors");
 
+const JWT_ALGORITHM = 'HS256';
+
 module.exports = async function verifyJwt(req, res, next) {
   const header = req.headers.authorization;
 
@@ -14,9 +16,12 @@ module.exports = async function verifyJwt(req, res, next) {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
+    decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, { algorithms: [JWT_ALGORITHM] });
   } catch (err) {
-    return next(new UnauthorizedError("Invalid or expired token"));
+    if (err.name === 'TokenExpiredError') {
+      return next(new UnauthorizedError("Token expired"));
+    }
+    return next(new UnauthorizedError("Invalid token"));
   }
 
   try {
@@ -77,7 +82,7 @@ module.exports = async function verifyJwt(req, res, next) {
 
     // Validate the specific session
     const sessionRes = await pool.query(
-      `SELECT id, is_revoked FROM user_sessions 
+      `SELECT id, is_revoked, expires_at FROM user_sessions 
        WHERE id = $1 AND user_id = $2`,
       [decoded.sessionId, decoded.id]
     );
@@ -86,8 +91,15 @@ module.exports = async function verifyJwt(req, res, next) {
       return next(new UnauthorizedError("Session not found - please login again"));
     }
 
-    if (sessionRes.rows[0].is_revoked) {
+    const session = sessionRes.rows[0];
+
+    if (session.is_revoked) {
       return next(new UnauthorizedError("Session has been revoked - please login again"));
+    }
+
+    // Check session expiration
+    if (new Date(session.expires_at) < new Date()) {
+      return next(new UnauthorizedError("Session expired - please login again"));
     }
 
     // Build req.user for controllers
@@ -116,7 +128,7 @@ module.exports = async function verifyJwt(req, res, next) {
       // (migration hasn't been run), fall back to empty permissions
       if (permErr.code !== '42P01') { // 42P01 = undefined_table
         // eslint-disable-next-line no-console
-        console.warn("Failed to load user permissions:", permErr.message);
+        // debug logging removed
       }
       req.user.permissions = [];
     }

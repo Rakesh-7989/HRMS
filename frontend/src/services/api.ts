@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/types';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -137,7 +138,7 @@ api.interceptors.response.use(
 
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
-        });
+        }, { timeout: 15000 });
 
         // Backend returns data at top level, not nested
         const { accessToken, refreshToken: newRefreshToken } = response.data;

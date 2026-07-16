@@ -33,6 +33,13 @@ if (import.meta.env.PROD) {
   console.log('[WellZo] Frontend build deployed successfully');
 }
 
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled Promise Rejection:', event.reason);
+  if (import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.captureException(event.reason);
+  }
+});
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>

@@ -61,7 +61,7 @@ class BillingService {
                 finalAmount = Math.max(0, finalAmount - discountAmount);
             } catch (error) {
                 // eslint-disable-next-line no-console
-                console.warn('Invalid Coupon:', error.message);
+                // debug logging removed
                 // We can either throw or ignore. Let's ignore for robustness but ideally notify user.
                 // For now, if invalid, just proceed without discount.
             }
@@ -84,7 +84,7 @@ class BillingService {
             });
         } catch (e) {
             // eslint-disable-next-line no-console
-            console.log('Plan creation warning (might exist):', e.message);
+            // debug logging removed
         }
 
         const subscriptionId = `SUB_${Date.now()}_${tenantId.substring(0, 8)}`;
@@ -188,7 +188,7 @@ class BillingService {
                     break;
                 default:
                     // eslint-disable-next-line no-console
-                    console.log('Unhandled Webhook Type:', event.type);
+                    // debug logging removed
             }
             // Update Status
             await db.query('UPDATE webhook_events SET status = \'PROCESSED\', processed_at = NOW() WHERE event_id = $1', [event.id]);

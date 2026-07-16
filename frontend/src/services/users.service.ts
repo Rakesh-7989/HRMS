@@ -336,7 +336,8 @@ export const usersService = {
 
   assignDesignation: async (id: string, designationId: string): Promise<User> => {
     try {
-      const response = await api.put(`/users/${id}/designation`, { designation_id: designationId });
+      const deid = deobfuscateId(id);
+      const response = await api.put(`/users/${deid}/designation`, { designation_id: designationId });
       return extractData<User>(response, 'result');
     } catch (error) {
       return handleApiError(error);

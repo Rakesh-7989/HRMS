@@ -10,12 +10,35 @@
 const escapeHtml = (str) => {
     if (typeof str !== 'string') return str;
     return str
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"')
-        .replace(/'/g, '&apos;')
-        .replace(/\//g, '&#x2F;');
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;')
+        .replace(/&/g, '&amp;');
+};
+
+const sanitize = (obj, depth = 0, maxDepth = 10, seen = new WeakSet()) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (depth > maxDepth) return obj;
+    if (seen.has(obj)) return obj;
+    seen.add(obj);
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => sanitize(item, depth + 1, maxDepth, seen));
+    }
+
+    const sanitized = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'string') {
+            sanitized[key] = escapeHtml(value);
+        } else if (typeof value === 'object' && value !== null) {
+            sanitized[key] = sanitize(value, depth + 1, maxDepth, seen);
+        } else {
+            sanitized[key] = value;
+        }
+    }
+    return sanitized;
 };
 
 /**
@@ -24,31 +47,11 @@ const escapeHtml = (str) => {
  * @param {Object} options - Options (kept for compatibility)
  * @returns {Function} Express middleware
  */
-const sanitizeInput = (options = {}) => {
+const sanitizeInput = () => {
     return (req, res, next) => {
-        const sanitize = (obj) => {
-            if (!obj || typeof obj !== 'object') return obj;
-            
-            const sanitized = {};
-            for (const [key, value] of Object.entries(obj)) {
-                if (typeof value === 'string') {
-                    // Fast HTML entity encoding
-                    sanitized[key] = escapeHtml(value);
-                } else if (typeof value === 'object' && value !== null) {
-                    // Recursively sanitize nested objects
-                    sanitized[key] = sanitize(value);
-                } else {
-                    sanitized[key] = value;
-                }
-            }
-            return sanitized;
-        };
-
-        // Sanitize body, query, and params
         if (req.body) req.body = sanitize(req.body);
         if (req.query) req.query = sanitize(req.query);
         if (req.params) req.params = sanitize(req.params);
-
         next();
     };
 };
@@ -58,15 +61,22 @@ const sanitizeInput = (options = {}) => {
  * @param {Object} obj - Object to strip
  * @returns {Object} Sanitized object
  */
-const stripTags = (obj) => {
+const stripTags = (obj, depth = 0, maxDepth = 10, seen = new WeakSet()) => {
     if (!obj || typeof obj !== 'object') return obj;
-    
+    if (depth > maxDepth) return obj;
+    if (seen.has(obj)) return obj;
+    seen.add(obj);
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => stripTags(item, depth + 1, maxDepth, seen));
+    }
+
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
         if (typeof value === 'string') {
             sanitized[key] = value.replace(/<[^>]*>/g, '').trim();
         } else if (typeof value === 'object' && value !== null) {
-            sanitized[key] = stripTags(value);
+            sanitized[key] = stripTags(value, depth + 1, maxDepth, seen);
         } else {
             sanitized[key] = value;
         }

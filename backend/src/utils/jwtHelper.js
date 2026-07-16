@@ -2,6 +2,33 @@
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 
+const JWT_ALGORITHM = 'HS256';
+
+class TokenExpiredError extends Error {
+    constructor(message = 'Token expired') {
+        super(message);
+        this.name = 'TokenExpiredError';
+    }
+}
+
+class TokenMalformedError extends Error {
+    constructor(message = 'Token malformed') {
+        super(message);
+        this.name = 'TokenMalformedError';
+    }
+}
+
+class TokenInvalidError extends Error {
+    constructor(message = 'Token invalid') {
+        super(message);
+        this.name = 'TokenInvalidError';
+    }
+}
+
+exports.TokenExpiredError = TokenExpiredError;
+exports.TokenMalformedError = TokenMalformedError;
+exports.TokenInvalidError = TokenInvalidError;
+
 /**
  * Generate a JWT access token
  * @param {Object} payload - Token payload
@@ -9,7 +36,7 @@ const env = require('../config/env');
  * @returns {string} JWT token
  */
 exports.generateAccessToken = (payload, expiresIn = env.JWT_EXPIRES_IN) => {
-    return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn });
+    return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn, algorithm: JWT_ALGORITHM });
 };
 
 /**
@@ -19,27 +46,35 @@ exports.generateAccessToken = (payload, expiresIn = env.JWT_EXPIRES_IN) => {
  * @returns {string} JWT token
  */
 exports.generateRefreshToken = (payload, expiresIn = env.REFRESH_TOKEN_EXPIRES_IN) => {
-    return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn });
+    return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn, algorithm: JWT_ALGORITHM });
 };
 
 /**
  * Verify and decode a JWT token
  * @param {string} token - JWT token to verify
  * @param {string} secret - Secret key (default: JWT_SECRET)
- * @returns {Objectnull} Decoded payload or null if invalid
+ * @param {Object} options - Additional verify options
+ * @returns {Object} Decoded payload
+ * @throws {TokenExpiredError|TokenMalformedError|TokenInvalidError}
  */
-exports.verifyToken = (token, secret = env.JWT_ACCESS_SECRET) => {
+exports.verifyToken = (token, secret = env.JWT_ACCESS_SECRET, options = {}) => {
     try {
-        return jwt.verify(token, secret);
+        return jwt.verify(token, secret, { algorithms: [JWT_ALGORITHM], ...options });
     } catch (error) {
-        return null;
+        if (error.name === 'TokenExpiredError') {
+            throw new TokenExpiredError();
+        }
+        if (error.name === 'JsonWebTokenError') {
+            throw new TokenMalformedError();
+        }
+        throw new TokenInvalidError();
     }
 };
 
 /**
  * Decode a JWT token without verification
  * @param {string} token - JWT token to decode
- * @returns {Objectnull} Decoded payload or null if invalid
+ * @returns {Object|null} Decoded payload or null if invalid
  */
 exports.decodeToken = (token) => {
     try {
@@ -52,13 +87,14 @@ exports.decodeToken = (token) => {
 /**
  * Extract token from Authorization header
  * @param {string} authHeader - Authorization header value
- * @returns {stringnull} Extracted token or null
+ * @returns {string|null} Extracted token or null
  */
 exports.extractTokenFromHeader = (authHeader) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return null;
     }
-    return authHeader.substring(7);
+    const token = authHeader.substring(7).trim();
+    return token || null;
 };
 
 /**
@@ -67,24 +103,32 @@ exports.extractTokenFromHeader = (authHeader) => {
  * @returns {boolean} True if expired, false otherwise
  */
 exports.isTokenExpired = (token) => {
-    const decoded = exports.decodeToken(token);
-    if (!decoded || !decoded.exp) {
+    try {
+        const decoded = exports.decodeToken(token);
+        if (!decoded || !decoded.exp) {
+            return true;
+        }
+        return decoded.exp * 1000 < Date.now();
+    } catch {
         return true;
     }
-    return decoded.exp * 1000 < Date.now();
 };
 
 /**
  * Get token expiration time
  * @param {string} token - JWT token
- * @returns {Datenull} Expiration date or null
+ * @returns {Date|null} Expiration date or null
  */
 exports.getTokenExpiration = (token) => {
-    const decoded = exports.decodeToken(token);
-    if (!decoded || !decoded.exp) {
+    try {
+        const decoded = exports.decodeToken(token);
+        if (!decoded || !decoded.exp) {
+            return null;
+        }
+        return new Date(decoded.exp * 1000);
+    } catch {
         return null;
     }
-    return new Date(decoded.exp * 1000);
 };
 
 /**
@@ -93,10 +137,14 @@ exports.getTokenExpiration = (token) => {
  * @returns {number} Remaining seconds or 0 if expired
  */
 exports.getTokenRemainingTime = (token) => {
-    const decoded = exports.decodeToken(token);
-    if (!decoded || !decoded.exp) {
+    try {
+        const decoded = exports.decodeToken(token);
+        if (!decoded || !decoded.exp) {
+            return 0;
+        }
+        const remaining = decoded.exp - Math.floor(Date.now() / 1000);
+        return remaining > 0 ? remaining : 0;
+    } catch {
         return 0;
     }
-    const remaining = decoded.exp - Math.floor(Date.now() / 1000);
-    return remaining > 0 ? remaining : 0;
 };

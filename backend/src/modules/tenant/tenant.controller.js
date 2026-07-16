@@ -4,7 +4,7 @@ exports.checkAvailability = async (req, res) => {
   try {
     const { subdomain, email } = req.query;
     // eslint-disable-next-line no-console
-    console.log(`[AVAILABILITY_CHECK_REQUEST] Subdomain: ${subdomain}, Email: ${email}`);
+    // debug logging removed
     
     if (subdomain) {
       const result = await tenantService.checkDomainAvailability(subdomain);
@@ -30,7 +30,7 @@ exports.registerTenant = async (req, res) => {
     }
     
     // eslint-disable-next-line no-console
-    console.log(`[DEBUG_REG] Payload Received for ${req.body.email}:`, req.body);
+    // debug logging removed
 
     const result = await tenantService.registerTenant(req.body, req);
 

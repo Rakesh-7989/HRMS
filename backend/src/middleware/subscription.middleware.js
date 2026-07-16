@@ -17,12 +17,12 @@ const requireFeature = (featurePath) => {
             
             if (!subscription) {
                 // eslint-disable-next-line no-console
-                console.warn(`[DEBUG_MIDDLEWARE] No active subscription found for Tenant: ${tenantId}`);
+                // debug logging removed
                 return next();
             }
 
             // eslint-disable-next-line no-console
-            console.log(`[DEBUG_MIDDLEWARE] tenantId: ${tenantId}, Feature: ${featurePath}, Plan: ${subscription.plan_name}, Status: ${subscription.status}`);
+            // debug logging removed
 
             // --- SUBSCRIPTION STATUS ENFORCEMENT ---
             const status = subscription.status;

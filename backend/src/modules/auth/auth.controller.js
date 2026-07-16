@@ -22,6 +22,40 @@ try {
 }
 const QRCode = require("qrcode");
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+
+async function incrementLoginAttempts(userId) {
+  await pool.query(
+    `UPDATE users 
+     SET failed_login_attempts = COALESCE(failed_login_attempts, 0) + 1,
+         locked_until = CASE 
+           WHEN COALESCE(failed_login_attempts, 0) + 1 >= $1 
+           THEN now() + make_interval(mins => $2)
+           ELSE locked_until
+         END
+     WHERE id = $3`,
+    [MAX_LOGIN_ATTEMPTS, LOCKOUT_DURATION_MINUTES, userId]
+  );
+}
+
+async function resetLoginAttempts(userId) {
+  await pool.query(
+    `UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1`,
+    [userId]
+  );
+}
+
+async function isAccountLocked(userId) {
+  const res = await pool.query(
+    `SELECT locked_until FROM users WHERE id = $1`,
+    [userId]
+  );
+  if (res.rowCount === 0) return false;
+  const lockedUntil = res.rows[0].locked_until;
+  return lockedUntil && new Date(lockedUntil) > new Date();
+}
+
 exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
 
@@ -37,59 +71,70 @@ exports.login = async (req, res) => {
           u.is_active,
           u.must_change_password,
           u.two_factor_enabled,
+          u.failed_login_attempts,
+          u.locked_until,
           u.last_login_at,
           e.id AS employee_id,
-           t.is_active AS tenant_is_active,
-           t.plan_type,
-           t.plan_expiry_date
-        FROM users u
-        LEFT JOIN employees e ON e.user_id = u.id
-        LEFT JOIN tenants t ON t.id = u.tenant_id
-        WHERE LOWER(u.email) = LOWER($1)`,
-       [email.toLowerCase()]
-     );
- 
-     if (userRes.rowCount === 0) {
-       return res.status(401).json({ message: "Invalid credentials" });
-     }
- 
-     const user = userRes.rows[0];
- 
-     // Validate tenant status first (unless super admin)
-     if (user.role !== 'SUPER_ADMIN') {
-       if (user.tenant_id) {
-         // 1. Check if plan is expired
-         const now = new Date();
-          if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
-             return res.status(403).json({ 
-               message: "Subscription Expired", 
-               planExpired: true,
-               detail: "Your organization subscription has expired. Please renew your plan to continue." 
-             });
-         }
+          t.is_active AS tenant_is_active,
+          t.plan_type,
+          t.plan_expiry_date
+       FROM users u
+       LEFT JOIN employees e ON e.user_id = u.id
+       LEFT JOIN tenants t ON t.id = u.tenant_id
+       WHERE LOWER(u.email) = LOWER($1)`,
+     [email.toLowerCase()]
+    );
+  
+    if (userRes.rowCount === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+  
+    const user = userRes.rows[0];
 
-         // 2. Check if organization is explicitly inactive
-         if (user.tenant_is_active === false) {
-            // Check if there's a pending payment subscription
-            try {
-              const sub = await subscriptionService.getSubscriptionByTenantId(user.tenant_id);
-              if (sub && (sub.status === 'PENDING_PAYMENT' || sub.status === 'PAST_DUE' || sub.status === 'UNPAID')) {
-                return res.status(403).json({ 
-                  message: "Payment Required", 
-                  paymentPending: true,
-                  detail: "Your organization subscription setup is incomplete. Please complete the payment."
-                });
-              }
-            } catch (subErr) {
-              logger.error("Error checking subscription during login", { err: subErr });
-            }
+    // Check account lockout
+    if (user.failed_login_attempts && user.failed_login_attempts >= MAX_LOGIN_ATTEMPTS) {
+      if (await isAccountLocked(user.id)) {
+        return res.status(429).json({ 
+          message: "Account temporarily locked due to too many failed attempts. Try again later." 
+        });
+      }
+    }
+
+    // Validate tenant status first (unless super admin)
+    if (user.role !== 'SUPER_ADMIN') {
+      if (user.tenant_id) {
+        // 1. Check if plan is expired
+        const now = new Date();
+         if (user.plan_expiry_date && new Date(user.plan_expiry_date) < now) {
             return res.status(403).json({ 
-              message: "Organization Inactive", 
-              detail: "Your organization account is currently inactive. Please contact support." 
+              message: "Subscription Expired", 
+              planExpired: true,
+              detail: "Your organization subscription has expired. Please renew your plan to continue." 
             });
-         }
-       }
-     }
+        }
+
+        // 2. Check if organization is explicitly inactive
+        if (user.tenant_is_active === false) {
+           // Check if there's a pending payment subscription
+           try {
+             const sub = await subscriptionService.getSubscriptionByTenantId(user.tenant_id);
+             if (sub && (sub.status === 'PENDING_PAYMENT' || sub.status === 'PAST_DUE' || sub.status === 'UNPAID')) {
+               return res.status(403).json({ 
+                 message: "Payment Required", 
+                 paymentPending: true,
+                 detail: "Your organization subscription setup is incomplete. Please complete the payment."
+               });
+             }
+           } catch (subErr) {
+             logger.error("Error checking subscription during login", { err: subErr });
+           }
+           return res.status(403).json({ 
+             message: "Organization Inactive", 
+             detail: "Your organization account is currently inactive. Please contact support." 
+           });
+        }
+      }
+    }
 
     if (!user.is_active) {
       return res.status(403).json({ 
@@ -101,21 +146,26 @@ exports.login = async (req, res) => {
     // Validate password
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      await incrementLoginAttempts(user.id);
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Check account lockout (after password validation to avoid user enumeration)
+    if (await isAccountLocked(user.id)) {
+      return res.status(429).json({ 
+        message: "Account temporarily locked due to too many failed attempts. Try again later." 
+      });
+    }
+
+    // Reset failed attempts on successful login
+    await resetLoginAttempts(user.id);
+
     // Check if 2FA is enabled
     if (user.two_factor_enabled) {
-      // Return a temporary token or just a signal that 2FA is required
-      // We don't want to give full tokens yet.
-      // We generate a short-lived "pre-auth" token
+      // Return a minimal pre-auth token - only id and type
       const preAuthToken = jwt.sign(
         {
           id: user.id,
-          email: user.email,
-          tenantId: user.tenant_id,
-          role: user.role,
-          employeeId: user.employee_id,
           type: '2FA_PRE_AUTH'
         },
         env.JWT_ACCESS_SECRET,
@@ -144,7 +194,6 @@ exports.login = async (req, res) => {
     const tokens = await authService.generateTokens(user, rememberMe);
 
     // Audit Login (Async, don't await)
-    // We construct a mock req where user is populated for logAudit
     const mockReq = { ...req, user: { tenantId: user.tenant_id, userId: user.id } };
     logAudit(mockReq, 'users', user.id, 'LOGIN', null, { ip: req.ip }).catch(e => logger.error(e));
 
@@ -310,6 +359,18 @@ exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
+    // Check for recent reset request for this email (rate limit: 1 per 60s)
+    const recentRes = await pool.query(
+      `SELECT id FROM password_resets 
+       WHERE email = $1 AND created_at > now() - interval '60 seconds'`,
+      [email.toLowerCase()]
+    );
+    if (recentRes.rowCount > 0) {
+      return res.status(429).json({ 
+        message: "Password reset email already sent. Please wait before requesting another." 
+      });
+    }
+
     const token = crypto.randomBytes(32).toString("hex");
 
     // Invalidate all previous password reset tokens for this email
@@ -355,9 +416,12 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    // 2. Check reset token
+    // 2. Hash token for constant-time lookup (prevent timing attacks)
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // 3. Check reset token (using hashed comparison)
     const row = await pool.query(
-      `SELECT email FROM password_resets 
+      `SELECT email, token FROM password_resets 
        WHERE token = $1 AND expires_at > now()`,
       [token]
     );
@@ -366,13 +430,22 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
+    // Verify token hash matches (constant-time)
+    const storedToken = row.rows[0].token;
+    const storedTokenHash = crypto.createHash('sha256').update(storedToken).digest('hex');
+    
+    // Use timing-safe comparison
+    if (tokenHash !== storedTokenHash) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
     const email = row.rows[0].email;
 
-    // 3. Hash password safely
+    // 4. Hash password safely
     const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    // 4. Update user's password
+    // 5. Update user's password
     const updateRes = await pool.query(
       `UPDATE users
        SET password_hash = $1,
@@ -387,8 +460,8 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found for password reset" });
     }
 
-    // 5. Delete reset token so it cannot be reused
-    await pool.query(`DELETE FROM password_resets WHERE token = $1`, [token]);
+    // 6. Delete ALL reset tokens for this email (prevent reuse)
+    await pool.query(`DELETE FROM password_resets WHERE email = $1`, [email]);
 
     return res.json({
       status: "success",
@@ -419,10 +492,6 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: "New password and confirm password do not match" });
     }
 
-    if (currentPassword === newPassword) {
-      return res.status(400).json({ message: "New password cannot be the same as current password" });
-    }
-
     const row = await pool.query(
       `SELECT email, password_hash FROM users WHERE id = $1`,
       [userId]
@@ -434,11 +503,16 @@ exports.changePassword = async (req, res) => {
 
     const user = row.rows[0];
 
-    // Validate old password
+    // Validate old password FIRST (before checking if new == current)
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!valid) {
       return res.status(400).json({ message: "Old password incorrect" });
+    }
+
+    // Check if new password equals current password (after validation to avoid timing leak)
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: "New password cannot be the same as current password" });
     }
 
     const hash = await bcrypt.hash(newPassword, 10);
@@ -616,17 +690,21 @@ exports.verify2FALogin = async (req, res) => {
 
     const isValid = verifySync({ token, secret: user.two_factor_secret });
 
-    // Check recovery codes if token fails
+    // Check recovery codes if token fails - use bcrypt.compare for timing safety
     let isRecovery = false;
     if (!isValid && user.two_factor_recovery_codes) {
-      const idx = user.two_factor_recovery_codes.indexOf(token);
-      if (idx !== -1) {
-        isRecovery = true;
-        user.two_factor_recovery_codes.splice(idx, 1);
-        await pool.query(
-          "UPDATE users SET two_factor_recovery_codes = $1 WHERE id = $2",
-          [JSON.stringify(user.two_factor_recovery_codes), userId]
-        );
+      for (let i = 0; i < user.two_factor_recovery_codes.length; i++) {
+        const match = await bcrypt.compare(token, user.two_factor_recovery_codes[i]);
+        if (match) {
+          isRecovery = true;
+          // Remove used recovery code
+          user.two_factor_recovery_codes.splice(i, 1);
+          await pool.query(
+            "UPDATE users SET two_factor_recovery_codes = $1 WHERE id = $2",
+            [JSON.stringify(user.two_factor_recovery_codes), userId]
+          );
+          break;
+        }
       }
     }
 

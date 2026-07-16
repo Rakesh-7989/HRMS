@@ -327,7 +327,7 @@ exports.getSuperAdminReports = async (db) => {
 exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) => {
   const query = getQuery(db);
   // eslint-disable-next-line no-console
-  console.log("DEBUG: Starting getAdminDashboard for tenant:", tenantId, "Date Range:", startDate, endDate);
+  // debug logging removed
 
   // Resolve effective timezone (defaults to organization timezone)
   const tz = await getEffectiveTz(query, tenantId);
@@ -338,7 +338,7 @@ exports.getAdminDashboard = async (db, tenantId, { startDate, endDate } = {}) =>
   const startStr = startDate || timeService.todayDate(tz, -30);
 
   // eslint-disable-next-line no-console
-  console.log("DEBUG: Resolved Timezone:", tz, "Today:", today, "Range:", startStr, endStr);
+  // debug logging removed
 
   // Get organization metrics
   const orgMetrics = await query(
