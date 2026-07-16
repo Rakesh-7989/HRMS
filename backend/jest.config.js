@@ -4,4 +4,5 @@ module.exports = {
   setupFiles: ['<rootDir>/src/test/setup.js'],
   coveragePathIgnorePatterns: ['/node_modules/', '/scripts/', '/src/test/'],
   collectCoverageFrom: ['src/**/*.js'],
+  testTimeout: 30000,
 };
