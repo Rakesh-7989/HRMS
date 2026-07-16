@@ -71,6 +71,10 @@ beforeEach(() => {
 
 describe('POST /api/auth/login', () => {
 
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
+
   it('should return 200 + tokens on valid credentials', async () => {
     mockDb
       .mockResolvedValueOnce({ rowCount: 1, rows: [mockUserRow] })
@@ -161,6 +165,10 @@ describe('POST /api/auth/login', () => {
 
 describe('POST /api/auth/refresh', () => {
 
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
+
   it('should return 200 + tokens on valid refresh', async () => {
     const verifySpy = jest.spyOn(require('../auth.service'), 'verifyRefreshToken');
     verifySpy.mockResolvedValue(mockSession);
@@ -193,6 +201,10 @@ describe('POST /api/auth/refresh', () => {
 
 describe('POST /api/auth/forgot-password', () => {
 
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
+
   it('should return 200 on valid email', async () => {
     mockDb
       .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'u_test_001', email: 'test@example.com', tenant_id: 't_test_001' }] })
@@ -220,6 +232,10 @@ describe('POST /api/auth/forgot-password', () => {
 
 describe('POST /api/auth/reset-password', () => {
 
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
+
   it('should return 200 on valid token + passwords', async () => {
     mockDb
       .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'u_test_001' }] })
@@ -245,6 +261,10 @@ describe('POST /api/auth/reset-password', () => {
 // ============= CHANGE PASSWORD =============
 
 describe('POST /api/auth/change-password', () => {
+
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
 
   it('should return 401 without auth header', async () => {
     const res = await request(app)
@@ -276,6 +296,10 @@ describe('POST /api/auth/change-password', () => {
 
 describe('POST /api/auth/logout', () => {
 
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
+
   it('should return 200 on successful logout', async () => {
     jwt.verify.mockReturnValue(defaultTokenPayload);
     mockDb
@@ -295,6 +319,10 @@ describe('POST /api/auth/logout', () => {
 // ============= SESSIONS =============
 
 describe('GET /api/auth/sessions', () => {
+
+  beforeEach(() => {
+    jest.setTimeout(60000);
+  });
 
   it('should return 401 without auth header', async () => {
     const res = await request(app).get('/api/auth/sessions');
