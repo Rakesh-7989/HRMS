@@ -2,7 +2,7 @@ const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const XLSX = require("xlsx");
+const ExcelJS = require("exceljs");
 const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
@@ -1660,10 +1660,30 @@ exports.bulkImportEmployees = async (db, fileBuffer, columnMapping, actor) => {
   const desigService = require('../designation/designation.service');
 
   // 1. Parse Excel
-  const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
-  const rawData = XLSX.utils.sheet_to_json(worksheet);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(fileBuffer);
+  const worksheet = workbook.worksheets[0];
+
+  // Extract headers from first row
+  const headerRow = worksheet.getRow(1);
+  const headers = [];
+  headerRow.eachCell({ includeEmpty: false }, (cell) => {
+    headers.push(cell.value);
+  });
+
+  // Build array of row objects keyed by header
+  const rawData = [];
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const rowData = {};
+    row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      const header = headers[colNumber - 1];
+      if (header !== undefined) {
+        rowData[header] = cell.value;
+      }
+    });
+    rawData.push(rowData);
+  });
 
   if (!rawData || rawData.length === 0) {
     throw new Error("The uploaded file is empty");

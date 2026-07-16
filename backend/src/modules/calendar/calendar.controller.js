@@ -113,11 +113,29 @@ exports.bulkImportHolidays = async (req, res) => {
             return res.status(400).json({ status: "error", message: "Please upload an Excel file (.xlsx or .xls)" });
         }
 
-        const XLSX = require('xlsx');
-        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const ExcelJS = require('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(req.file.buffer);
+        const worksheet = workbook.worksheets[0];
+
+        const headerRow = worksheet.getRow(1);
+        const headers = [];
+        headerRow.eachCell({ includeEmpty: false }, (cell) => {
+          headers.push(cell.value);
+        });
+
+        const rows = [];
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) return;
+          const rowData = {};
+          row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+            const header = headers[colNumber - 1];
+            if (header !== undefined) {
+              rowData[header] = cell.value !== undefined ? cell.value : '';
+            }
+          });
+          rows.push(rowData);
+        });
 
         if (!rows.length) {
             return res.status(400).json({ status: "error", message: "Excel file is empty" });

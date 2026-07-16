@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { usersService } from '@/services/users.service';
@@ -50,13 +50,16 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
         if (selectedFile) {
             setFile(selectedFile);
             const reader = new FileReader();
-            reader.onload = (evt) => {
-                const bstr = evt.target?.result;
-                const wb = XLSX.read(bstr, { type: 'binary' });
-                const wsname = wb.SheetNames[0];
-                const ws = wb.Sheets[wsname];
-                const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-                const excelHeaders = data[0] as string[];
+            reader.onload = async (evt) => {
+                const buffer = evt.target?.result as ArrayBuffer;
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(buffer);
+                const worksheet = workbook.worksheets[0];
+                const headerRow = worksheet.getRow(1);
+                const excelHeaders: string[] = [];
+                headerRow.eachCell({ includeEmpty: false }, (cell) => {
+                    excelHeaders.push(String(cell.value));
+                });
                 setHeaders(excelHeaders || []);
 
                 const initialMapping: Record<string, string> = {};
@@ -78,8 +81,27 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
         }
     };
 
-    const downloadTemplate = () => {
-        const templateData = [{
+    const downloadTemplate = async () => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Employees');
+        worksheet.columns = [
+            { header: 'Email', key: 'Email', width: 30 },
+            { header: 'First Name', key: 'First Name', width: 15 },
+            { header: 'Last Name', key: 'Last Name', width: 15 },
+            { header: 'Phone', key: 'Phone', width: 15 },
+            { header: 'Employee ID', key: 'Employee ID', width: 15 },
+            { header: 'Department', key: 'Department', width: 20 },
+            { header: 'Designation', key: 'Designation', width: 20 },
+            { header: 'Join Date', key: 'Join Date', width: 15 },
+            { header: 'Gender', key: 'Gender', width: 12 },
+            { header: 'Marital Status', key: 'Marital Status', width: 15 },
+            { header: 'Address', key: 'Address', width: 25 },
+            { header: 'Annual CTC', key: 'Annual CTC', width: 15 },
+            { header: 'Bank Name', key: 'Bank Name', width: 20 },
+            { header: 'Account Number', key: 'Account Number', width: 20 },
+            { header: 'IFSC Code', key: 'IFSC Code', width: 15 },
+        ];
+        worksheet.addRow({
             'Email': 'employee@example.com',
             'First Name': 'John',
             'Last Name': 'Doe',
@@ -95,12 +117,15 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({ open, onOpen
             'Bank Name': 'Sample Bank',
             'Account Number': '123456789',
             'IFSC Code': 'SAMP0001234'
-        }];
-
-        const ws = XLSX.utils.json_to_sheet(templateData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Employees');
-        XLSX.writeFile(wb, 'hrms_employee_import_template.xlsx');
+        });
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'hrms_employee_import_template.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     const handleImport = async () => {
