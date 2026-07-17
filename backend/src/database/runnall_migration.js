@@ -139,7 +139,6 @@ async function runMigrations() {
         console.error("\n💥 Migration process stopped due to error");
         // eslint-disable-next-line no-console
         console.error(err);
-        process.exit(1);
     } finally {
         await client.end();
     }
