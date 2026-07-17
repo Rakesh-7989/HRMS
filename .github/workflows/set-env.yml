@@ -1,0 +1,87 @@
+name: Set Vercel Env Vars
+
+on:
+  workflow_dispatch:
+    inputs:
+      DATABASE_URL:
+        description: 'PostgreSQL connection string'
+        required: false
+      JWT_ACCESS_SECRET:
+        description: 'JWT access token secret (min 32 chars)'
+        required: false
+      JWT_REFRESH_SECRET:
+        description: 'JWT refresh token secret (min 32 chars)'
+        required: false
+      ENCRYPTION_KEY:
+        description: '32-byte hex encryption key (64 hex chars)'
+        required: false
+      SMTP_HOST:
+        description: 'SMTP server hostname'
+        required: false
+      SMTP_PORT:
+        description: 'SMTP server port'
+        required: false
+      SMTP_SECURE:
+        description: 'SMTP use TLS (true/false)'
+        required: false
+      SMTP_USER:
+        description: 'SMTP username'
+        required: false
+      SMTP_PASS:
+        description: 'SMTP password'
+        required: false
+      EMAIL_FROM:
+        description: 'From email address'
+        required: false
+      EMAIL_FROM_NAME:
+        description: 'From email display name'
+        required: false
+      CONTACT_SALES_EMAIL:
+        description: 'Sales inquiry email recipient'
+        required: false
+      FRONTEND_URL:
+        description: 'Frontend URL'
+        required: false
+      SENTRY_DSN:
+        description: 'Sentry DSN (optional)'
+        required: false
+      DBA_PASSWORD:
+        description: 'DBA password for super admin access'
+        required: false
+
+env:
+  VERCEL_ORG_ID: team_lAjOepLfDaFUyAINRNPdz3a0
+  VERCEL_PROJECT_ID: prj_2A9b3vpSqFFOmBE0opFU5vmjI3l3
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Vercel env vars via API
+        shell: bash
+        run: |
+          INPUTS='${{ toJSON(github.event.inputs) }}'
+          echo "$INPUTS" | jq -c 'to_entries[] | select(.value != "")' | while read -r entry; do
+            key=$(echo "$entry" | jq -r '.key')
+            val=$(echo "$entry" | jq -r '.value')
+            echo "Setting $key..."
+            response=$(curl -s -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n --arg k "$key" --arg v "$val" '{key: $k, value: $v, type: "encrypted", target: ["production"]}')")
+            if echo "$response" | grep -q '"error"'; then
+              echo "ERROR setting $key: $response"
+              exit 1
+            fi
+            echo "$key set successfully"
+          done
+
+      - name: Trigger redeploy
+        run: |
+          response=$(curl -s -X POST "https://api.vercel.com/v1/deployments?projectId=$VERCEL_PROJECT_ID" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"backend","target":"production"}')
+          echo "Redeploy response: $response"
