@@ -94,6 +94,6 @@ jobs:
         env:
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_BACKEND_PROJECT_ID }}
         run: >
-          vercel deploy --prod --cwd=backend
+          vercel deploy --prod
           --token=${{ secrets.VERCEL_TOKEN }}
           --scope=${{ env.VERCEL_ORG_ID }}
