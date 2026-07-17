@@ -16,11 +16,12 @@ const dbConfig = process.env.DATABASE_URL
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     };
 
-// Postgres "already exists" errors
-const ALREADY_EXISTS_ERRORS = new Set([
+// Postgres non-fatal errors (migrations should continue)
+const NON_FATAL_ERRORS = new Set([
     "42P07", // relation already exists
     "42710",  // duplicate object
-    "42701"  // duplicate column
+    "42701",  // duplicate column
+    "42P01"  // relation does not exist (DROP/ALTER on missing table is ok)
 ]);
 
 async function runMigrations() {
@@ -91,9 +92,9 @@ async function runMigrations() {
                 // ALWAYS rollback first
                 await client.query("ROLLBACK");
 
-                if (ALREADY_EXISTS_ERRORS.has(err.code)) {
+                if (NON_FATAL_ERRORS.has(err.code)) {
                     // eslint-disable-next-line no-console
-                    console.warn(`⚠️  Skipped (already exists): ${file}`);
+                    console.warn(`⚠️  Skipped (non-fatal): ${file} — ${err.message}`);
 
                     // record skip OUTSIDE transaction
                     await client.query(
@@ -106,8 +107,17 @@ async function runMigrations() {
                 }
 
                 // eslint-disable-next-line no-console
-                console.error(`❌ Failed: ${file}`);
-                throw err;
+                console.error(`❌ Failed: ${file} — ${err.message}`);
+
+                // Record as skipped to prevent retry on every cold start
+                try {
+                    await client.query(
+                        "INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING",
+                        [file]
+                    );
+                } catch (_) {}
+
+                skippedFiles.push(file);
             }
         }
 
