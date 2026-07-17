@@ -1,25 +1,33 @@
-process.on('unhandledRejection', (reason) => {
-  console.error('UNHANDLED REJECTION:', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err);
-  setTimeout(() => process.exit(1), 1000);
-});
+const start = Date.now();
+console.error(`[api/index.js] Starting at ${start}`);
 
-let app;
+try {
+  console.error('[api/index.js] Loading express...');
+  const express = require('express');
+  console.error(`[api/index.js] express loaded in ${Date.now() - start}ms`);
 
-module.exports = (req, res) => {
-  if (!app) {
-    try {
-      app = require('../app');
-    } catch (err) {
-      console.error('APP ERROR:', err.message);
-      console.error(err.stack);
-      app = (req, res) => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message, stack: err.stack }));
-      };
-    }
-  }
-  app(req, res);
-};
+  console.error('[api/index.js] Creating app...');
+  const app = express();
+  app.disable('x-powered-by');
+
+  console.error('[api/index.js] Loading routes...');
+  const routes = require('../src/routes');
+  console.error(`[api/index.js] Routes loaded in ${Date.now() - start}ms`);
+
+  app.use('/api', routes);
+  console.error(`[api/index.js] App ready in ${Date.now() - start}ms`);
+
+  module.exports = app;
+} catch (err) {
+  console.error(`[api/index.js] ERROR at ${Date.now() - start}ms:`, err.message);
+  console.error(err.stack);
+
+  module.exports = (req, res) => {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      error: err.message,
+      stack: err.stack,
+      loadTimeMs: Date.now() - start
+    }));
+  };
+}
