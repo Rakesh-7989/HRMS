@@ -6,7 +6,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "maxDuration": 90
+      "maxDuration": 180
     },
     "api/health.js": {
       "maxDuration": 30
