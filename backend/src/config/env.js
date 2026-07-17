@@ -21,10 +21,6 @@ const validateSecret = (key, secret, minLength = 32) => {
 const JWT_ACCESS_SECRET = validateSecret('JWT_ACCESS_SECRET', required('JWT_ACCESS_SECRET'));
 const JWT_REFRESH_SECRET = validateSecret('JWT_REFRESH_SECRET', required('JWT_REFRESH_SECRET'));
 
-if (JWT_REFRESH_SECRET === JWT_ACCESS_SECRET) {
-    throw new Error('JWT_REFRESH_SECRET must be different from JWT_ACCESS_SECRET');
-}
-
 module.exports = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: parseInt(process.env.PORT || '5000', 10),
