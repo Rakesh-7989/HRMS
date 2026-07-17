@@ -6,9 +6,6 @@ const {
   ForbiddenError
 } = require("../../utils/customErrors");
 const crypto = require("crypto");
-const JsBarcode = require("jsbarcode");
-const Canvas = require("canvas");
-const QRCode = require("qrcode");
 const logger = require("../../config/logger");
 const inboxService = require("../inbox/inbox.service");
 
@@ -547,6 +544,8 @@ exports.generateBarcode = async (tenantId, assetId, format = "base64") => {
   const { asset_code } = result.rows[0];
 
   try {
+    const Canvas = require("canvas");
+    const JsBarcode = require("jsbarcode");
     // Create canvas for barcode
     const canvas = Canvas.createCanvas(200, 100);
 
@@ -602,6 +601,7 @@ exports.generateQRCode = async (tenantId, assetId) => {
   const { asset_code, name } = result.rows[0];
 
   try {
+    const QRCode = require("qrcode");
     const qrData = JSON.stringify({ asset_code, name, id: assetId });
     const qrImage = await QRCode.toDataURL(qrData, {
       width: 200,

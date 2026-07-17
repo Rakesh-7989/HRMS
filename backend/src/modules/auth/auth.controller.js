@@ -20,8 +20,6 @@ try {
   generateURI = () => "";
   verifySync = () => false;
 }
-const QRCode = require("qrcode");
-
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 
@@ -561,6 +559,7 @@ exports.setup2FA = async (req, res) => {
     const user = userRes.rows[0];
     const secret = generateSecret();
     const otpauth = generateURI({ secret, issuer: "HRMS GIGGLE", label: user.email });
+    const QRCode = require("qrcode");
     const qrCodeDataURL = await QRCode.toDataURL(otpauth);
 
     // Save secret temporarily (maybe don't enable yet)

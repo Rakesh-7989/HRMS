@@ -1,4 +1,3 @@
-const PDFDocument = require('pdfkit');
 const db = require("../../../config/db");
 
 const generateForm16PartB = async (tenantId, employeeId, fy) => {
@@ -86,6 +85,7 @@ const generateForm16PartB = async (tenantId, employeeId, fy) => {
             const tdsResult = statutoryCalculator.calculateTDS(parseFloat(salaryParams.total_gross), tdsInput, age);
 
             // 6. Generate PDF
+            const PDFDocument = require('pdfkit');
             const doc = new PDFDocument({ margin: 50 });
             const buffers = [];
             doc.on('data', buffers.push.bind(buffers));

@@ -1,8 +1,6 @@
 const db = require("../../../config/db");
-const PDFDocument = require("pdfkit");
 const path = require("path");
 const fs = require("fs");
-const converter = require("number-to-words");
 const mailer = require("../../../config/mailer");
 const inboxService = require("../../inbox/inbox.service");
 const { decrypt } = require("../../../utils/encryption");
@@ -192,6 +190,7 @@ const generatePDFFromData = async (data) => {
     data.designation_name = sanitizeForPDF(data.designation_name);
 
     // Create PDF document
+    const PDFDocument = require("pdfkit");
     const doc = new PDFDocument({
         margin: 40,
         size: 'A4',
@@ -474,6 +473,7 @@ const numberToWords = (num) => {
         const integerPart = Math.floor(num);
         const fractionalPart = Math.round((num - integerPart) * 100);
 
+        const converter = require("number-to-words");
         let words = converter.toWords(integerPart);
         if (fractionalPart > 0) {
             words += " and " + converter.toWords(fractionalPart) + " paise";

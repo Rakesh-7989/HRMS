@@ -21,7 +21,6 @@ const dashboardRouter = require('../modules/dashboards/dashboard.router');
 const userRouter = require('../modules/users/user.router');
 const attendanceRouter = require('../modules/attendance/attendance.router');
 const leaveRouter = require('../modules/leave/index.router');
-const payrollRouter = require('../modules/payroll/payroll.router');
 const inboxRouter = require('../modules/inbox/inbox.router');
 const notificationRouter = require('../modules/inbox/notification.router');
 const documentsRouter = require('../modules/documents/documents.router');
@@ -120,7 +119,9 @@ router.use('/events', eventsRouter);
 
 // Payroll module (includes: salary, payrun, statutory, settlement,
 // consultants, payslips, expenses, loans, merchants)
-router.use('/payroll', planGuard('payroll.full_access'), payrollRouter);
+router.use('/payroll', planGuard('payroll.full_access'), (req, res, next) => {
+  require('../modules/payroll/payroll.router')(req, res, next);
+});
 
 // Leave module
 router.use('/leave', requireFeature('leave_tracker'), leaveRouter);
@@ -141,12 +142,12 @@ router.use('/chat', planGuard('collaboration.chat'), chatRouter);
 router.use('/calendar', requireFeature('leave_tracker'), calendarRouter);
 router.use('/shifts', planGuard('attendance.scheduling'), shiftRouter);
 
-// Phase 5 Modules
-router.use('/performance', planGuard('performance.full_access'), require('../modules/performance/performance.router'));
-router.use('/recruitment', planGuard('recruitment.full_access'), require('../modules/recruitment/recruitment.router'));
-router.use('/bonus', planGuard('bonus.full_access'), require('../modules/bonus/bonus.router'));
-router.use('/engagement', planGuard('engagement.full_access'), require('../modules/engagement/engagement.router'));
-router.use('/compliance', planGuard('compliance.full_access'), require('../modules/compliance/compliance.router'));
-router.use('/ai', planGuard('ai.full_access'), require('../modules/ai/ai.router'));
+// Phase 5 Modules (lazy-loaded)
+router.use('/performance', planGuard('performance.full_access'), (req, res, next) => { require('../modules/performance/performance.router')(req, res, next); });
+router.use('/recruitment', planGuard('recruitment.full_access'), (req, res, next) => { require('../modules/recruitment/recruitment.router')(req, res, next); });
+router.use('/bonus', planGuard('bonus.full_access'), (req, res, next) => { require('../modules/bonus/bonus.router')(req, res, next); });
+router.use('/engagement', planGuard('engagement.full_access'), (req, res, next) => { require('../modules/engagement/engagement.router')(req, res, next); });
+router.use('/compliance', planGuard('compliance.full_access'), (req, res, next) => { require('../modules/compliance/compliance.router')(req, res, next); });
+router.use('/ai', planGuard('ai.full_access'), (req, res, next) => { require('../modules/ai/ai.router')(req, res, next); });
 
 module.exports = router;

@@ -2,7 +2,6 @@ const pool = require("../../config/db");
 const { query: dbQuery } = require("../../middleware/db");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const ExcelJS = require("exceljs");
 const mailer = require("../../config/mailer");
 const logger = require("../../config/logger");
 const subscriptionService = require("../subscriptions/subscriptions.service");
@@ -1660,6 +1659,7 @@ exports.bulkImportEmployees = async (db, fileBuffer, columnMapping, actor) => {
   const desigService = require('../designation/designation.service');
 
   // 1. Parse Excel
+  const ExcelJS = require("exceljs");
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(fileBuffer);
   const worksheet = workbook.worksheets[0];
