@@ -8,14 +8,12 @@ module.exports = async (req, res) => {
     app = express();
     app.disable('x-powered-by');
 
-    if (process.env.RUN_MIGRATIONS_ON_START === 'true') {
-      try {
-        const runMigrations = require('../src/database/runnall_migration');
-        await runMigrations();
-        console.log('[api/index.js] Migrations completed.');
-      } catch (err) {
-        console.error('[api/index.js] Migration error:', err.message);
-      }
+    try {
+      const runMigrations = require('../src/database/runnall_migration');
+      await runMigrations();
+      console.log('[api/index.js] Migrations completed.');
+    } catch (err) {
+      console.error('[api/index.js] Migration error:', err.message);
     }
 
     const routes = require('../src/routes');
