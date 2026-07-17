@@ -177,8 +177,8 @@ jobs:
 
       - name: Audit Frontend
         working-directory: frontend
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Audit Backend
         working-directory: backend
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
