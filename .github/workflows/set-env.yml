@@ -59,7 +59,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set Vercel env vars via API
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Set Vercel env vars via CLI
         shell: bash
         run: |
           INPUTS='${{ toJSON(github.event.inputs) }}'
@@ -67,21 +70,15 @@ jobs:
             key=$(echo "$entry" | jq -r '.key')
             val=$(echo "$entry" | jq -r '.value')
             echo "Setting $key..."
-            response=$(curl -s -X POST "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env" \
-              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              -d "$(jq -n --arg k "$key" --arg v "$val" '{key: $k, value: $v, type: "encrypted", target: ["production"]}')")
-            if echo "$response" | grep -q '"error"'; then
-              echo "ERROR setting $key: $response"
-              exit 1
-            fi
-            echo "$key set successfully"
+            echo "$val" | vercel env add "$key" production --force \
+              --token=${{ secrets.VERCEL_TOKEN }} \
+              --scope=$VERCEL_ORG_ID \
+              --project=$VERCEL_PROJECT_ID 2>&1
+            echo "$key done"
           done
 
       - name: Trigger redeploy
         run: |
-          response=$(curl -s -X POST "https://api.vercel.com/v1/deployments?projectId=$VERCEL_PROJECT_ID" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"name":"backend","target":"production"}')
-          echo "Redeploy response: $response"
+          vercel deploy --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=$VERCEL_ORG_ID 2>&1
