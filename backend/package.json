@@ -58,7 +58,7 @@
     "uuid": "^13.0.0",
     "winston": "^3.18.3",
     "xss": "^1.0.15",
-    "zod": "^3.23.8"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "autocannon": "^8.0.0",
